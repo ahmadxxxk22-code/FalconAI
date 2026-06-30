@@ -1,3 +1,0 @@
-# API
-
-REST API endpoints.
