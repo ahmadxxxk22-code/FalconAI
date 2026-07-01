@@ -64,3 +64,25 @@ class User(BaseModel):
     login_count = Column(Integer, default=0)
 
     last_login = Column(DateTime(timezone=True))
+class Subscription(BaseModel):
+    __tablename__ = "subscriptions"
+
+    user_id = Column(Integer, nullable=False, index=True)
+
+    plan = Column(String(30), default="FREE")
+
+    status = Column(String(30), default="ACTIVE")
+
+    payment_method = Column(String(50))
+
+    amount = Column(Float, default=0)
+
+    currency = Column(String(10), default="USD")
+
+    start_date = Column(DateTime(timezone=True), server_default=func.now())
+
+    end_date = Column(DateTime(timezone=True))
+
+    auto_renew = Column(Boolean, default=False)
+
+    transaction_id = Column(String(255))
