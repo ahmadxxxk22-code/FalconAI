@@ -1,11 +1,21 @@
-from fastapi import APIRouter
+from datetime import datetime, timedelta
+from jose import jwt
 
-router = APIRouter()
+from config import settings
 
-@router.get("/login")
-async def login():
-    return {"message": "Login endpoint"}
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 
-@router.get("/register")
-async def register():
-    return {"message": "Register endpoint"}
+
+def create_access_token(data: dict, expires_minutes: int = 60):
+    to_encode = data.copy()
+
+    expire = datetime.utcnow() + timedelta(minutes=expires_minutes)
+
+    to_encode.update({"exp": expire})
+
+    return jwt.encode(
+        to_encode,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
