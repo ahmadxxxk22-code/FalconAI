@@ -64,6 +64,8 @@ class User(BaseModel):
     login_count = Column(Integer, default=0)
 
     last_login = Column(DateTime(timezone=True))
+
+
 class Subscription(BaseModel):
     __tablename__ = "subscriptions"
 
@@ -86,3 +88,29 @@ class Subscription(BaseModel):
     auto_renew = Column(Boolean, default=False)
 
     transaction_id = Column(String(255))
+
+
+class Payment(BaseModel):
+    __tablename__ = "payments"
+
+    user_id = Column(Integer, nullable=False, index=True)
+
+    subscription_id = Column(Integer)
+
+    amount = Column(Float, nullable=False)
+
+    currency = Column(String(10), default="USD")
+
+    payment_method = Column(String(50))
+
+    provider = Column(String(50))
+
+    transaction_id = Column(String(255), unique=True)
+
+    status = Column(String(30), default="PENDING")
+
+    invoice_number = Column(String(100))
+
+    paid_at = Column(DateTime(timezone=True))
+
+    notes = Column(String(255))
