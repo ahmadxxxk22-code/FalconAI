@@ -18,3 +18,8 @@ requests
 beautifulsoup4
 lxml
 python-multipart
+alembic
+passlib[bcrypt]
+python-jose[cryptography]
+email-validator
+openai
