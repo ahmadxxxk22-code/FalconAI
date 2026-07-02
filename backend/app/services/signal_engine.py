@@ -10,8 +10,9 @@ class SignalEngine:
         self.indicators = IndicatorEngine()
 
     def get_mock_prices(self):
-        # لاحقاً نربطه ب API حقيقي (Binance / Forex)
-        return [random.randint(20000, 30000) for _ in range(30)]
+    # بيانات شبه واقعية بدل العشوائية الكاملة
+    base = 27000
+    return [base + random.randint(-500, 500) for _ in range(30)]
 
     def analyze_market(self, symbol: str, timeframe: str = "1m"):
 
