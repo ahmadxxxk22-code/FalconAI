@@ -1,33 +1,43 @@
 from datetime import datetime
 import random
 
+from app.services.indicator_engine import IndicatorEngine
+
 
 class SignalEngine:
 
+    def __init__(self):
+        self.indicators = IndicatorEngine()
+
+    def get_mock_prices(self):
+        # لاحقاً نربطه ب API حقيقي (Binance / Forex)
+        return [random.randint(20000, 30000) for _ in range(30)]
+
     def analyze_market(self, symbol: str, timeframe: str = "1m"):
-        """
-        تحليل السوق (نسخة أولية - لاحقاً نربط AI + Indicators)
-        """
 
-        # محاكاة بيانات (لاحقاً نستبدلها ببيانات حقيقية)
-        rsi = random.randint(10, 90)
-        trend_strength = random.randint(1, 100)
+        prices = self.get_mock_prices()
 
-        # قرار بسيط مبدئي
-        if rsi < 30 and trend_strength > 60:
+        rsi = self.indicators.rsi(prices)
+        ema = self.indicators.ema(prices)
+        trend_strength = self.indicators.trend_strength(prices)
+
+        last_price = prices[-1]
+
+        # القرار الحقيقي الآن
+        if rsi < 30 and last_price > ema:
             direction = "BUY"
-            confidence = random.randint(70, 95)
-            reason = "السوق في حالة تشبع بيع + قوة صعود واضحة"
+            confidence = 85 + random.randint(0, 10)
+            reason = "RSI منخفض + السعر فوق EMA = بداية صعود محتمل"
 
-        elif rsi > 70 and trend_strength > 60:
+        elif rsi > 70 and last_price < ema:
             direction = "SELL"
-            confidence = random.randint(70, 95)
-            reason = "السوق في حالة تشبع شراء + ضعف محتمل في الصعود"
+            confidence = 85 + random.randint(0, 10)
+            reason = "RSI مرتفع + السعر تحت EMA = احتمال هبوط"
 
         else:
             direction = "WAIT"
-            confidence = random.randint(40, 60)
-            reason = "السوق غير واضح، يفضل الانتظار"
+            confidence = 50 + random.randint(0, 20)
+            reason = "السوق غير واضح + لا يوجد تأكيد قوي"
 
         return {
             "symbol": symbol,
@@ -35,7 +45,9 @@ class SignalEngine:
             "direction": direction,
             "confidence": confidence,
             "rsi": rsi,
+            "ema": ema,
             "trend_strength": trend_strength,
+            "last_price": last_price,
             "reason": reason,
             "created_at": datetime.utcnow().isoformat()
         }
