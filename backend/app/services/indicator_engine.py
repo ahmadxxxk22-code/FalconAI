@@ -1,55 +1,117 @@
-import numpy as np
+import math
 
 
 class IndicatorEngine:
 
-    def rsi(self, prices, period: int = 14):
-        if len(prices) < period + 1:
+    # ==========================
+    # EMA
+    # ==========================
+    def ema(self, prices, period=20):
+
+        if len(prices) < period:
+            return prices[-1]
+
+        multiplier = 2 / (period + 1)
+
+        ema = sum(prices[:period]) / period
+
+        for price in prices[period:]:
+            ema = (price - ema) * multiplier + ema
+
+        return round(ema, 2)
+
+    # ==========================
+    # SMA
+    # ==========================
+    def sma(self, prices, period=20):
+
+        if len(prices) < period:
+            return prices[-1]
+
+        return round(
+            sum(prices[-period:]) / period,
+            2
+        )
+
+    # ==========================
+    # RSI
+    # ==========================
+    def rsi(self, prices, period=14):
+
+        if len(prices) <= period:
             return 50
 
         gains = []
         losses = []
 
         for i in range(1, len(prices)):
-            change = prices[i] - prices[i - 1]
+            diff = prices[i] - prices[i - 1]
 
-            if change > 0:
-                gains.append(change)
-                losses.append(0)
+            if diff > 0:
+                gains.append(diff)
             else:
-                gains.append(0)
-                losses.append(abs(change))
+                losses.append(abs(diff))
 
-        avg_gain = np.mean(gains[-period:])
-        avg_loss = np.mean(losses[-period:])
+        avg_gain = (
+            sum(gains[-period:]) / period
+            if gains else 0.0001
+        )
 
-        if avg_loss == 0:
-            return 100
+        avg_loss = (
+            sum(losses[-period:]) / period
+            if losses else 0.0001
+        )
 
         rs = avg_gain / avg_loss
-        rsi = 100 - (100 / (1 + rs))
 
-        return round(rsi, 2)
+        return round(
+            100 - (100 / (1 + rs)),
+            2
+        )
 
+    # ==========================
+    # MACD
+    # ==========================
+    def macd(self, prices):
 
-    def ema(self, prices, period: int = 14):
-        if len(prices) < period:
-            return sum(prices) / len(prices)
+        ema12 = self.ema(prices, 12)
+        ema26 = self.ema(prices, 26)
 
-        alpha = 2 / (period + 1)
-        ema = prices[0]
+        return round(
+            ema12 - ema26,
+            2
+        )
 
-        for price in prices[1:]:
-            ema = (price * alpha) + (ema * (1 - alpha))
-
-        return round(ema, 2)
-
-
+    # ==========================
+    # Trend Strength
+    # ==========================
     def trend_strength(self, prices):
-        if len(prices) < 2:
-            return 50
 
-        changes = np.diff(prices)
-        strength = np.mean(np.abs(changes))
+        if len(prices) < 20:
+            return 0
 
-        return round(min(strength * 10, 100), 2)
+        first = prices[-20]
+
+        last = prices[-1]
+
+        return round(
+            ((last - first) / first) * 100,
+            2
+        )
+
+    # ==========================
+    # Volatility
+    # ==========================
+    def volatility(self, prices):
+
+        avg = sum(prices) / len(prices)
+
+        variance = sum(
+            (x - avg) ** 2
+            for x in prices
+        ) / len(prices)
+
+        return round(
+            math.sqrt(variance),
+            2
+        )
