@@ -54,3 +54,45 @@ class BinanceService(BaseMarketService):
 
     def get_candles(
         self,
+        symbol="BTCUSDT",
+        interval="1h",
+        limit=200
+    ):
+
+        response = requests.get(
+            f"{self.BASE_URL}/klines",
+            params={
+                "symbol": symbol,
+                "interval": interval,
+                "limit": limit
+            },
+            timeout=10
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        candles = []
+
+        for candle in data:
+
+            candles.append({
+
+                "open_time": candle[0],
+
+                "open": float(candle[1]),
+
+                "high": float(candle[2]),
+
+                "low": float(candle[3]),
+
+                "close": float(candle[4]),
+
+                "volume": float(candle[5]),
+
+                "close_time": candle[6]
+
+            })
+
+        return candles
