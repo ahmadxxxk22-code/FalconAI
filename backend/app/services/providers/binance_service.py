@@ -7,34 +7,59 @@ class BinanceService(BaseMarketService):
 
     BASE_URL = "https://api.binance.com/api/v3"
 
+    def request(self, endpoint, params=None):
+
+        try:
+
+            response = requests.get(
+
+                f"{self.BASE_URL}/{endpoint}",
+
+                params=params,
+
+                timeout=10
+
+            )
+
+            response.raise_for_status()
+
+            return response.json()
+
+        except requests.RequestException as e:
+
+            raise Exception(
+
+                f"Binance API Error: {e}"
+
+            )
+
     def get_price(self, symbol="BTCUSDT"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/ticker/price",
-            params={"symbol": symbol},
-            timeout=10
+        data = self.request(
+
+            "ticker/price",
+
+            {"symbol": symbol}
+
         )
 
-        response.raise_for_status()
-
-        data = response.json()
-
         return {
+
             "symbol": data["symbol"],
+
             "price": float(data["price"])
+
         }
 
     def get_24h(self, symbol="BTCUSDT"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/ticker/24hr",
-            params={"symbol": symbol},
-            timeout=10
+        data = self.request(
+
+            "ticker/24hr",
+
+            {"symbol": symbol}
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         return {
 
@@ -53,25 +78,32 @@ class BinanceService(BaseMarketService):
         }
 
     def get_candles(
+
         self,
+
         symbol="BTCUSDT",
+
         interval="1h",
+
         limit=200
+
     ):
 
-        response = requests.get(
-            f"{self.BASE_URL}/klines",
-            params={
+        data = self.request(
+
+            "klines",
+
+            {
+
                 "symbol": symbol,
+
                 "interval": interval,
+
                 "limit": limit
-            },
-            timeout=10
+
+            }
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         candles = []
 
