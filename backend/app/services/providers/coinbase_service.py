@@ -7,16 +7,39 @@ class CoinbaseService(BaseMarketService):
 
     BASE_URL = "https://api.exchange.coinbase.com"
 
+    def request(self, endpoint, params=None):
+
+        try:
+
+            response = requests.get(
+
+                f"{self.BASE_URL}/{endpoint}",
+
+                params=params,
+
+                timeout=10
+
+            )
+
+            response.raise_for_status()
+
+            return response.json()
+
+        except requests.RequestException as e:
+
+            raise Exception(
+
+                f"Coinbase API Error: {e}"
+
+            )
+
     def get_price(self, symbol="BTC-USD"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/products/{symbol}/ticker",
-            timeout=10
+        data = self.request(
+
+            f"products/{symbol}/ticker"
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         return {
 
@@ -28,14 +51,11 @@ class CoinbaseService(BaseMarketService):
 
     def get_24h(self, symbol="BTC-USD"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/products/{symbol}/stats",
-            timeout=10
+        data = self.request(
+
+            f"products/{symbol}/stats"
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         return {
 
@@ -52,21 +72,28 @@ class CoinbaseService(BaseMarketService):
         }
 
     def get_candles(
+
         self,
+
         symbol="BTC-USD",
+
         interval=3600,
+
         limit=200
+
     ):
 
-        response = requests.get(
-            f"{self.BASE_URL}/products/{symbol}/candles",
-            params={"granularity": interval},
-            timeout=10
+        data = self.request(
+
+            f"products/{symbol}/candles",
+
+            {
+
+                "granularity": interval
+
+            }
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         candles = []
 
