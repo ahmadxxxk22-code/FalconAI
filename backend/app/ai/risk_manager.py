@@ -2,58 +2,80 @@ class RiskManager:
 
     def calculate(
         self,
-        symbol="BTCUSDT",
-        timeframe="1h",
+        direction="BUY",
+        price=100,
+        confidence=80,
         balance=1000,
-        risk_percent=2,
-        entry=100,
-        stop_loss=98
+        risk_percent=2
     ):
 
         risk_amount = balance * (risk_percent / 100)
 
-        stop_distance = abs(entry - stop_loss)
+        if direction == "BUY":
+
+            stop_loss = price * 0.98
+
+            take_profit_1 = price * 1.02
+
+            take_profit_2 = price * 1.04
+
+            take_profit_3 = price * 1.06
+
+        elif direction == "SELL":
+
+            stop_loss = price * 1.02
+
+            take_profit_1 = price * 0.98
+
+            take_profit_2 = price * 0.96
+
+            take_profit_3 = price * 0.94
+
+        else:
+
+            stop_loss = price
+
+            take_profit_1 = price
+
+            take_profit_2 = price
+
+            take_profit_3 = price
+
+        stop_distance = abs(price - stop_loss)
 
         if stop_distance == 0:
             stop_distance = 0.0001
 
         position_size = risk_amount / stop_distance
 
-        tp1 = entry + (entry - stop_loss) * 1.5
-
-        tp2 = entry + (entry - stop_loss) * 2
-
-        tp3 = entry + (entry - stop_loss) * 3
-
         risk_reward = round(
-            abs(tp2 - entry) / stop_distance,
+            abs(take_profit_2 - price) / stop_distance,
             2
         )
 
-        trade_allowed = risk_reward >= 2
-
         return {
 
-            "symbol": symbol,
+            "direction": direction,
 
-            "timeframe": timeframe,
-
-            "entry": round(entry, 4),
+            "entry": round(price, 4),
 
             "stop_loss": round(stop_loss, 4),
 
-            "take_profit_1": round(tp1, 4),
+            "take_profit_1": round(take_profit_1, 4),
 
-            "take_profit_2": round(tp2, 4),
+            "take_profit_2": round(take_profit_2, 4),
 
-            "take_profit_3": round(tp3, 4),
+            "take_profit_3": round(take_profit_3, 4),
 
             "position_size": round(position_size, 4),
 
-            "risk_percent": risk_percent,
-
             "risk_reward": risk_reward,
 
-            "trade_allowed": trade_allowed
+            "confidence": confidence,
+
+            "trade_allowed": (
+                confidence >= 60
+                and risk_reward >= 2
+            )
 
         }
