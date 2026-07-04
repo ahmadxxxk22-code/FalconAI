@@ -1,7 +1,9 @@
 from fastapi import FastAPI
+
 from users import router as users_router
 
 from app.ai.signals_engine import SignalEngine
+from app.ai.assistant import FalconAssistant
 
 app = FastAPI(
     title="FalconAI",
@@ -11,7 +13,8 @@ app = FastAPI(
 
 app.include_router(users_router)
 
-engine = SignalEngine()
+signal_engine = SignalEngine()
+assistant = FalconAssistant()
 
 
 @app.get("/")
@@ -19,7 +22,8 @@ async def home():
     return {
         "status": "online",
         "platform": "FalconAI",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "message": "Welcome to FalconAI"
     }
 
 
@@ -27,28 +31,30 @@ async def home():
 async def health():
     return {
         "server": "running",
-        "ai": "ready"
+        "database": "ready",
+        "authentication": "ready",
+        "ai": "running",
+        "signals": "running"
     }
 
 
-@app.get("/ai/analyze/{symbol}")
-async def analyze(
-    symbol: str,
-    interval: str = "1h"
-):
+@app.get("/signal/{symbol}")
+async def signal(symbol: str, interval: str = "1h"):
 
-    try:
+    analysis = signal_engine.analyze(
+        symbol=symbol,
+        interval=interval
+    )
 
-        result = engine.analyze(
-            symbol=symbol,
-            interval=interval
-        )
+    return analysis
 
-        return result
 
-    except Exception as e:
+@app.get("/assistant/{symbol}")
+async def ai(symbol: str, interval: str = "1h"):
 
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    analysis = signal_engine.analyze(
+        symbol=symbol,
+        interval=interval
+    )
+
+    return assistant.explain(analysis)
