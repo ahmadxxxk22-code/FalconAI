@@ -1,45 +1,129 @@
 class FalconAssistant:
 
-    def explain(self, analysis: dict):
+    def explain(self, analysis):
 
-        signal = analysis.get("signal", "WAIT")
+        direction = analysis.get("direction", "WAIT")
+
         confidence = analysis.get("confidence", 0)
-        reasons = analysis.get("reasons", [])
+
         risk = analysis.get("risk", {})
 
-        if signal == "BUY":
+        market = analysis.get("market", {})
+
+        pattern = analysis.get("patterns", {})
+
+        smart = analysis.get("smart_money", {})
+
+        news = analysis.get("news", {})
+
+        fibonacci = analysis.get("fibonacci", {})
+
+        if direction == "BUY":
+
             title = "إشارة شراء"
 
-        elif signal == "SELL":
+        elif direction == "SELL":
+
             title = "إشارة بيع"
 
         else:
+
             title = "انتظار"
 
         return {
 
             "title": title,
 
-            "signal": signal,
+            "signal": direction,
 
             "confidence": confidence,
 
-            "summary": f"درجة الثقة {confidence}%",
+            "summary": self.summary(
 
-            "reasons": reasons,
+                direction,
+
+                confidence
+
+            ),
+
+            "market": market,
+
+            "pattern": pattern,
+
+            "smart_money": smart,
+
+            "news": news,
+
+            "fibonacci": fibonacci,
 
             "risk": risk,
 
-            "advice": self.build_advice(signal, confidence)
+            "advice": self.advice(
+
+                direction,
+
+                confidence
+
+            )
 
         }
 
-    def build_advice(self, signal, confidence):
+    def summary(
 
-        if signal == "BUY" and confidence >= 80:
-            return "الاتجاه قوي ويمكن التفكير بالدخول مع إدارة جيدة لرأس المال."
+        self,
 
-        if signal == "SELL" and confidence >= 80:
-            return "الاتجاه هابط بقوة، ويجب الانتباه لإدارة المخاطر."
+        direction,
 
-        return "يفضل انتظار تأكيدات إضافية قبل اتخاذ القرار."
+        confidence
+
+    ):
+
+        return (
+
+            f"FalconAI يرى أن الاتجاه {direction} "
+
+            f"بثقة {confidence}%."
+
+        )
+
+    def advice(
+
+        self,
+
+        direction,
+
+        confidence
+
+    ):
+
+        if direction == "BUY" and confidence >= 80:
+
+            return (
+
+                "الاتجاه صاعد بقوة. "
+
+                "يفضل الدخول مع الالتزام "
+
+                "بوقف الخسارة."
+
+            )
+
+        if direction == "SELL" and confidence >= 80:
+
+            return (
+
+                "الاتجاه هابط بقوة. "
+
+                "يفضل البيع أو تجنب "
+
+                "الشراء حالياً."
+
+            )
+
+        return (
+
+            "يفضل الانتظار حتى "
+
+            "ظهور تأكيدات إضافية."
+
+        )
