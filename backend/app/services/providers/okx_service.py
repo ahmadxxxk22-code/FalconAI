@@ -7,17 +7,45 @@ class OKXService(BaseMarketService):
 
     BASE_URL = "https://www.okx.com/api/v5"
 
+    def request(self, endpoint, params=None):
+
+        try:
+
+            response = requests.get(
+
+                f"{self.BASE_URL}/{endpoint}",
+
+                params=params,
+
+                timeout=10
+
+            )
+
+            response.raise_for_status()
+
+            return response.json()
+
+        except requests.RequestException as e:
+
+            raise Exception(
+
+                f"OKX API Error: {e}"
+
+            )
+
     def get_price(self, symbol="BTC-USDT"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/market/ticker",
-            params={"instId": symbol},
-            timeout=10
-        )
+        data = self.request(
 
-        response.raise_for_status()
+            "market/ticker",
 
-        data = response.json()["data"][0]
+            {
+
+                "instId": symbol
+
+            }
+
+        )["data"][0]
 
         return {
 
@@ -29,15 +57,17 @@ class OKXService(BaseMarketService):
 
     def get_24h(self, symbol="BTC-USDT"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/market/ticker",
-            params={"instId": symbol},
-            timeout=10
-        )
+        data = self.request(
 
-        response.raise_for_status()
+            "market/ticker",
 
-        data = response.json()["data"][0]
+            {
+
+                "instId": symbol
+
+            }
+
+        )["data"][0]
 
         return {
 
@@ -56,25 +86,32 @@ class OKXService(BaseMarketService):
         }
 
     def get_candles(
+
         self,
+
         symbol="BTC-USDT",
+
         interval="1H",
+
         limit=200
+
     ):
 
-        response = requests.get(
-            f"{self.BASE_URL}/market/candles",
-            params={
+        data = self.request(
+
+            "market/candles",
+
+            {
+
                 "instId": symbol,
+
                 "bar": interval,
+
                 "limit": limit
-            },
-            timeout=10
-        )
 
-        response.raise_for_status()
+            }
 
-        data = response.json()["data"]
+        )["data"]
 
         candles = []
 
