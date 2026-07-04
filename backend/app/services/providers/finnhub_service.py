@@ -1,3 +1,4 @@
+import time
 import requests
 
 from app.services.base_market_service import BaseMarketService
@@ -8,22 +9,53 @@ class FinnhubService(BaseMarketService):
     BASE_URL = "https://finnhub.io/api/v1"
 
     def __init__(self, api_key="YOUR_FINNHUB_API_KEY"):
+
         self.api_key = api_key
+
+    def request(self, endpoint, params=None):
+
+        if params is None:
+            params = {}
+
+        params["token"] = self.api_key
+
+        try:
+
+            response = requests.get(
+
+                f"{self.BASE_URL}/{endpoint}",
+
+                params=params,
+
+                timeout=10
+
+            )
+
+            response.raise_for_status()
+
+            return response.json()
+
+        except requests.RequestException as e:
+
+            raise Exception(
+
+                f"Finnhub API Error: {e}"
+
+            )
 
     def get_price(self, symbol="AAPL"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/quote",
-            params={
-                "symbol": symbol,
-                "token": self.api_key
-            },
-            timeout=15
+        data = self.request(
+
+            "quote",
+
+            {
+
+                "symbol": symbol
+
+            }
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         return {
 
@@ -35,18 +67,17 @@ class FinnhubService(BaseMarketService):
 
     def get_24h(self, symbol="AAPL"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/quote",
-            params={
-                "symbol": symbol,
-                "token": self.api_key
-            },
-            timeout=15
+        data = self.request(
+
+            "quote",
+
+            {
+
+                "symbol": symbol
+
+            }
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         return {
 
@@ -65,46 +96,62 @@ class FinnhubService(BaseMarketService):
         }
 
     def get_candles(
+
         self,
+
         symbol="AAPL",
+
         interval="60",
-        start=0,
-        end=0
+
+        limit=200
+
     ):
 
-        response = requests.get(
-            f"{self.BASE_URL}/stock/candle",
-            params={
+        end = int(time.time())
+
+        start = end - (limit * 3600)
+
+        data = self.request(
+
+            "stock/candle",
+
+            {
+
                 "symbol": symbol,
+
                 "resolution": interval,
+
                 "from": start,
-                "to": end,
-                "token": self.api_key
-            },
-            timeout=15
+
+                "to": end
+
+            }
+
         )
 
-        response.raise_for_status()
-
-        data = response.json()
-
         candles = []
+
+        if data.get("s") != "ok":
+
+            return candles
 
         for i in range(len(data["t"])):
 
             candles.append({
 
-                "time": data["t"][i],
+                "open_time": data["t"][i],
 
-                "open": data["o"][i],
+                "open": float(data["o"][i]),
 
-                "high": data["h"][i],
+                "high": float(data["h"][i]),
 
-                "low": data["l"][i],
+                "low": float(data["l"][i]),
 
-                "close": data["c"][i],
+                "close": float(data["c"][i]),
 
-                "volume": data["v"][i]
+                "volume": float(data["v"][i]),
+
+                "close_time": data["t"][i]
 
             })
 
