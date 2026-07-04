@@ -8,22 +8,53 @@ class TwelveDataService(BaseMarketService):
     BASE_URL = "https://api.twelvedata.com"
 
     def __init__(self, api_key="YOUR_TWELVEDATA_API_KEY"):
+
         self.api_key = api_key
+
+    def request(self, endpoint, params=None):
+
+        if params is None:
+            params = {}
+
+        params["apikey"] = self.api_key
+
+        try:
+
+            response = requests.get(
+
+                f"{self.BASE_URL}/{endpoint}",
+
+                params=params,
+
+                timeout=10
+
+            )
+
+            response.raise_for_status()
+
+            return response.json()
+
+        except requests.RequestException as e:
+
+            raise Exception(
+
+                f"TwelveData API Error: {e}"
+
+            )
 
     def get_price(self, symbol="EUR/USD"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/price",
-            params={
-                "symbol": symbol,
-                "apikey": self.api_key
-            },
-            timeout=15
+        data = self.request(
+
+            "price",
+
+            {
+
+                "symbol": symbol
+
+            }
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         return {
 
@@ -35,18 +66,17 @@ class TwelveDataService(BaseMarketService):
 
     def get_24h(self, symbol="EUR/USD"):
 
-        response = requests.get(
-            f"{self.BASE_URL}/quote",
-            params={
-                "symbol": symbol,
-                "apikey": self.api_key
-            },
-            timeout=15
+        data = self.request(
+
+            "quote",
+
+            {
+
+                "symbol": symbol
+
+            }
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
 
         return {
 
@@ -76,37 +106,31 @@ class TwelveDataService(BaseMarketService):
 
     ):
 
-        response = requests.get(
+        data = self.request(
 
-            f"{self.BASE_URL}/time_series",
+            "time_series",
 
-            params={
+            {
 
                 "symbol": symbol,
 
                 "interval": interval,
 
-                "outputsize": limit,
+                "outputsize": limit
 
-                "apikey": self.api_key
-
-            },
-
-            timeout=15
+            }
 
         )
 
-        response.raise_for_status()
-
-        data = response.json()["values"]
-
         candles = []
 
-        for candle in reversed(data):
+        values = data.get("values", [])
+
+        for candle in reversed(values):
 
             candles.append({
 
-                "time": candle["datetime"],
+                "open_time": candle["datetime"],
 
                 "open": float(candle["open"]),
 
@@ -116,7 +140,9 @@ class TwelveDataService(BaseMarketService):
 
                 "close": float(candle["close"]),
 
-                "volume": float(candle.get("volume", 0))
+                "volume": float(candle.get("volume", 0)),
+
+                "close_time": candle["datetime"]
 
             })
 
