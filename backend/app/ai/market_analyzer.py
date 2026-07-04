@@ -5,10 +5,16 @@ from app.services.indicator_engine import IndicatorEngine
 class MarketAnalyzer:
 
     def __init__(self):
+
         self.market = MarketData()
+
         self.indicators = IndicatorEngine()
 
-    def analyze(self, symbol="BTCUSDT", interval="1h"):
+    def analyze(
+        self,
+        symbol="BTCUSDT",
+        interval="1h"
+    ):
 
         prices = self.market.get_close_prices(
             symbol=symbol,
@@ -21,6 +27,12 @@ class MarketAnalyzer:
             interval=interval,
             limit=300
         )
+
+        if not prices or not volumes:
+
+            raise Exception(
+                "No market data received."
+            )
 
         rsi = self.indicators.rsi(prices)
 
@@ -36,6 +48,44 @@ class MarketAnalyzer:
 
         volume_power = (
             current_volume / avg_volume
+            if avg_volume > 0
+            else 0
+        )
+
+        bullish = (
+
+            trend > 0
+
+            and
+
+            last_price > ema
+
+            and
+
+            rsi < 35
+
+            and
+
+            volume_power > 1
+
+        )
+
+        bearish = (
+
+            trend < 0
+
+            and
+
+            last_price < ema
+
+            and
+
+            rsi > 65
+
+            and
+
+            volume_power > 1
+
         )
 
         return {
@@ -50,18 +100,13 @@ class MarketAnalyzer:
 
             "rsi": rsi,
 
-            "volume_power": volume_power,
-
-            "bullish": (
-                rsi < 35
-                and last_price > ema
-                and volume_power > 1
+            "volume_power": round(
+                volume_power,
+                2
             ),
 
-            "bearish": (
-                rsi > 65
-                and last_price < ema
-                and volume_power > 1
-            )
+            "bullish": bullish,
+
+            "bearish": bearish
 
         }
