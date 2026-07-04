@@ -1,91 +1,138 @@
-import requests
+from app.services.market_router import MarketRouter
 
 
 class MarketData:
 
-    BINANCE_URL = "https://api.binance.com/api/v3/klines"
+    def __init__(self):
+
+        self.router = MarketRouter()
+
+    def get_price(
+
+        self,
+
+        symbol="BTCUSDT",
+
+        market="crypto"
+
+    ):
+
+        return self.router.get_price(
+
+            symbol,
+
+            market
+
+        )
+
+    def get_24h(
+
+        self,
+
+        symbol="BTCUSDT",
+
+        market="crypto"
+
+    ):
+
+        return self.router.get_24h(
+
+            symbol,
+
+            market
+
+        )
 
     def get_candles(
+
         self,
+
         symbol="BTCUSDT",
-        interval="1m",
-        limit=100
+
+        interval="1h",
+
+        limit=200,
+
+        market="crypto"
+
     ):
 
-        params = {
-            "symbol": symbol,
-            "interval": interval,
-            "limit": limit
-        }
+        return self.router.get_candles(
 
-        response = requests.get(
-            self.BINANCE_URL,
-            params=params,
-            timeout=10
+            symbol=symbol,
+
+            interval=interval,
+
+            limit=limit,
+
+            market=market
+
         )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        candles = []
-
-        for candle in data:
-
-            candles.append({
-
-                "open_time": candle[0],
-
-                "open": float(candle[1]),
-
-                "high": float(candle[2]),
-
-                "low": float(candle[3]),
-
-                "close": float(candle[4]),
-
-                "volume": float(candle[5]),
-
-                "close_time": candle[6]
-
-            })
-
-        return candles
-
 
     def get_close_prices(
+
         self,
+
         symbol="BTCUSDT",
-        interval="1m",
-        limit=100
+
+        interval="1h",
+
+        limit=200,
+
+        market="crypto"
+
     ):
 
         candles = self.get_candles(
+
             symbol,
+
             interval,
-            limit
+
+            limit,
+
+            market
+
         )
 
         return [
-            c["close"]
-            for c in candles
+
+            candle["close"]
+
+            for candle in candles
+
         ]
 
-
     def get_volumes(
+
         self,
+
         symbol="BTCUSDT",
-        interval="1m",
-        limit=100
+
+        interval="1h",
+
+        limit=200,
+
+        market="crypto"
+
     ):
 
         candles = self.get_candles(
+
             symbol,
+
             interval,
-            limit
+
+            limit,
+
+            market
+
         )
 
         return [
-            c["volume"]
-            for c in candles
+
+            candle["volume"]
+
+            for candle in candles
+
         ]
