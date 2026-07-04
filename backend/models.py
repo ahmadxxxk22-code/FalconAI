@@ -4,8 +4,11 @@ from sqlalchemy import (
     String,
     Boolean,
     Float,
-    DateTime
+    DateTime,
+    ForeignKey
 )
+
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from database import Base
@@ -18,13 +21,15 @@ class BaseModel(Base):
 
     created_at = Column(
         DateTime(timezone=True),
-        server_default=func.now()
+        server_default=func.now(),
+        nullable=False
     )
 
     updated_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
-        onupdate=func.now()
+        onupdate=func.now(),
+        nullable=False
     )
 
 
@@ -65,11 +70,27 @@ class User(BaseModel):
 
     last_login = Column(DateTime(timezone=True))
 
+    subscriptions = relationship(
+        "Subscription",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    payments = relationship(
+        "Payment",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
 
 class Subscription(BaseModel):
     __tablename__ = "subscriptions"
 
-    user_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
 
     plan = Column(String(30), default="FREE")
 
@@ -81,7 +102,10 @@ class Subscription(BaseModel):
 
     currency = Column(String(10), default="USD")
 
-    start_date = Column(DateTime(timezone=True), server_default=func.now())
+    start_date = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
 
     end_date = Column(DateTime(timezone=True))
 
@@ -89,13 +113,26 @@ class Subscription(BaseModel):
 
     transaction_id = Column(String(255))
 
+    user = relationship(
+        "User",
+        back_populates="subscriptions"
+    )
+
 
 class Payment(BaseModel):
     __tablename__ = "payments"
 
-    user_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False
+    )
 
-    subscription_id = Column(Integer)
+    subscription_id = Column(
+        Integer,
+        ForeignKey("subscriptions.id"),
+        nullable=True
+    )
 
     amount = Column(Float, nullable=False)
 
@@ -105,12 +142,23 @@ class Payment(BaseModel):
 
     provider = Column(String(50))
 
-    transaction_id = Column(String(255), unique=True)
+    transaction_id = Column(
+        String(255),
+        unique=True
+    )
 
-    status = Column(String(30), default="PENDING")
+    status = Column(
+        String(30),
+        default="PENDING"
+    )
 
     invoice_number = Column(String(100))
 
     paid_at = Column(DateTime(timezone=True))
 
     notes = Column(String(255))
+
+    user = relationship(
+        "User",
+        back_populates="payments"
+    )
