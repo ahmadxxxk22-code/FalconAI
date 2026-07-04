@@ -25,7 +25,7 @@ class FibonacciAnalyzer:
             "0.382": high - diff * 0.382,
             "0.500": high - diff * 0.500,
             "0.618": high - diff * 0.618,
-            "0.786": high - diff * 0.786,
+            "0.786": high - diff * 0.786
         }
 
         nearest = min(
@@ -40,7 +40,6 @@ class FibonacciAnalyzer:
 
         if bullish:
             signal = "BUY"
-
         elif bearish:
             signal = "SELL"
 
@@ -50,5 +49,5 @@ class FibonacciAnalyzer:
             "bearish": bearish,
             "levels": levels,
             "nearest_level": nearest,
-            "price": current_price
+            "current_price": current_price
         }
