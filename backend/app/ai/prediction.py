@@ -1,6 +1,4 @@
 from app.ai.market_analyzer import MarketAnalyzer
-from app.ai.patterns import PatternAnalyzer
-from app.ai.smart_money import SmartMoneyAnalyzer
 
 
 class PredictionEngine:
@@ -9,121 +7,113 @@ class PredictionEngine:
 
         self.market = MarketAnalyzer()
 
-        self.patterns = PatternAnalyzer()
+    def predict(
 
-        self.smart = SmartMoneyAnalyzer()
+        self,
 
-    def predict(self, symbol="BTCUSDT", interval="1h"):
+        symbol="BTCUSDT",
+
+        interval="1h"
+
+    ):
 
         market = self.market.analyze(
+
             symbol,
+
             interval
+
         )
 
-        patterns = self.patterns.detect(
-            symbol,
-            interval
-        )
+        bullish = False
 
-        smart = self.smart.analyze(
-            symbol,
-            interval
-        )
+        bearish = False
+
+        confidence = 50
+
+        trend = market["trend_strength"]
+
+        rsi = market["rsi"]
+
+        volume = market["volume_power"]
+
+        ema = market["ema"]
+
+        price = market["price"]
 
         score = 0
 
-        reasons = []
+        if trend > 0:
+            score += 20
 
-        # --------------------------
-        # Market Trend
-        # --------------------------
+        if price > ema:
+            score += 20
 
-        if market["bullish"]:
+        if volume > 1:
+            score += 20
 
-            score += 35
+        if rsi < 35:
+            score += 20
 
-            reasons.append(
-                "Bullish Trend"
-            )
+        if rsi > 65:
+            score -= 20
 
-        if market["bearish"]:
+        confidence = min(
 
-            score -= 35
+            max(
 
-            reasons.append(
-                "Bearish Trend"
-            )
+                score,
 
-        # --------------------------
-        # Candlestick Patterns
-        # --------------------------
+                0
 
-        if patterns["signal"] == "BUY":
+            ),
 
-            score += 25
+            100
 
-            reasons.append(
-                patterns["pattern"]
-            )
+        )
 
-        elif patterns["signal"] == "SELL":
+        if confidence >= 60:
 
-            score -= 25
+            bullish = True
 
-            reasons.append(
-                patterns["pattern"]
-            )
+        if (
 
-        # --------------------------
-        # Smart Money
-        # --------------------------
+            trend < 0
 
-        if smart["signal"] == "BUY":
+            and price < ema
 
-            score += smart["confidence"]
+            and rsi > 65
 
-            reasons.append(
-                "Institutional Buying"
-            )
+        ):
 
-        elif smart["signal"] == "SELL":
+            bearish = True
 
-            score -= smart["confidence"]
+        prediction = "WAIT"
 
-            reasons.append(
-                "Institutional Selling"
-            )
+        if bullish:
+            prediction = "BUY"
 
-        # --------------------------
-        # Final Decision
-        # --------------------------
-
-        if score >= 60:
-
-            signal = "BUY"
-
-            confidence = min(score, 100)
-
-        elif score <= -60:
-
-            signal = "SELL"
-
-            confidence = min(abs(score), 100)
-
-        else:
-
-            signal = "WAIT"
-
-            confidence = abs(score)
+        if bearish:
+            prediction = "SELL"
 
         return {
 
-            "signal": signal,
+            "prediction": prediction,
 
             "confidence": confidence,
 
-            "score": score,
+            "bullish": bullish,
 
-            "reasons": reasons
+            "bearish": bearish,
+
+            "trend": trend,
+
+            "rsi": rsi,
+
+            "ema": ema,
+
+            "price": price,
+
+            "volume": volume
 
         }
