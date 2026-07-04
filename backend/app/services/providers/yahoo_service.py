@@ -1,7 +1,9 @@
 import requests
 
+from app.services.base_market_service import BaseMarketService
 
-class YahooService:
+
+class YahooService(BaseMarketService):
 
     BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart"
 
@@ -25,28 +27,81 @@ class YahooService:
         "1d": "10y"
     }
 
-    def get_candles(
-        self,
-        symbol="AAPL",
-        interval="1d"
-    ):
-
-        url = f"{self.BASE_URL}/{symbol}"
-
-        params = {
-            "interval": self.INTERVALS.get(interval, "1d"),
-            "range": self.RANGES.get(interval, "1y")
-        }
+    def request(self, symbol, interval="1d"):
 
         response = requests.get(
-            url,
-            params=params,
-            timeout=15
+
+            f"{self.BASE_URL}/{symbol}",
+
+            params={
+
+                "interval": self.INTERVALS.get(interval, "1d"),
+
+                "range": self.RANGES.get(interval, "1y")
+
+            },
+
+            timeout=10
+
         )
 
         response.raise_for_status()
 
-        data = response.json()
+        return response.json()
+
+    def get_price(self, symbol="AAPL"):
+
+        data = self.request(symbol)
+
+        result = data["chart"]["result"][0]
+
+        quote = result["indicators"]["quote"][0]
+
+        price = quote["close"][-1]
+
+        return {
+
+            "symbol": symbol,
+
+            "price": float(price)
+
+        }
+
+    def get_24h(self, symbol="AAPL"):
+
+        data = self.request(symbol)
+
+        result = data["chart"]["result"][0]
+
+        quote = result["indicators"]["quote"][0]
+
+        return {
+
+            "symbol": symbol,
+
+            "price": float(quote["close"][-1]),
+
+            "high": float(max(quote["high"])),
+
+            "low": float(min(quote["low"])),
+
+            "volume": float(quote["volume"][-1])
+
+        }
+
+    def get_candles(
+
+        self,
+
+        symbol="AAPL",
+
+        interval="1d",
+
+        limit=200
+
+    ):
+
+        data = self.request(symbol, interval)
 
         result = data["chart"]["result"][0]
 
@@ -63,52 +118,20 @@ class YahooService:
 
             candles.append({
 
-                "time": timestamps[i],
+                "open_time": timestamps[i],
 
-                "open": quote["open"][i],
+                "open": float(quote["open"][i]),
 
-                "high": quote["high"][i],
+                "high": float(quote["high"][i]),
 
-                "low": quote["low"][i],
+                "low": float(quote["low"][i]),
 
-                "close": quote["close"][i],
+                "close": float(quote["close"][i]),
 
-                "volume": quote["volume"][i]
+                "volume": float(quote["volume"][i]),
+
+                "close_time": timestamps[i]
 
             })
 
-        return candles
-
-    def get_close_prices(
-        self,
-        symbol="AAPL",
-        interval="1d"
-    ):
-
-        return [
-
-            candle["close"]
-
-            for candle in self.get_candles(
-                symbol,
-                interval
-            )
-
-        ]
-
-    def get_volumes(
-        self,
-        symbol="AAPL",
-        interval="1d"
-    ):
-
-        return [
-
-            candle["volume"]
-
-            for candle in self.get_candles(
-                symbol,
-                interval
-            )
-
-        ]
+        return candles[-limit:]
