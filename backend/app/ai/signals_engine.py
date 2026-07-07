@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from app.ai.market_analyzer import MarketAnalyzer
+from app.ai.trend_engine import TrendEngine
 from app.ai.patterns import PatternAnalyzer
 from app.ai.smart_money import SmartMoneyAnalyzer
 from app.ai.prediction import PredictionEngine
@@ -14,6 +15,7 @@ class SignalEngine:
     def __init__(self):
 
         self.market = MarketAnalyzer()
+        self.trend = TrendEngine()
         self.patterns = PatternAnalyzer()
         self.smart_money = SmartMoneyAnalyzer()
         self.prediction = PredictionEngine()
@@ -24,23 +26,45 @@ class SignalEngine:
     def analyze(
         self,
         symbol="BTCUSDT",
-        interval="1h"
+        interval="1h",
+        market="crypto"
     ):
 
-        market = self.market.analyze(symbol, interval)
+        market_data = self.market.analyze(
+            symbol,
+            interval
+        )
 
-        patterns = self.patterns.analyze(symbol, interval)
+        trend = self.trend.analyze(
+            symbol=symbol,
+            interval=interval,
+            market=market
+        )
 
-        smart = self.smart_money.analyze(symbol, interval)
+        patterns = self.patterns.analyze(
+            symbol,
+            interval
+        )
 
-        prediction = self.prediction.predict(symbol, interval)
+        smart = self.smart_money.analyze(
+            symbol,
+            interval
+        )
+
+        prediction = self.prediction.predict(
+            symbol,
+            interval
+        )
 
         news = self.news.analyze(symbol)
 
-        fibo = self.fibonacci.analyze(symbol, interval)
+        fibo = self.fibonacci.analyze(
+            symbol,
+            interval
+        )
 
         confidence = self.calculate_confidence(
-            market,
+            trend,
             patterns,
             smart,
             prediction,
@@ -49,7 +73,7 @@ class SignalEngine:
         )
 
         direction = self.choose_direction(
-            market,
+            trend,
             prediction,
             smart,
             patterns,
@@ -58,34 +82,25 @@ class SignalEngine:
 
         risk = self.risk.calculate(
             direction=direction,
-            price=market.get("price", 0),
+            price=market_data["price"],
             confidence=confidence
         )
 
         return {
 
             "symbol": symbol,
-
             "interval": interval,
-
             "direction": direction,
-
             "confidence": confidence,
+            "price": market_data["price"],
 
-            "price": market.get("price"),
-
-            "market": market,
-
+            "trend": trend,
+            "market": market_data,
             "patterns": patterns,
-
             "smart_money": smart,
-
             "prediction": prediction,
-
             "news": news,
-
             "fibonacci": fibo,
-
             "risk": risk,
 
             "created_at": datetime.utcnow().isoformat()
@@ -94,7 +109,7 @@ class SignalEngine:
 
     def calculate_confidence(
         self,
-        market,
+        trend,
         patterns,
         smart,
         prediction,
@@ -104,29 +119,29 @@ class SignalEngine:
 
         score = 0
 
-        if market.get("bullish"):
+        if trend["bullish"]:
+            score += 25
+
+        if prediction["bullish"]:
             score += 20
 
-        if prediction.get("bullish"):
+        if smart["bullish"]:
             score += 20
 
-        if smart.get("bullish"):
-            score += 20
-
-        if patterns.get("bullish"):
+        if patterns["bullish"]:
             score += 15
 
-        if news.get("bullish"):
-            score += 15
+        if news["bullish"]:
+            score += 10
 
-        if fibo.get("bullish"):
+        if fibo["bullish"]:
             score += 10
 
         return min(score, 100)
 
     def choose_direction(
         self,
-        market,
+        trend,
         prediction,
         smart,
         patterns,
@@ -136,34 +151,34 @@ class SignalEngine:
         bullish = 0
         bearish = 0
 
-        if market.get("bullish"):
+        if trend["bullish"]:
             bullish += 1
 
-        if prediction.get("bullish"):
+        if prediction["bullish"]:
             bullish += 1
 
-        if smart.get("bullish"):
+        if smart["bullish"]:
             bullish += 1
 
-        if patterns.get("bullish"):
+        if patterns["bullish"]:
             bullish += 1
 
-        if fibo.get("bullish"):
+        if fibo["bullish"]:
             bullish += 1
 
-        if market.get("bearish"):
+        if trend["bearish"]:
             bearish += 1
 
-        if prediction.get("bearish"):
+        if prediction["bearish"]:
             bearish += 1
 
-        if smart.get("bearish"):
+        if smart["bearish"]:
             bearish += 1
 
-        if patterns.get("bearish"):
+        if patterns["bearish"]:
             bearish += 1
 
-        if fibo.get("bearish"):
+        if fibo["bearish"]:
             bearish += 1
 
         if bullish >= 3:
