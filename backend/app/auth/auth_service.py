@@ -243,6 +243,110 @@ class AuthService:
         ).first()
 
         if session:
+                def login(
+
+        self,
+
+        email: str,
+
+        password: str,
+
+        device: str = "Unknown",
+
+        ip: str = "0.0.0.0"
+
+    ):
+
+        user = self.crud.get_user_by_email(
+            self.db,
+            email
+        )
+
+        if user is None:
+            raise Exception("Invalid email or password")
+
+        if not verify_password(
+            password,
+            user.password
+        ):
+            raise Exception("Invalid email or password")
+
+        access_token = create_access_token(
+            {
+                "user_id": user.id,
+                "email": user.email
+            }
+        )
+
+        refresh_token = create_refresh_token(
+            {
+                "user_id": user.id
+            }
+        )
+
+        self.crud.create_session(
+            self.db,
+            user_id=user.id,
+            token=access_token,
+            device=device,
+            ip=ip
+        )
+
+        return {
+            "user": user,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer"
+        }
+
+    def get_user(
+        self,
+        user_id: int
+    ):
+
+        return self.crud.get_user(
+            self.db,
+            user_id
+        )
+
+    def verify_access_token(
+        self,
+        token: str
+    ):
+
+        from app.core.security import verify_token
+
+        payload = verify_token(token)
+
+        if payload is None:
+            return None
+
+        user_id = payload.get("user_id")
+
+        if user_id is None:
+            return None
+
+        return self.crud.get_user(
+            self.db,
+            user_id
+        )
+
+    def logout(
+        self,
+        token: str
+    ):
+
+        session = self.db.query(
+            LoginSession
+        ).filter(
+            LoginSession.token == token
+        ).first()
+
+        if session:
+            self.db.delete(session)
+            self.db.commit()
+
+        return True
 
             self.db.delete(session)
 
