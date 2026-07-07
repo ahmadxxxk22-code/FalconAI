@@ -1,4 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from app.database.session import get_db
+from app.auth.auth_service import AuthService
 
 router = APIRouter(
     prefix="/users",
@@ -6,61 +11,87 @@ router = APIRouter(
 )
 
 
-fake_users = [
-    {
-        "id": 1,
-        "username": "admin",
-        "email": "admin@falconai.com",
-        "subscription": "PRO"
-    }
-]
+class RegisterRequest(BaseModel):
+    username: str
+    email: str
+    password: str
+    full_name: str = ""
+    phone: str = ""
+    country: str = ""
 
 
-@router.get("/")
-async def get_users():
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+@router.post("/register")
+def register(
+    request: RegisterRequest,
+    db: Session = Depends(get_db)
+):
+
+    auth = AuthService(db)
+
+    user = auth.register(
+        username=request.username,
+        email=request.email,
+        password=request.password,
+        full_name=request.full_name,
+        phone=request.phone,
+        country=request.country
+    )
 
     return {
-        "status": "success",
-        "count": len(fake_users),
-        "users": fake_users
+        "success": True,
+        "user_id": user.id,
+        "username": user.username,
+        "email": user.email
     }
 
 
-@router.get("/{user_id}")
-async def get_user(user_id: int):
+@router.post("/login")
+def login(
+    request: LoginRequest,
+    db: Session = Depends(get_db)
+):
 
-    for user in fake_users:
+    auth = AuthService(db)
 
-        if user["id"] == user_id:
-            return {
-                "status": "success",
-                "user": user
-            }
-
-    raise HTTPException(
-        status_code=404,
-        detail="User not found"
+    return auth.login(
+        email=request.email,
+        password=request.password
     )
 
 
-@router.get("/profile/me")
-async def profile():
+@router.get("/profile/{user_id}")
+def profile(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    auth = AuthService(db)
+
+    user = auth.get_user(user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
 
     return {
-        "status": "success",
-        "profile": {
-            "username": "admin",
-            "subscription": "PRO",
-            "wallet_balance": 0,
-            "language": "en"
-        }
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "subscription": user.subscription.plan if user.subscription else "FREE"
     }
 
 
 @router.get("/ping")
-async def ping():
+def ping():
 
     return {
-        "status": "success",
-        "message": "Users API is working"
+        "status": "ok"
     }
