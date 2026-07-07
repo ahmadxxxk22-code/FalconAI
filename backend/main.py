@@ -5,6 +5,13 @@ from users import router as users_router
 from app.ai.signals_engine import SignalEngine
 from app.ai.assistant import FalconAssistant
 
+from app.database.base import Base
+from app.database.session import engine
+import app.database.models
+
+# إنشاء جميع الجداول
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(
     title="FalconAI",
     description="AI Trading Platform",
