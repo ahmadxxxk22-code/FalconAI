@@ -175,6 +175,18 @@ class CRUD:
 
         db.refresh(api)
 
+         @staticmethod
+    def get_api_keys(
+        db: Session,
+        user_id: int
+    ):
+
+        return db.query(
+            ApiKey
+        ).filter(
+            ApiKey.user_id == user_id
+        ).all()   
+
         return api
 
     @staticmethod
