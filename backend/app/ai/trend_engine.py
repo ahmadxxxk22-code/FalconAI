@@ -1,30 +1,153 @@
+from app.services.market_data import MarketData
+from app.services.indicator_engine import IndicatorEngine
+
+from app.ai.core.constants import (
+    TREND_STRONG_BULL,
+    TREND_BULL,
+    TREND_SIDEWAYS,
+    TREND_BEAR,
+    TREND_STRONG_BEAR,
+    EMA_FAST,
+    EMA_MEDIUM,
+    EMA_SLOW,
+    EMA_LONG,
+    SMA_LONG,
+    RSI_OVERSOLD,
+    RSI_OVERBOUGHT
+)
+
+
+class TrendEngine:
+
+    def __init__(self):
+
+        self.market = MarketData()
+        self.indicators = IndicatorEngine()
+
+
+    def analyze(
+        self,
+        symbol="BTCUSDT",
+        interval="1h",
+        market="crypto"
+    ):
+
+        prices = self.market.get_close_prices(
+            symbol=symbol,
+            interval=interval,
+            limit=400,
+            market=market
+        )
+
+        candles = self.market.get_candles(
+            symbol=symbol,
+            interval=interval,
+            limit=400,
+            market=market
+        )
+
+
+        if len(prices) < EMA_LONG:
+            raise Exception(
+                "Not enough candles."
+            )
+
+
+        last_price = prices[-1]
+
+
+        ema20 = self.indicators.ema(
+            prices,
+            EMA_FAST
+        )
+
+        ema50 = self.indicators.ema(
+            prices,
+            EMA_MEDIUM
+        )
+
+        ema100 = self.indicators.ema(
+            prices,
+            EMA_SLOW
+        )
+
+        ema200 = self.indicators.ema(
+            prices,
+            EMA_LONG
+        )
+
+
+        sma200 = self.indicators.sma(
+            prices,
+            SMA_LONG
+        )
+
+
+        rsi = self.indicators.rsi(
+            prices
+        )
+
+        macd = self.indicators.macd(
+            prices
+        )
+
+        momentum = self.indicators.momentum(
+            prices
+        )
+
+        atr = self.indicators.atr(
+            candles
+        )
+
+        trend_strength = self.indicators.trend_strength(
+            prices
+        )
+
+
+        score = 0
+        reasons = []
+
+
         # ==========================
         # EMA Score
         # ==========================
 
         if last_price > ema20:
             score += 5
-            reasons.append("Price above EMA20")
+            reasons.append(
+                "Price above EMA20"
+            )
         else:
             score -= 5
 
+
         if last_price > ema50:
             score += 10
-            reasons.append("Price above EMA50")
+            reasons.append(
+                "Price above EMA50"
+            )
         else:
             score -= 10
 
+
         if last_price > ema100:
             score += 15
-            reasons.append("Price above EMA100")
+            reasons.append(
+                "Price above EMA100"
+            )
         else:
             score -= 15
 
+
         if last_price > ema200:
             score += 20
-            reasons.append("Price above EMA200")
+            reasons.append(
+                "Price above EMA200"
+            )
         else:
             score -= 20
+
+
 
         # ==========================
         # SMA200
@@ -32,127 +155,111 @@
 
         if last_price > sma200:
             score += 10
-            reasons.append("Above SMA200")
+            reasons.append(
+                "Above SMA200"
+            )
         else:
             score -= 10
+
+
 
         # ==========================
         # RSI
         # ==========================
 
         if rsi < RSI_OVERSOLD:
+
             score += 15
-            reasons.append("RSI Oversold")
+
+            reasons.append(
+                "RSI Oversold"
+            )
+
 
         elif rsi > RSI_OVERBOUGHT:
+
             score -= 15
-            reasons.append("RSI Overbought")
+
+            reasons.append(
+                "RSI Overbought"
+            )
+
 
         else:
+
             if rsi > 55:
                 score += 5
 
             elif rsi < 45:
                 score -= 5
 
+
+
         # ==========================
         # MACD
         # ==========================
 
         if macd > 0:
+
             score += 15
-            reasons.append("MACD Bullish")
+
+            reasons.append(
+                "MACD Bullish"
+            )
+
         else:
+
             score -= 15
+
+
 
         # ==========================
         # Momentum
         # ==========================
 
         if momentum > 0:
+
             score += 10
-            reasons.append("Positive Momentum")
-        else:
-            score -= 10
-        # ==========================
-        # Trend Strength
-        # ==========================
 
-        if trend_strength > 10:
-            score += 20
-            reasons.append("Strong Up Trend")
-
-        elif trend_strength > 5:
-            score += 10
-            reasons.append("Medium Up Trend")
-
-        elif trend_strength < -10:
-            score -= 20
-            reasons.append("Strong Down Trend")
-
-        elif trend_strength < -5:
-            score -= 10
-            reasons.append("Medium Down Trend")
-
-        # ==========================
-        # ATR Filter
-        # ==========================
-
-        if atr > 0:
-
-            volatility_percent = (atr / last_price) * 100
+            reasons.append(
+                "Positive Momentum"
+            )
 
         else:
 
-            volatility_percent = 0
+            score -= 10
 
-        if volatility_percent > 4:
 
-            score -= 5
-
-            reasons.append("High Volatility")
 
         # ==========================
-        # Trend Classification
+        # Trend Result
         # ==========================
 
         if score >= 70:
 
             trend = TREND_STRONG_BULL
 
+
         elif score >= 35:
 
             trend = TREND_BULL
+
 
         elif score <= -70:
 
             trend = TREND_STRONG_BEAR
 
+
         elif score <= -35:
 
             trend = TREND_BEAR
+
 
         else:
 
             trend = TREND_SIDEWAYS
 
-        bullish = trend in (
-            TREND_BULL,
-            TREND_STRONG_BULL
-        )
 
-        bearish = trend in (
-            TREND_BEAR,
-            TREND_STRONG_BEAR
-        )
-
-        confidence = abs(score)
-
-        if confidence > 100:
-            confidence = 100
-
-        if confidence < 5:
-            confidence = 5
 
         return {
 
@@ -160,29 +267,11 @@
 
             "interval": interval,
 
-            "price": round(last_price, 4),
-
-            "trend": trend,
-
-            "trend_strength": trend_strength,
-
-            "confidence": confidence,
-
-            "bullish": bullish,
-
-            "bearish": bearish,
+            "price": last_price,
 
             "score": score,
 
-            "ema20": ema20,
-
-            "ema50": ema50,
-
-            "ema100": ema100,
-
-            "ema200": ema200,
-
-            "sma200": sma200,
+            "trend": trend,
 
             "rsi": rsi,
 
@@ -192,10 +281,7 @@
 
             "atr": atr,
 
-            "volatility_percent": round(
-                volatility_percent,
-                2
-            ),
+            "trend_strength": trend_strength,
 
             "reasons": reasons
 
