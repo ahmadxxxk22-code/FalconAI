@@ -31,15 +31,19 @@ class CRUD:
 
         return user
 
+
     @staticmethod
     def get_user_by_email(
         db: Session,
         email: str
     ):
 
-        return db.query(User).filter(
+        return db.query(
+            User
+        ).filter(
             User.email == email
         ).first()
+
 
     @staticmethod
     def get_user_by_username(
@@ -47,7 +51,9 @@ class CRUD:
         username: str
     ):
 
-        return db.query(User).filter(
+        return db.query(
+            User
+        ).filter(
             User.username == username
         ).first()
 
@@ -57,9 +63,12 @@ class CRUD:
         user_id: int
     ):
 
-        return db.query(User).filter(
+        return db.query(
+            User
+        ).filter(
             User.id == user_id
         ).first()
+
 
     @staticmethod
     def update_user(
@@ -72,6 +81,7 @@ class CRUD:
         db.refresh(user)
 
         return user
+
 
     # ==========================
     # Subscription
@@ -92,6 +102,7 @@ class CRUD:
         db.refresh(sub)
 
         return sub
+
 
     @staticmethod
     def get_subscription(
@@ -125,6 +136,7 @@ class CRUD:
 
         return signal
 
+
     @staticmethod
     def get_signals(
         db: Session,
@@ -136,6 +148,7 @@ class CRUD:
         ).filter(
             SignalHistory.user_id == user_id
         ).all()
+
 
     # ==========================
     # Login Sessions
@@ -157,6 +170,7 @@ class CRUD:
 
         return session
 
+
     # ==========================
     # API Keys
     # ==========================
@@ -176,6 +190,7 @@ class CRUD:
         db.refresh(api)
 
         return api
+
 
     @staticmethod
     def get_api_keys(
