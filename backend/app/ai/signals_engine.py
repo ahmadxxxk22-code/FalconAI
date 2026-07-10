@@ -15,13 +15,21 @@ class SignalEngine:
     def __init__(self):
 
         self.market = MarketAnalyzer()
+
         self.trend = TrendEngine()
+
         self.patterns = PatternAnalyzer()
+
         self.smart_money = SmartMoneyAnalyzer()
+
         self.prediction = PredictionEngine()
+
         self.risk = RiskManager()
+
         self.news = NewsAnalyzer()
+
         self.fibonacci = FibonacciAnalyzer()
+
 
     def analyze(
         self,
@@ -35,33 +43,40 @@ class SignalEngine:
             interval
         )
 
+
         trend = self.trend.analyze(
             symbol=symbol,
             interval=interval,
             market=market
         )
 
+
         patterns = self.patterns.analyze(
             symbol,
             interval
         )
+
 
         smart = self.smart_money.analyze(
             symbol,
             interval
         )
 
+
         prediction = self.prediction.predict(
             symbol,
             interval
         )
 
+
         news = self.news.analyze(symbol)
+
 
         fibo = self.fibonacci.analyze(
             symbol,
             interval
         )
+
 
         confidence = self.calculate_confidence(
             trend,
@@ -72,6 +87,7 @@ class SignalEngine:
             fibo
         )
 
+
         direction = self.choose_direction(
             trend,
             prediction,
@@ -80,32 +96,47 @@ class SignalEngine:
             fibo
         )
 
+
         risk = self.risk.calculate(
             direction=direction,
             price=market_data["price"],
             confidence=confidence
         )
 
+
         return {
 
             "symbol": symbol,
+
             "interval": interval,
+
             "direction": direction,
+
             "confidence": confidence,
+
             "price": market_data["price"],
 
             "trend": trend,
+
             "market": market_data,
+
             "patterns": patterns,
+
             "smart_money": smart,
+
             "prediction": prediction,
+
             "news": news,
+
             "fibonacci": fibo,
+
             "risk": risk,
 
             "created_at": datetime.utcnow().isoformat()
 
         }
+
+
 
     def calculate_confidence(
         self,
@@ -119,25 +150,35 @@ class SignalEngine:
 
         score = 0
 
-        if trend["bullish"]:
+
+        # TrendEngine يعتمد على score
+        if trend["score"] > 0:
             score += 25
 
-        if prediction["bullish"]:
+
+        if prediction.get("bullish", False):
             score += 20
 
-        if smart["bullish"]:
+
+        if smart.get("bullish", False):
             score += 20
 
-        if patterns["bullish"]:
+
+        if patterns.get("bullish", False):
             score += 15
 
-        if news["bullish"]:
+
+        if news.get("bullish", False):
             score += 10
 
-        if fibo["bullish"]:
+
+        if fibo.get("bullish", False):
             score += 10
+
 
         return min(score, 100)
+
+
 
     def choose_direction(
         self,
@@ -148,43 +189,59 @@ class SignalEngine:
         fibo
     ):
 
+
         bullish = 0
+
         bearish = 0
 
-        if trend["bullish"]:
+
+        # TrendEngine الجديد
+        if trend["score"] > 0:
             bullish += 1
 
-        if prediction["bullish"]:
+        elif trend["score"] < 0:
+            bearish += 1
+
+
+
+        if prediction.get("bullish", False):
             bullish += 1
 
-        if smart["bullish"]:
+        if prediction.get("bearish", False):
+            bearish += 1
+
+
+
+        if smart.get("bullish", False):
             bullish += 1
 
-        if patterns["bullish"]:
+        if smart.get("bearish", False):
+            bearish += 1
+
+
+
+        if patterns.get("bullish", False):
             bullish += 1
 
-        if fibo["bullish"]:
+        if patterns.get("bearish", False):
+            bearish += 1
+
+
+
+        if fibo.get("bullish", False):
             bullish += 1
 
-        if trend["bearish"]:
+        if fibo.get("bearish", False):
             bearish += 1
 
-        if prediction["bearish"]:
-            bearish += 1
 
-        if smart["bearish"]:
-            bearish += 1
-
-        if patterns["bearish"]:
-            bearish += 1
-
-        if fibo["bearish"]:
-            bearish += 1
 
         if bullish >= 3:
             return "BUY"
 
+
         if bearish >= 3:
             return "SELL"
+
 
         return "WAIT"
