@@ -206,8 +206,8 @@ class SignalEngine:
             return "SELL"
 
 
-<<<<<<< HEAD
+HEAD
         return "WAIT"
-=======
+
         return "WAIT"
->>>>>>> 3438409 (Fix SignalEngine and TrendEngine integration)
+3438409 (Fix SignalEngine and TrendEngine integration)
