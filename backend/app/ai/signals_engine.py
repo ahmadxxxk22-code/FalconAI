@@ -1,34 +1,29 @@
-from datetime import datetime
+from app.services.market_data import MarketData
+from app.services.indicator_engine import IndicatorEngine
 
-from app.ai.market_analyzer import MarketAnalyzer
-from app.ai.trend_engine import TrendEngine
-from app.ai.patterns import PatternAnalyzer
-from app.ai.smart_money import SmartMoneyAnalyzer
-from app.ai.prediction import PredictionEngine
-from app.ai.risk_manager import RiskManager
-from app.ai.news_ai import NewsAnalyzer
-from app.ai.fibonacci import FibonacciAnalyzer
+from app.ai.core.constants import (
+    TREND_STRONG_BULL,
+    TREND_BULL,
+    TREND_SIDEWAYS,
+    TREND_BEAR,
+    TREND_STRONG_BEAR,
+    EMA_FAST,
+    EMA_MEDIUM,
+    EMA_SLOW,
+    EMA_LONG,
+    SMA_LONG,
+    RSI_OVERSOLD,
+    RSI_OVERBOUGHT
+)
 
 
-class SignalEngine:
+class TrendEngine:
 
     def __init__(self):
 
-        self.market = MarketAnalyzer()
+        self.market = MarketData()
 
-        self.trend = TrendEngine()
-
-        self.patterns = PatternAnalyzer()
-
-        self.smart_money = SmartMoneyAnalyzer()
-
-        self.prediction = PredictionEngine()
-
-        self.risk = RiskManager()
-
-        self.news = NewsAnalyzer()
-
-        self.fibonacci = FibonacciAnalyzer()
+        self.indicators = IndicatorEngine()
 
 
     def analyze(
@@ -38,70 +33,227 @@ class SignalEngine:
         market="crypto"
     ):
 
-        market_data = self.market.analyze(
-            symbol,
-            interval
-        )
-
-
-        trend = self.trend.analyze(
+        prices = self.market.get_close_prices(
             symbol=symbol,
             interval=interval,
+            limit=400,
             market=market
         )
 
 
-        patterns = self.patterns.analyze(
-            symbol,
-            interval
+        candles = self.market.get_candles(
+            symbol=symbol,
+            interval=interval,
+            limit=400,
+            market=market
         )
 
 
-        smart = self.smart_money.analyze(
-            symbol,
-            interval
+        if len(prices) < EMA_LONG:
+
+            raise Exception(
+                "Not enough candles."
+            )
+
+
+        last_price = prices[-1]
+
+
+        ema20 = self.indicators.ema(
+            prices,
+            EMA_FAST
+        )
+
+        ema50 = self.indicators.ema(
+            prices,
+            EMA_MEDIUM
+        )
+
+        ema100 = self.indicators.ema(
+            prices,
+            EMA_SLOW
+        )
+
+        ema200 = self.indicators.ema(
+            prices,
+            EMA_LONG
         )
 
 
-        prediction = self.prediction.predict(
-            symbol,
-            interval
+        sma200 = self.indicators.sma(
+            prices,
+            SMA_LONG
         )
 
 
-        news = self.news.analyze(symbol)
-
-
-        fibo = self.fibonacci.analyze(
-            symbol,
-            interval
+        rsi = self.indicators.rsi(
+            prices
         )
 
 
-        confidence = self.calculate_confidence(
-            trend,
-            patterns,
-            smart,
-            prediction,
-            news,
-            fibo
+        macd = self.indicators.macd(
+            prices
         )
 
 
-        direction = self.choose_direction(
-            trend,
-            prediction,
-            smart,
-            patterns,
-            fibo
+        momentum = self.indicators.momentum(
+            prices
         )
 
 
-        risk = self.risk.calculate(
-            direction=direction,
-            price=market_data["price"],
-            confidence=confidence
+        atr = self.indicators.atr(
+            candles
         )
+
+
+        trend_strength = self.indicators.trend_strength(
+            prices
+        )
+
+
+        score = 0
+
+        reasons = []
+
+
+        # EMA
+
+        if last_price > ema20:
+            score += 5
+            reasons.append("Price above EMA20")
+        else:
+            score -= 5
+
+
+        if last_price > ema50:
+            score += 10
+            reasons.append("Price above EMA50")
+        else:
+            score -= 10
+
+
+        if last_price > ema100:
+            score += 15
+            reasons.append("Price above EMA100")
+        else:
+            score -= 15
+
+
+        if last_price > ema200:
+            score += 20
+            reasons.append("Price above EMA200")
+        else:
+            score -= 20
+
+
+
+        # SMA200
+
+        if last_price > sma200:
+
+            score += 10
+
+            reasons.append(
+                "Above SMA200"
+            )
+
+        else:
+
+            score -= 10
+
+
+
+        # RSI
+
+        if rsi < RSI_OVERSOLD:
+
+            score += 15
+
+            reasons.append(
+                "RSI Oversold"
+            )
+
+
+        elif rsi > RSI_OVERBOUGHT:
+
+            score -= 15
+
+            reasons.append(
+                "RSI Overbought"
+            )
+
+
+        else:
+
+            if rsi > 55:
+
+                score += 5
+
+
+            elif rsi < 45:
+
+                score -= 5
+
+
+
+        # MACD
+
+        if macd > 0:
+
+            score += 15
+
+            reasons.append(
+                "MACD Bullish"
+            )
+
+        else:
+
+            score -= 15
+
+
+
+        # Momentum
+
+        if momentum > 0:
+
+            score += 10
+
+            reasons.append(
+                "Positive Momentum"
+            )
+
+        else:
+
+            score -= 10
+
+
+
+        # Trend
+
+        if score >= 70:
+
+            trend = TREND_STRONG_BULL
+
+
+        elif score >= 35:
+
+            trend = TREND_BULL
+
+
+        elif score <= -70:
+
+            trend = TREND_STRONG_BEAR
+
+
+        elif score <= -35:
+
+            trend = TREND_BEAR
+
+
+        else:
+
+            trend = TREND_SIDEWAYS
+
 
 
         return {
@@ -110,138 +262,26 @@ class SignalEngine:
 
             "interval": interval,
 
-            "direction": direction,
+            "price": last_price,
 
-            "confidence": confidence,
-
-            "price": market_data["price"],
+            "score": score,
 
             "trend": trend,
 
-            "market": market_data,
+            "bullish": score > 0,
 
-            "patterns": patterns,
+            "bearish": score < 0,
 
-            "smart_money": smart,
+            "rsi": rsi,
 
-            "prediction": prediction,
+            "macd": macd,
 
-            "news": news,
+            "momentum": momentum,
 
-            "fibonacci": fibo,
+            "atr": atr,
 
-            "risk": risk,
+            "trend_strength": trend_strength,
 
-            "created_at": datetime.utcnow().isoformat()
+            "reasons": reasons
 
         }
-
-
-
-    def calculate_confidence(
-        self,
-        trend,
-        patterns,
-        smart,
-        prediction,
-        news,
-        fibo
-    ):
-
-        score = 0
-
-
-        # TrendEngine يعتمد على score
-        if trend["score"] > 0:
-            score += 25
-
-
-        if prediction.get("bullish", False):
-            score += 20
-
-
-        if smart.get("bullish", False):
-            score += 20
-
-
-        if patterns.get("bullish", False):
-            score += 15
-
-
-        if news.get("bullish", False):
-            score += 10
-
-
-        if fibo.get("bullish", False):
-            score += 10
-
-
-        return min(score, 100)
-
-
-
-    def choose_direction(
-        self,
-        trend,
-        prediction,
-        smart,
-        patterns,
-        fibo
-    ):
-
-
-        bullish = 0
-
-        bearish = 0
-
-
-        # TrendEngine الجديد
-        if trend["score"] > 0:
-            bullish += 1
-
-        elif trend["score"] < 0:
-            bearish += 1
-
-
-
-        if prediction.get("bullish", False):
-            bullish += 1
-
-        if prediction.get("bearish", False):
-            bearish += 1
-
-
-
-        if smart.get("bullish", False):
-            bullish += 1
-
-        if smart.get("bearish", False):
-            bearish += 1
-
-
-
-        if patterns.get("bullish", False):
-            bullish += 1
-
-        if patterns.get("bearish", False):
-            bearish += 1
-
-
-
-        if fibo.get("bullish", False):
-            bullish += 1
-
-        if fibo.get("bearish", False):
-            bearish += 1
-
-
-
-        if bullish >= 3:
-            return "BUY"
-
-
-        if bearish >= 3:
-            return "SELL"
-
-
-        return "WAIT"
