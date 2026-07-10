@@ -36,7 +36,6 @@ class SignalEngine:
             interval
         )
 
-
         trend = self.trend.analyze(
             symbol=symbol,
             interval=interval,
@@ -101,31 +100,20 @@ class SignalEngine:
 
             "symbol": symbol,
             "interval": interval,
-
             "direction": direction,
-
             "confidence": confidence,
-
             "price": market_data["price"],
 
             "trend": trend,
-
             "market": market_data,
-
             "patterns": patterns,
-
             "smart_money": smart,
-
             "prediction": prediction,
-
             "news": news,
-
             "fibonacci": fibo,
-
             "risk": risk,
 
             "created_at": datetime.utcnow().isoformat()
-
         }
 
 
@@ -143,31 +131,31 @@ class SignalEngine:
         score = 0
 
 
-        if trend.get("score",0) > 0:
+        if trend.get("score", 0) > 0:
             score += 25
 
 
-        if prediction.get("bullish",False):
+        if prediction.get("bullish", False):
             score += 20
 
 
-        if smart.get("bullish",False):
+        if smart.get("bullish", False):
             score += 20
 
 
-        if patterns.get("bullish",False):
+        if patterns.get("bullish", False):
             score += 15
 
 
-        if news.get("bullish",False):
+        if news.get("bullish", False):
             score += 10
 
 
-        if fibo.get("bullish",False):
+        if fibo.get("bullish", False):
             score += 10
 
 
-        return min(score,100)
+        return min(score, 100)
 
 
 
@@ -184,11 +172,13 @@ class SignalEngine:
         bearish = 0
 
 
-        # Trend Engine الجديد
-        if trend.get("score",0) > 0:
+        score = trend.get("score",0)
+
+
+        if score > 0:
             bullish += 1
 
-        elif trend.get("score",0) < 0:
+        elif score < 0:
             bearish += 1
 
 
