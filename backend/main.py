@@ -69,7 +69,6 @@ async def ai(symbol: str, interval: str = "1h"):
     )
 
     return assistant.explain(analysis)
-return assistant.explain(analysis)
 @app.get("/assistant", response_class=HTMLResponse)
 async def assistant_page(request: Request):
 
