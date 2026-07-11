@@ -21,7 +21,7 @@ app = FastAPI(
     description="AI Trading Platform",
     version="1.0.0"
 )
-
+templates = Jinja2Templates(directory="templates")
 app.include_router(users_router)
 
 signal_engine = SignalEngine()
