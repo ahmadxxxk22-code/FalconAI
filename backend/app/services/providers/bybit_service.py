@@ -7,6 +7,13 @@ class BybitService(BaseMarketService):
 
     BASE_URL = "https://api.bybit.com/v5"
 
+
+    @property
+    def provider_name(self):
+
+        return "Bybit"
+
+
     def get_price(self, symbol="BTCUSDT"):
 
         response = requests.get(
@@ -29,6 +36,7 @@ class BybitService(BaseMarketService):
             "price": float(data["lastPrice"])
 
         }
+
 
     def get_24h(self, symbol="BTCUSDT"):
 
@@ -60,6 +68,7 @@ class BybitService(BaseMarketService):
             "volume": float(data["volume24h"])
 
         }
+
 
     def get_candles(
 
