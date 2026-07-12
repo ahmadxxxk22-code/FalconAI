@@ -7,6 +7,13 @@ class OKXService(BaseMarketService):
 
     BASE_URL = "https://www.okx.com/api/v5"
 
+
+    @property
+    def provider_name(self):
+
+        return "OKX"
+
+
     def request(self, endpoint, params=None):
 
         try:
@@ -33,6 +40,7 @@ class OKXService(BaseMarketService):
 
             )
 
+
     def get_price(self, symbol="BTC-USDT"):
 
         data = self.request(
@@ -54,6 +62,7 @@ class OKXService(BaseMarketService):
             "price": float(data["last"])
 
         }
+
 
     def get_24h(self, symbol="BTC-USDT"):
 
@@ -84,6 +93,7 @@ class OKXService(BaseMarketService):
             "volume": float(data["vol24h"])
 
         }
+
 
     def get_candles(
 
