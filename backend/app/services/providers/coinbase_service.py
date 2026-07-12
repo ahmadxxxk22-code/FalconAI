@@ -7,18 +7,21 @@ class CoinbaseService(BaseMarketService):
 
     BASE_URL = "https://api.exchange.coinbase.com"
 
+
+    @property
+    def provider_name(self):
+
+        return "Coinbase"
+
+
     def request(self, endpoint, params=None):
 
         try:
 
             response = requests.get(
-
                 f"{self.BASE_URL}/{endpoint}",
-
                 params=params,
-
                 timeout=10
-
             )
 
             response.raise_for_status()
@@ -28,17 +31,18 @@ class CoinbaseService(BaseMarketService):
         except requests.RequestException as e:
 
             raise Exception(
-
                 f"Coinbase API Error: {e}"
-
             )
 
-    def get_price(self, symbol="BTC-USD"):
+
+    def get_price(
+        self,
+        symbol="BTC-USD",
+        market="crypto"
+    ):
 
         data = self.request(
-
             f"products/{symbol}/ticker"
-
         )
 
         return {
@@ -49,12 +53,15 @@ class CoinbaseService(BaseMarketService):
 
         }
 
-    def get_24h(self, symbol="BTC-USD"):
+
+    def get_24h(
+        self,
+        symbol="BTC-USD",
+        market="crypto"
+    ):
 
         data = self.request(
-
             f"products/{symbol}/stats"
-
         )
 
         return {
@@ -71,6 +78,7 @@ class CoinbaseService(BaseMarketService):
 
         }
 
+
     def get_candles(
 
         self,
@@ -79,7 +87,9 @@ class CoinbaseService(BaseMarketService):
 
         interval=3600,
 
-        limit=200
+        limit=200,
+
+        market="crypto"
 
     ):
 
