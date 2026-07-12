@@ -22,18 +22,21 @@ class KrakenService(BaseMarketService):
         "ETHUSDT": "ETHUSDT"
     }
 
+
+    @property
+    def provider_name(self):
+
+        return "Kraken"
+
+
     def request(self, endpoint, params=None):
 
         try:
 
             response = requests.get(
-
                 f"{self.BASE_URL}/{endpoint}",
-
                 params=params,
-
                 timeout=10
-
             )
 
             response.raise_for_status()
@@ -44,16 +47,18 @@ class KrakenService(BaseMarketService):
 
             raise Exception(f"Kraken API Error: {e}")
 
-    def get_price(self, symbol="BTCUSDT"):
+
+    def get_price(
+        self,
+        symbol="BTCUSDT",
+        market="crypto"
+    ):
 
         pair = self.SYMBOLS.get(symbol, symbol)
 
         data = self.request(
-
             "Ticker",
-
             {"pair": pair}
-
         )
 
         if data["error"]:
@@ -69,16 +74,18 @@ class KrakenService(BaseMarketService):
 
         }
 
-    def get_24h(self, symbol="BTCUSDT"):
+
+    def get_24h(
+        self,
+        symbol="BTCUSDT",
+        market="crypto"
+    ):
 
         pair = self.SYMBOLS.get(symbol, symbol)
 
         data = self.request(
-
             "Ticker",
-
             {"pair": pair}
-
         )
 
         if data["error"]:
@@ -100,6 +107,7 @@ class KrakenService(BaseMarketService):
 
         }
 
+
     def get_candles(
 
         self,
@@ -108,7 +116,9 @@ class KrakenService(BaseMarketService):
 
         interval="1h",
 
-        limit=200
+        limit=200,
+
+        market="crypto"
 
     ):
 
