@@ -13,32 +13,25 @@ class MarketRouter:
     def __init__(self):
 
         self.crypto = [
-
             BinanceService(),
-
             BybitService(),
-
             OKXService(),
-
             CoinbaseService(),
-
             KrakenService()
-
         ]
 
         self.stocks = [
-
             YahooService(),
-
             FinnhubService()
-
         ]
 
         self.forex = [
-
             TwelveDataService()
-
         ]
+
+    # ==========================================
+    # Provider Selection
+    # ==========================================
 
     def get_providers(self, market="crypto"):
 
@@ -53,6 +46,30 @@ class MarketRouter:
 
         return self.crypto
 
+    # ==========================================
+    # Symbol Mapping
+    # ==========================================
+
+    def map_symbol(self, provider, symbol):
+
+        name = provider.provider_name
+
+        if name == "OKX":
+            return symbol.replace("USDT", "-USDT")
+
+        if name == "Coinbase":
+            return symbol.replace("USDT", "-USD")
+
+        if name == "Kraken":
+            if symbol == "BTCUSDT":
+                return "XBTUSDT"
+
+        return symbol
+
+    # ==========================================
+    # Price
+    # ==========================================
+
     def get_price(
         self,
         symbol,
@@ -65,13 +82,27 @@ class MarketRouter:
 
             try:
 
-                return provider.get_price(symbol)
+                provider_symbol = self.map_symbol(
+                    provider,
+                    symbol
+                )
+
+                return provider.get_price(
+                    provider_symbol,
+                    market
+                )
 
             except Exception as e:
 
                 last_error = e
 
-        raise Exception(f"No Provider Available: {last_error}")
+        raise Exception(
+            f"No Provider Available: {last_error}"
+        )
+
+    # ==========================================
+    # 24H
+    # ==========================================
 
     def get_24h(
         self,
@@ -85,13 +116,27 @@ class MarketRouter:
 
             try:
 
-                return provider.get_24h(symbol)
+                provider_symbol = self.map_symbol(
+                    provider,
+                    symbol
+                )
+
+                return provider.get_24h(
+                    provider_symbol,
+                    market
+                )
 
             except Exception as e:
 
                 last_error = e
 
-        raise Exception(f"No Provider Available: {last_error}")
+        raise Exception(
+            f"No Provider Available: {last_error}"
+        )
+
+    # ==========================================
+    # Candles
+    # ==========================================
 
     def get_candles(
         self,
@@ -107,14 +152,22 @@ class MarketRouter:
 
             try:
 
+                provider_symbol = self.map_symbol(
+                    provider,
+                    symbol
+                )
+
                 return provider.get_candles(
-                    symbol,
+                    provider_symbol,
                     interval,
-                    limit
+                    limit,
+                    market
                 )
 
             except Exception as e:
 
                 last_error = e
 
-        raise Exception(f"No Provider Available: {last_error}")
+        raise Exception(
+            f"No Provider Available: {last_error}"
+            )
