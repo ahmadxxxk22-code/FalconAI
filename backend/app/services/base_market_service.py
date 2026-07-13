@@ -14,7 +14,7 @@ class BaseMarketService(ABC):
         market: str = "crypto"
     ):
         raise NotImplementedError(
-            "Provider must implement get_price()"
+            "get_price must be implemented"
         )
 
 
@@ -24,7 +24,7 @@ class BaseMarketService(ABC):
         market: str = "crypto"
     ):
         raise NotImplementedError(
-            "Provider must implement get_24h()"
+            "get_24h must be implemented"
         )
 
 
@@ -36,5 +36,5 @@ class BaseMarketService(ABC):
         market: str = "crypto"
     ):
         raise NotImplementedError(
-            "Provider must implement get_candles()"
+            "get_candles must be implemented"
         )
