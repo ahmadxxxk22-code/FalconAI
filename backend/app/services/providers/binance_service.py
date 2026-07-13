@@ -7,6 +7,13 @@ class BinanceService(BaseMarketService):
 
     BASE_URL = "https://api.binance.com/api/v3"
 
+
+    @property
+    def provider_name(self):
+
+        return "Binance"
+
+
     def request(self, endpoint, params=None):
 
         try:
@@ -33,13 +40,20 @@ class BinanceService(BaseMarketService):
 
             )
 
-    def get_price(self, symbol="BTCUSDT"):
+
+    def get_price(
+        self,
+        symbol="BTCUSDT",
+        market="crypto"
+    ):
 
         data = self.request(
 
             "ticker/price",
 
-            {"symbol": symbol}
+            {
+                "symbol": symbol
+            }
 
         )
 
@@ -51,13 +65,20 @@ class BinanceService(BaseMarketService):
 
         }
 
-    def get_24h(self, symbol="BTCUSDT"):
+
+    def get_24h(
+        self,
+        symbol="BTCUSDT",
+        market="crypto"
+    ):
 
         data = self.request(
 
             "ticker/24hr",
 
-            {"symbol": symbol}
+            {
+                "symbol": symbol
+            }
 
         )
 
@@ -77,16 +98,13 @@ class BinanceService(BaseMarketService):
 
         }
 
+
     def get_candles(
-
         self,
-
         symbol="BTCUSDT",
-
         interval="1h",
-
-        limit=200
-
+        limit=200,
+        market="crypto"
     ):
 
         data = self.request(
@@ -107,6 +125,7 @@ class BinanceService(BaseMarketService):
 
         candles = []
 
+
         for candle in data:
 
             candles.append({
@@ -126,5 +145,6 @@ class BinanceService(BaseMarketService):
                 "close_time": candle[6]
 
             })
+
 
         return candles
