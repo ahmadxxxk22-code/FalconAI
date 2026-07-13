@@ -1,81 +1,375 @@
+from math import fabs
+
+
 class RiskManager:
 
+    def __init__(self):
+
+        self.market_settings = {
+
+            "crypto": {
+                "atr_multiplier": 2.0,
+                "tp1": 2.0,
+                "tp2": 3.5,
+                "tp3": 5.0,
+                "max_risk": 2.0
+            },
+
+            "forex": {
+                "atr_multiplier": 1.8,
+                "tp1": 1.8,
+                "tp2": 3.0,
+                "tp3": 4.5,
+                "max_risk": 1.5
+            },
+
+            "gold": {
+                "atr_multiplier": 2.2,
+                "tp1": 2.5,
+                "tp2": 4.0,
+                "tp3": 6.0,
+                "max_risk": 1.5
+            },
+
+            "oil": {
+                "atr_multiplier": 2.4,
+                "tp1": 2.5,
+                "tp2": 4.5,
+                "tp3": 6.5,
+                "max_risk": 1.5
+            },
+
+            "stocks": {
+                "atr_multiplier": 2.0,
+                "tp1": 2.5,
+                "tp2": 4.0,
+                "tp3": 6.0,
+                "max_risk": 2.0
+            },
+
+            "indices": {
+                "atr_multiplier": 2.0,
+                "tp1": 2.2,
+                "tp2": 3.8,
+                "tp3": 5.5,
+                "max_risk": 1.5
+            }
+
+        }
+
+
     def calculate(
+
         self,
-        direction="BUY",
-        price=100,
-        confidence=80,
-        balance=1000,
+
+        direction,
+
+        price,
+
+        confidence,
+
+        atr,
+
+        volatility,
+
+        trend_strength,
+
+        market_state,
+
+        smart_money,
+
+        fibonacci,
+
+        market="crypto",
+
+        balance=10000,
+
         risk_percent=2
+
     ):
 
-        risk_amount = balance * (risk_percent / 100)
+
+        settings = self.market_settings.get(
+
+            market,
+
+            self.market_settings["crypto"]
+
+        )
+
+
+        risk_percent = min(
+
+            risk_percent,
+
+            settings["max_risk"]
+
+        )
+
+
+        risk_amount = balance * (
+
+            risk_percent / 100
+
+        )
+
+
+        atr = max(
+
+            atr,
+
+            price * 0.003
+
+        )
+
+
+        multiplier = settings["atr_multiplier"]
+
+
+        trade_allowed = True
+
+        reasons = []
+
+
+        if confidence < 60:
+
+            trade_allowed = False
+
+            reasons.append(
+
+                "الثقة أقل من الحد الأدنى"
+
+            )
+
+
+        if market_state == "SIDEWAYS":
+
+            trade_allowed = False
+
+            reasons.append(
+
+                "السوق عرضي"
+
+            )
+
+
+        if abs(trend_strength) < 0.5:
+
+            trade_allowed = False
+
+            reasons.append(
+
+                "الاتجاه ضعيف"
+
+            )
+
+
+        if direction == "WAIT":
+
+            trade_allowed = False
+
+            reasons.append(
+
+                "لا توجد إشارة دخول"
+
+            )
 
         if direction == "BUY":
 
-            stop_loss = price * 0.98
+            entry = price
 
-            take_profit_1 = price * 1.02
+            stop_loss = price - (atr * multiplier)
 
-            take_profit_2 = price * 1.04
+            take_profit_1 = price + (
+                atr * settings["tp1"]
+            )
 
-            take_profit_3 = price * 1.06
+            take_profit_2 = price + (
+                atr * settings["tp2"]
+            )
+
+            take_profit_3 = price + (
+                atr * settings["tp3"]
+            )
+
 
         elif direction == "SELL":
 
-            stop_loss = price * 1.02
+            entry = price
 
-            take_profit_1 = price * 0.98
+            stop_loss = price + (
+                atr * multiplier
+            )
 
-            take_profit_2 = price * 0.96
+            take_profit_1 = price - (
+                atr * settings["tp1"]
+            )
 
-            take_profit_3 = price * 0.94
+            take_profit_2 = price - (
+                atr * settings["tp2"]
+            )
+
+            take_profit_3 = price - (
+                atr * settings["tp3"]
+            )
+
 
         else:
 
-            stop_loss = price
+            entry = None
 
-            take_profit_1 = price
+            stop_loss = None
 
-            take_profit_2 = price
+            take_profit_1 = None
 
-            take_profit_3 = price
+            take_profit_2 = None
 
-        stop_distance = abs(price - stop_loss)
+            take_profit_3 = None
 
-        if stop_distance == 0:
-            stop_distance = 0.0001
 
-        position_size = risk_amount / stop_distance
+        if entry is None:
 
-        risk_reward = round(
-            abs(take_profit_2 - price) / stop_distance,
-            2
-        )
+            position_size = 0
 
-        return {
+            risk_reward = 0
+
+        else:
+
+            stop_distance = fabs(
+                entry - stop_loss
+            )
+
+            if stop_distance < 0.00000001:
+
+                stop_distance = 0.00000001
+
+
+            position_size = (
+
+                risk_amount /
+
+                stop_distance
+
+            )
+
+
+            reward = fabs(
+
+                take_profit_2 -
+
+                entry
+
+            )
+
+
+            risk_reward = round(
+
+                reward /
+
+                stop_distance,
+
+                2
+
+            )
+
+
+            if risk_reward < 1.5:
+
+                trade_allowed = False
+
+                reasons.append(
+
+                    "العائد أقل من المخاطرة"
+
+                )
+
+
+        if smart_money.get(
+            "bullish",
+            False
+        ):
+
+            reasons.append(
+                "Smart Money إيجابي"
+            )
+
+
+        if smart_money.get(
+            "bearish",
+            False
+        ):
+
+            reasons.append(
+                "Smart Money سلبي"
+            )
+
+
+        if fibonacci.get(
+            "signal"
+        ):
+
+            reasons.append(
+
+                f"فيبوناتشي: {fibonacci['signal']}"
+
+            )
+
+                    return {
 
             "direction": direction,
 
-            "entry": round(price, 4),
+            "entry": (
+                round(entry, 4)
+                if entry is not None
+                else None
+            ),
 
-            "stop_loss": round(stop_loss, 4),
+            "stop_loss": (
+                round(stop_loss, 4)
+                if stop_loss is not None
+                else None
+            ),
 
-            "take_profit_1": round(take_profit_1, 4),
+            "take_profit_1": (
+                round(take_profit_1, 4)
+                if take_profit_1 is not None
+                else None
+            ),
 
-            "take_profit_2": round(take_profit_2, 4),
+            "take_profit_2": (
+                round(take_profit_2, 4)
+                if take_profit_2 is not None
+                else None
+            ),
 
-            "take_profit_3": round(take_profit_3, 4),
+            "take_profit_3": (
+                round(take_profit_3, 4)
+                if take_profit_3 is not None
+                else None
+            ),
 
-            "position_size": round(position_size, 4),
+            "atr": round(atr, 4),
+
+            "position_size": round(
+                position_size,
+                4
+            ),
+
+            "risk_percent": risk_percent,
+
+            "risk_amount": round(
+                risk_amount,
+                2
+            ),
 
             "risk_reward": risk_reward,
 
             "confidence": confidence,
 
-            "trade_allowed": (
-                confidence >= 60
-                and risk_reward >= 2
-            )
+            "market_state": market_state,
 
-        }
+            "trade_allowed": trade_allowed,
+
+            "reasons": reasons
+
+}
