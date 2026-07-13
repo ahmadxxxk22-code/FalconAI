@@ -1,40 +1,29 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
 class BaseMarketService(ABC):
 
-
     @property
-    @abstractmethod
     def provider_name(self):
-
-        pass
-
+        return self.__class__.__name__
 
 
-    @abstractmethod
     def get_price(
         self,
         symbol: str,
         market: str = "crypto"
     ):
-
-        pass
-
+        raise NotImplementedError
 
 
-    @abstractmethod
     def get_24h(
         self,
         symbol: str,
         market: str = "crypto"
     ):
-
-        pass
-
+        raise NotImplementedError
 
 
-    @abstractmethod
     def get_candles(
         self,
         symbol: str,
@@ -42,6 +31,4 @@ class BaseMarketService(ABC):
         limit: int = 100,
         market: str = "crypto"
     ):
-
-        pass
-        
+        raise NotImplementedError
