@@ -1,13 +1,13 @@
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
-
 from fastapi import FastAPI
 
 from users import router as users_router
 
 from app.ai.signals_engine import SignalEngine
 from app.ai.assistant import FalconAssistant
+from app.ai.multi_timeframe_engine import MultiTimeframeEngine
 
 from app.database.base import Base
 from app.database.session import engine
@@ -21,11 +21,14 @@ app = FastAPI(
     description="AI Trading Platform",
     version="1.0.0"
 )
+
 templates = Jinja2Templates(directory="templates")
+
 app.include_router(users_router)
 
 signal_engine = SignalEngine()
 assistant = FalconAssistant()
+multi_engine = MultiTimeframeEngine()
 
 
 @app.get("/")
@@ -50,7 +53,10 @@ async def health():
 
 
 @app.get("/signal/{symbol}")
-async def signal(symbol: str, interval: str = "1h"):
+async def signal(
+    symbol: str,
+    interval: str = "1h"
+):
 
     analysis = signal_engine.analyze(
         symbol=symbol,
@@ -60,8 +66,23 @@ async def signal(symbol: str, interval: str = "1h"):
     return analysis
 
 
+@app.get("/multi-timeframe/{symbol}")
+async def multi_timeframe(
+    symbol: str,
+    market: str = "crypto"
+):
+
+    return multi_engine.analyze(
+        symbol=symbol,
+        market=market
+    )
+
+
 @app.get("/assistant/{symbol}")
-async def ai(symbol: str, interval: str = "1h"):
+async def ai(
+    symbol: str,
+    interval: str = "1h"
+):
 
     analysis = signal_engine.analyze(
         symbol=symbol,
