@@ -12,6 +12,7 @@ from app.ai.fibonacci import FibonacciAnalyzer
 
 class SignalEngine:
 
+
     def __init__(self):
 
         self.market = MarketAnalyzer()
@@ -24,6 +25,7 @@ class SignalEngine:
         self.fibonacci = FibonacciAnalyzer()
 
 
+
     def analyze(
         self,
         symbol="BTCUSDT",
@@ -31,10 +33,13 @@ class SignalEngine:
         market="crypto"
     ):
 
+
         market_data = self.market.analyze(
-            symbol,
-            interval
+            symbol=symbol,
+            interval=interval,
+            market=market
         )
+
 
         trend = self.trend.analyze(
             symbol=symbol,
@@ -61,7 +66,9 @@ class SignalEngine:
         )
 
 
-        news = self.news.analyze(symbol)
+        news = self.news.analyze(
+            symbol
+        )
 
 
         fibo = self.fibonacci.analyze(
@@ -70,141 +77,381 @@ class SignalEngine:
         )
 
 
-        confidence = self.calculate_confidence(
+
+        confidence, confidence_details = self.calculate_confidence(
+
             trend,
+            market_data,
             patterns,
             smart,
             prediction,
             news,
             fibo
+
         )
 
 
-        direction = self.choose_direction(
+
+        direction, decision_reasons = self.choose_direction(
+
             trend,
+            market_data,
             prediction,
             smart,
             patterns,
-            fibo
+            fibo,
+            news
+
         )
+
 
 
         risk = self.risk.calculate(
+
             direction=direction,
+
             price=market_data["price"],
-            confidence=confidence
+
+            confidence=confidence,
+
+            atr=market_data.get("atr", 0),
+
+            volatility=market_data.get("volatility", 0),
+
+            trend_strength=market_data.get(
+                "trend_strength",
+                0
+            ),
+
+            market_state=market_data.get(
+                "market_state",
+                "UNKNOWN"
+            ),
+
+            smart_money=smart,
+
+            fibonacci=fibo,
+
+            market=market
+
         )
+
 
 
         return {
 
+
             "symbol": symbol,
+
             "interval": interval,
+
             "direction": direction,
+
             "confidence": confidence,
+
+            "confidence_details": confidence_details,
+
+            "decision_reasons": decision_reasons,
+
+
             "price": market_data["price"],
 
+
             "trend": trend,
+
             "market": market_data,
+
             "patterns": patterns,
+
             "smart_money": smart,
+
             "prediction": prediction,
+
             "news": news,
+
             "fibonacci": fibo,
+
             "risk": risk,
 
+
             "created_at": datetime.utcnow().isoformat()
+
         }
 
 
 
     def calculate_confidence(
+
         self,
+
         trend,
+
+        market,
+
         patterns,
+
         smart,
+
         prediction,
+
         news,
+
         fibo
+
     ):
+
 
         score = 0
 
 
-        if trend.get("score", 0) > 0:
-            score += 25
+        details = []
 
 
-        if prediction.get("bullish", False):
+
+        trend_score = trend.get(
+            "score",
+            0
+        )
+
+
+        if abs(trend_score) > 50:
+
             score += 20
 
+            details.append(
+                "قوة الاتجاه عالية"
+            )
 
-        if smart.get("bullish", False):
-            score += 20
+        elif abs(trend_score) > 20:
+
+            score += 10
+
+            details.append(
+                "الاتجاه متوسط القوة"
+            )
 
 
-        if patterns.get("bullish", False):
+
+        if market.get("market_state") in [
+
+            "BULLISH_TREND",
+
+            "BEARISH_TREND"
+
+        ]:
+
             score += 15
 
+            details.append(
+                "السوق في اتجاه واضح"
+            )
 
-        if news.get("bullish", False):
+
+
+        if prediction.get(
+            "confidence",
+            0
+        ) > 50:
+
+            score += 15
+
+            details.append(
+                "التنبؤ يدعم الاتجاه"
+            )
+
+
+
+        if smart.get(
+            "confidence",
+            0
+        ) >= 50:
+
+            score += 15
+
+            details.append(
+                "Smart Money يدعم القرار"
+            )
+
+
+
+        if patterns.get(
+            "strength",
+            0
+        ) > 50:
+
             score += 10
 
+            details.append(
+                "نمط سعري قوي"
+            )
 
-        if fibo.get("bullish", False):
+
+
+        if news.get(
+            "confidence",
+            0
+        ) >= 60:
+
             score += 10
 
+            details.append(
+                "الأخبار لها تأثير"
+            )
 
-        return min(score, 100)
+
+
+        if fibo.get(
+            "bullish",
+            False
+        ) or fibo.get(
+            "bearish",
+            False
+        ):
+
+            score += 15
+
+            details.append(
+                "فيبوناتشي يدعم منطقة مهمة"
+            )
+
+
+
+        return min(
+            score,
+            100
+        ), details
+
 
 
 
     def choose_direction(
+
         self,
+
         trend,
+
+        market,
+
         prediction,
+
         smart,
+
         patterns,
-        fibo
+
+        fibo,
+
+        news
+
     ):
 
+
         bullish = 0
+
         bearish = 0
 
 
-        score = trend.get("score",0)
+        reasons = []
 
 
-        if score > 0:
-            bullish += 1
 
-        elif score < 0:
-            bearish += 1
+        trend_score = trend.get(
+            "score",
+            0
+        )
+
+
+        if trend_score > 0:
+
+            bullish += 2
+
+            reasons.append(
+                "الاتجاه العام إيجابي"
+            )
+
+
+        elif trend_score < 0:
+
+            bearish += 2
+
+            reasons.append(
+                "الاتجاه العام سلبي"
+            )
 
 
 
         for item in [
+
             prediction,
+
             smart,
+
             patterns,
-            fibo
+
+            fibo,
+
+            news
+
         ]:
 
-            if item.get("bullish",False):
+
+            if item.get(
+                "bullish",
+                False
+            ):
+
                 bullish += 1
 
-            if item.get("bearish",False):
+
+            if item.get(
+                "bearish",
+                False
+            ):
+
                 bearish += 1
 
 
 
-        if bullish >= 3:
-            return "BUY"
+        if market.get(
+            "bullish",
+            False
+        ):
+
+            bullish += 1
 
 
-        if bearish >= 3:
-            return "SELL"
+
+        if market.get(
+            "bearish",
+            False
+        ):
+
+            bearish += 1
 
 
 
-        return "WAIT"
+        if bullish >= 4 and bullish > bearish:
+
+            reasons.append(
+                "توافق عدة عوامل للشراء"
+            )
+
+            return "BUY", reasons
+
+
+
+        if bearish >= 4 and bearish > bullish:
+
+            reasons.append(
+                "توافق عدة عوامل للبيع"
+            )
+
+            return "SELL", reasons
+
+
+
+        reasons.append(
+            "لا يوجد توافق كافٍ للدخول"
+        )
+
+
+        return "WAIT", reasons
