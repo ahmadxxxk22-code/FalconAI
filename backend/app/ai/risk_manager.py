@@ -120,7 +120,7 @@ class RiskManager:
             reasons.append(
                 "لا توجد إشارة دخول"
             )
-                    if direction == "BUY":
+                            if direction == "BUY":
 
             entry = price
 
@@ -222,14 +222,14 @@ class RiskManager:
                 "Smart Money سلبي"
             )
 
-        if fibonacci.get(
+                if fibonacci.get(
             "signal"
         ):
-
             reasons.append(
                 f"فيبوناتشي: {fibonacci['signal']}"
-        )
-                   return {
+            )
+
+                return {
 
             "direction": direction,
 
