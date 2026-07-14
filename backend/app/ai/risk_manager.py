@@ -57,128 +57,76 @@ class RiskManager:
 
         }
 
-
     def calculate(
-
         self,
-
         direction,
-
         price,
-
         confidence,
-
         atr,
-
         volatility,
-
         trend_strength,
-
         market_state,
-
         smart_money,
-
         fibonacci,
-
         market="crypto",
-
         balance=10000,
-
         risk_percent=2
-
     ):
 
-
         settings = self.market_settings.get(
-
             market,
-
             self.market_settings["crypto"]
-
         )
-
 
         risk_percent = min(
-
             risk_percent,
-
             settings["max_risk"]
-
         )
-
 
         risk_amount = balance * (
-
             risk_percent / 100
-
         )
-
 
         atr = max(
-
             atr,
-
             price * 0.003
-
         )
-
 
         multiplier = settings["atr_multiplier"]
 
-
         trade_allowed = True
-
         reasons = []
 
-
         if confidence < 60:
-
             trade_allowed = False
-
             reasons.append(
-
                 "الثقة أقل من الحد الأدنى"
-
             )
-
 
         if market_state == "SIDEWAYS":
-
             trade_allowed = False
-
             reasons.append(
-
                 "السوق عرضي"
-
             )
-
 
         if abs(trend_strength) < 0.5:
-
             trade_allowed = False
-
             reasons.append(
-
                 "الاتجاه ضعيف"
-
             )
-
 
         if direction == "WAIT":
-
             trade_allowed = False
-
             reasons.append(
-
                 "لا توجد إشارة دخول"
 
-            )
-
-        if direction == "BUY":
+                   if direction == "BUY":
 
             entry = price
 
-            stop_loss = price - (atr * multiplier)
+            stop_loss = price - (
+                atr * multiplier
+            )
 
             take_profit_1 = price + (
                 atr * settings["tp1"]
@@ -191,7 +139,6 @@ class RiskManager:
             take_profit_3 = price + (
                 atr * settings["tp3"]
             )
-
 
         elif direction == "SELL":
 
@@ -213,24 +160,17 @@ class RiskManager:
                 atr * settings["tp3"]
             )
 
-
         else:
 
             entry = None
-
             stop_loss = None
-
             take_profit_1 = None
-
             take_profit_2 = None
-
             take_profit_3 = None
-
 
         if entry is None:
 
             position_size = 0
-
             risk_reward = 0
 
         else:
@@ -240,81 +180,58 @@ class RiskManager:
             )
 
             if stop_distance < 0.00000001:
-
                 stop_distance = 0.00000001
 
-
             position_size = (
-
                 risk_amount /
-
                 stop_distance
-
             )
-
 
             reward = fabs(
-
                 take_profit_2 -
-
                 entry
-
             )
-
 
             risk_reward = round(
-
                 reward /
-
                 stop_distance,
-
                 2
-
             )
-
 
             if risk_reward < 1.5:
 
                 trade_allowed = False
 
                 reasons.append(
-
                     "العائد أقل من المخاطرة"
-
                 )
-
 
         if smart_money.get(
             "bullish",
             False
         ):
-
             reasons.append(
                 "Smart Money إيجابي"
             )
-
 
         if smart_money.get(
             "bearish",
             False
         ):
-
             reasons.append(
                 "Smart Money سلبي"
             )
-
 
         if fibonacci.get(
             "signal"
         ):
 
             reasons.append(
-
                 f"فيبوناتشي: {fibonacci['signal']}"
+            )     
+                )
 
-            )
-
-                    return {
+        return {
 
             "direction": direction,
 
@@ -372,4 +289,4 @@ class RiskManager:
 
             "reasons": reasons
 
-}
+        }
