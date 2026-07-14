@@ -133,7 +133,7 @@ class RiskManager:
                 atr * settings["tp3"]
             )
 
-       elif direction == "SELL":
+         elif direction == "SELL":
 
             entry = price
 
@@ -153,7 +153,7 @@ class RiskManager:
                 atr * settings["tp3"]
             )
 
-          else:
+        else:
 
             entry = None
             stop_loss = None
