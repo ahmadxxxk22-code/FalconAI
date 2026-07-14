@@ -119,8 +119,8 @@ class RiskManager:
             trade_allowed = False
             reasons.append(
                 "لا توجد إشارة دخول"
-
-                   if direction == "BUY":
+            )
+                    if direction == "BUY":
 
             entry = price
 
@@ -228,10 +228,8 @@ class RiskManager:
 
             reasons.append(
                 f"فيبوناتشي: {fibonacci['signal']}"
-            )     
-                )
-
-        return {
+        )
+                   return {
 
             "direction": direction,
 
@@ -289,4 +287,4 @@ class RiskManager:
 
             "reasons": reasons
 
-        }
+        } 
