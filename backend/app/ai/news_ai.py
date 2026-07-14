@@ -1,10 +1,14 @@
 import feedparser
 from datetime import datetime
 
+from app.ai.economic_calendar import EconomicCalendar
+
 
 class NewsAnalyzer:
 
     def __init__(self):
+
+        self.calendar = EconomicCalendar()
 
         self.bullish_words = [
             "surge",
@@ -49,8 +53,15 @@ class NewsAnalyzer:
 
             title = article.title.lower()
 
-            bullish = any(word in title for word in self.bullish_words)
-            bearish = any(word in title for word in self.bearish_words)
+            bullish = any(
+                word in title
+                for word in self.bullish_words
+            )
+
+            bearish = any(
+                word in title
+                for word in self.bearish_words
+            )
 
             sentiment = "NEUTRAL"
             confidence = 50
@@ -63,9 +74,7 @@ class NewsAnalyzer:
                 sentiment = "BEARISH"
                 confidence = 75
 
-            impact = self.detect_impact(title)
-
-            return {
+            news = {
 
                 "symbol": symbol,
 
@@ -77,13 +86,9 @@ class NewsAnalyzer:
 
                 "confidence": confidence,
 
-                "impact": impact,
-
                 "bullish": bullish,
 
                 "bearish": bearish,
-
-                "trade_allowed": impact != "EXTREME",
 
                 "source": "CoinDesk",
 
@@ -94,6 +99,12 @@ class NewsAnalyzer:
                 )
 
             }
+
+            news["economic"] = self.calendar.analyze(news)
+
+            news["trade_allowed"] = news["economic"]["trade_allowed"]
+
+            return news
 
         except Exception:
 
@@ -109,45 +120,22 @@ class NewsAnalyzer:
         if "BTC" in symbol or "ETH" in symbol:
             return "CRYPTO"
 
-        if any(x in symbol for x in ["EUR", "USD", "JPY", "GBP", "CHF", "AUD", "NZD", "CAD"]):
+        if any(x in symbol for x in [
+            "EUR", "USD", "JPY",
+            "GBP", "CHF",
+            "AUD", "CAD",
+            "NZD"
+        ]):
             return "FOREX"
 
-        if "OIL" in symbol or "WTI" in symbol or "BRENT" in symbol:
+        if "OIL" in symbol:
             return "OIL"
 
         return "STOCK"
 
-    def detect_impact(self, title):
-
-        title = title.lower()
-
-        extreme = [
-            "federal reserve",
-            "interest rate",
-            "cpi",
-            "nfp",
-            "inflation"
-        ]
-
-        high = [
-            "sec",
-            "etf",
-            "bank",
-            "war",
-            "sanction"
-        ]
-
-        if any(word in title for word in extreme):
-            return "EXTREME"
-
-        if any(word in title for word in high):
-            return "HIGH"
-
-        return "MEDIUM"
-
     def empty(self, symbol):
 
-        return {
+        news = {
 
             "symbol": symbol,
 
@@ -159,16 +147,18 @@ class NewsAnalyzer:
 
             "confidence": 50,
 
-            "impact": "LOW",
-
             "bullish": False,
 
             "bearish": False,
-
-            "trade_allowed": True,
 
             "source": None,
 
             "published_at": datetime.utcnow().isoformat()
 
         }
+
+        news["economic"] = self.calendar.empty()
+
+        news["trade_allowed"] = True
+
+        return news
