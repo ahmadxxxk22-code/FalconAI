@@ -97,6 +97,9 @@ class RiskManager:
         trade_allowed = True
         reasons = []
 
+        smart_money = smart_money or {}
+        fibonacci = fibonacci or {}
+
         if confidence < 60:
             trade_allowed = False
             reasons.append("Low confidence")
