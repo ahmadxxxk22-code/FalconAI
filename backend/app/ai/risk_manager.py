@@ -111,7 +111,7 @@ class RiskManager:
 
         if direction == "WAIT":
             trade_allowed = False
-            reasons.append("لا توجد إشار
+            reasons.append("لا توجد إشارة
                     if direction == "BUY":
 
             entry = price
@@ -196,8 +196,8 @@ class RiskManager:
 
                 reasons.append(
                     "العائد أقل من المخاطرة"
-            )
-                  if smart_money.get(
+                )
+                               if smart_money.get(
             "bullish",
             False
         ):
@@ -281,5 +281,5 @@ class RiskManager:
 
             "reasons": reasons
 
-        }                 
-                           ة دخول")
+        }    
+                           دخول")
