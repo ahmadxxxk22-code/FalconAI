@@ -133,7 +133,7 @@ class RiskManager:
                 atr * settings["tp3"]
             )
 
-        elif direction == "SELL":
+                        elif direction == "SELL":
 
             entry = price
 
@@ -160,7 +160,8 @@ class RiskManager:
             take_profit_1 = None
             take_profit_2 = None
             take_profit_3 = None
-                  if entry is None:
+
+        if entry is None:
 
             position_size = 0
             risk_reward = 0
@@ -221,7 +222,7 @@ class RiskManager:
                 f"Fibonacci: {fibonacci['signal']}"
             )
 
-              return {
+             return {
 
             "direction": direction,
 
