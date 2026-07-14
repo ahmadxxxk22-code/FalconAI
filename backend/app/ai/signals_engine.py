@@ -61,8 +61,9 @@ class SignalEngine:
 
 
         prediction = self.prediction.predict(
-            symbol,
-            interval
+            symbol=symbol,
+            interval=interval,
+            market=market
         )
 
 
