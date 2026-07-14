@@ -99,28 +99,20 @@ class RiskManager:
 
         if confidence < 60:
             trade_allowed = False
-            reasons.append(
-                "الثقة أقل من الحد الأدنى"
-            )
+            reasons.append("الثقة أقل من الحد الأدنى")
 
         if market_state == "SIDEWAYS":
             trade_allowed = False
-            reasons.append(
-                "السوق عرضي"
-            )
+            reasons.append("السوق عرضي")
 
         if abs(trend_strength) < 0.5:
             trade_allowed = False
-            reasons.append(
-                "الاتجاه ضعيف"
-            )
+            reasons.append("الاتجاه ضعيف")
 
         if direction == "WAIT":
             trade_allowed = False
-            reasons.append(
-                "لا توجد إشارة دخول"
-            )
-                            if direction == "BUY":
+            reasons.append("لا توجد إشار
+                    if direction == "BUY":
 
             entry = price
 
@@ -204,9 +196,8 @@ class RiskManager:
 
                 reasons.append(
                     "العائد أقل من المخاطرة"
-                )
-
-        if smart_money.get(
+            )
+                  if smart_money.get(
             "bullish",
             False
         ):
@@ -222,14 +213,14 @@ class RiskManager:
                 "Smart Money سلبي"
             )
 
-                if fibonacci.get(
+        if fibonacci.get(
             "signal"
         ):
             reasons.append(
                 f"فيبوناتشي: {fibonacci['signal']}"
             )
 
-                return {
+        return {
 
             "direction": direction,
 
@@ -263,7 +254,10 @@ class RiskManager:
                 else None
             ),
 
-            "atr": round(atr, 4),
+            "atr": round(
+                atr,
+                4
+            ),
 
             "position_size": round(
                 position_size,
@@ -287,4 +281,5 @@ class RiskManager:
 
             "reasons": reasons
 
-        } 
+        }                 
+                           ة دخول")
