@@ -113,7 +113,7 @@ class RiskManager:
             trade_allowed = False
             reasons.append("No entry signal")
 
-                if direction == "BUY":
+        if direction == "BUY":
 
             entry = price
 
