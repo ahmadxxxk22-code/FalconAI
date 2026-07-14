@@ -4,42 +4,29 @@ from app.ai.market_analyzer import MarketAnalyzer
 class PredictionEngine:
 
     def __init__(self):
-
         self.market = MarketAnalyzer()
 
     def predict(
-
         self,
-
         symbol="BTCUSDT",
-
-        interval="1h"
-
+        interval="1h",
+        market="crypto"
     ):
 
-        market = self.market.analyze(
-
-            symbol,
-
-            interval
-
+        market_data = self.market.analyze(
+            symbol=symbol,
+            interval=interval,
+            market=market
         )
 
         bullish = False
-
         bearish = False
 
-        confidence = 50
-
-        trend = market["trend_strength"]
-
-        rsi = market["rsi"]
-
-        volume = market["volume_power"]
-
-        ema = market["ema"]
-
-        price = market["price"]
+        trend = market_data["trend_strength"]
+        rsi = market_data["rsi"]
+        volume = market_data["volume_power"]
+        ema = market_data["ema"]
+        price = market_data["price"]
 
         score = 0
 
@@ -59,33 +46,21 @@ class PredictionEngine:
             score -= 20
 
         confidence = min(
-
             max(
-
                 score,
-
                 0
-
             ),
-
             100
-
         )
 
         if confidence >= 60:
-
             bullish = True
 
         if (
-
             trend < 0
-
             and price < ema
-
             and rsi > 65
-
         ):
-
             bearish = True
 
         prediction = "WAIT"
@@ -93,7 +68,7 @@ class PredictionEngine:
         if bullish:
             prediction = "BUY"
 
-        if bearish:
+        elif bearish:
             prediction = "SELL"
 
         return {
