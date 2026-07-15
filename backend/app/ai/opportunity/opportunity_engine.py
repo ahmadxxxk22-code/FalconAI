@@ -55,91 +55,92 @@ class OpportunityEngine:
             closes
         )
 
-        score = 0
+                score = 0
 
-reasons = []
-
-
-if trend.get("signal") == "BUY":
-
-    score += 25
-
-    reasons.append(
-        "Trend BUY"
-    )
+        reasons = []
 
 
-elif trend.get("signal") == "SELL":
+        if trend.get("signal") == "BUY":
 
-    score -= 25
+            score += 25
 
-    reasons.append(
-        "Trend SELL"
-    )
-
-
-score += volume.get(
-    "score",
-    0
-)
+            reasons.append(
+                "Trend BUY"
+            )
 
 
-score += liquidity.get(
-    "score",
-    0
-)
+        elif trend.get("signal") == "SELL":
+
+            score -= 25
+
+            reasons.append(
+                "Trend SELL"
+            )
 
 
-score += candle_patterns.get(
-    "confidence",
-    0
-)
+        score += volume.get(
+            "score",
+            0
+        )
 
 
-if order_blocks.get(
-    "bullish_blocks"
-):
-
-    score += 15
-
-    reasons.append(
-        "Bullish Order Block"
-    )
+        score += liquidity.get(
+            "score",
+            0
+        )
 
 
-if order_blocks.get(
-    "bearish_blocks"
-):
-
-    score -= 15
-
-    reasons.append(
-        "Bearish Order Block"
-    )
+        score += candle_patterns.get(
+            "confidence",
+            0
+        )
 
 
-if history.get(
-    "bullish",
-    False
-):
+        if order_blocks.get(
+            "bullish_blocks"
+        ):
 
-    score += 20
+            score += 15
 
-    reasons.append(
-        "Historical Bullish"
-    )
+            reasons.append(
+                "Bullish Order Block"
+            )
 
 
-if history.get(
-    "bearish",
-    False
-):
+        if order_blocks.get(
+            "bearish_blocks"
+        ):
 
-    score -= 20
+            score -= 15
 
-    reasons.append(
-        "Historical Bearish"
-    )
+            reasons.append(
+                "Bearish Order Block"
+            )
+
+
+        if history.get(
+            "bullish",
+            False
+        ):
+
+            score += 20
+
+            reasons.append(
+                "Historical Bullish"
+            )
+
+
+        if history.get(
+            "bearish",
+            False
+        ):
+
+            score -= 20
+
+            reasons.append(
+                "Historical Bearish"
+            )
+
 
         if score >= 40:
 
