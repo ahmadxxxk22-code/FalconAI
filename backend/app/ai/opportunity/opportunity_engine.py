@@ -57,29 +57,89 @@ class OpportunityEngine:
 
         score = 0
 
-        reasons = []
+reasons = []
 
-        if trend["signal"] == "BUY":
-            score += 25
-            reasons.append("Trend BUY")
 
-        elif trend["signal"] == "SELL":
-            score -= 25
-            reasons.append("Trend SELL")
+if trend.get("signal") == "BUY":
 
-        score += volume["score"]
+    score += 25
 
-        score += liquidity["score"]
+    reasons.append(
+        "Trend BUY"
+    )
 
-        score += candle_patterns["score"]
 
-        if history["bullish"]:
-            score += 20
-            reasons.append("Historical Bullish")
+elif trend.get("signal") == "SELL":
 
-        if history["bearish"]:
-            score -= 20
-            reasons.append("Historical Bearish")
+    score -= 25
+
+    reasons.append(
+        "Trend SELL"
+    )
+
+
+score += volume.get(
+    "score",
+    0
+)
+
+
+score += liquidity.get(
+    "score",
+    0
+)
+
+
+score += candle_patterns.get(
+    "confidence",
+    0
+)
+
+
+if order_blocks.get(
+    "bullish_blocks"
+):
+
+    score += 15
+
+    reasons.append(
+        "Bullish Order Block"
+    )
+
+
+if order_blocks.get(
+    "bearish_blocks"
+):
+
+    score -= 15
+
+    reasons.append(
+        "Bearish Order Block"
+    )
+
+
+if history.get(
+    "bullish",
+    False
+):
+
+    score += 20
+
+    reasons.append(
+        "Historical Bullish"
+    )
+
+
+if history.get(
+    "bearish",
+    False
+):
+
+    score -= 20
+
+    reasons.append(
+        "Historical Bearish"
+    )
 
         if score >= 40:
 
