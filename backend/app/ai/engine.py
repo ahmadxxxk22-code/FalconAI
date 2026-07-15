@@ -1,223 +1,74 @@
-from app.ai.market_analyzer import MarketAnalyzer
-from app.ai.patterns import PatternAnalyzer
-from app.ai.smart_money import SmartMoneyAnalyzer
-from app.ai.prediction import PredictionEngine
-from app.ai.news_ai import NewsAnalyzer
-from app.ai.fibonacci import FibonacciAnalyzer
-from app.ai.risk_manager import RiskManager
+from app.ai.signals_engine import SignalEngine
+from app.ai.explanation_engine import ExplanationEngine
 from app.ai.learning import LearningEngine
 from app.ai.assistant import FalconAssistant
 
 
 class AIEngine:
 
+
     def __init__(self):
 
-        self.market = MarketAnalyzer()
+        # المحرك الرئيسي للتحليل
+        self.signal_engine = SignalEngine()
 
-        self.patterns = PatternAnalyzer()
+        # شرح التحليل حسب نوع المستخدم
+        self.explanation = ExplanationEngine()
 
-        self.smart_money = SmartMoneyAnalyzer()
-
-        self.prediction = PredictionEngine()
-
-        self.news = NewsAnalyzer()
-
-        self.fibonacci = FibonacciAnalyzer()
-
-        self.risk = RiskManager()
-
+        # نظام التعلم
         self.learning = LearningEngine()
 
+        # المساعد الذكي
         self.assistant = FalconAssistant()
+
+
 
     def analyze(
         self,
         symbol="BTCUSDT",
-        interval="1h"
+        interval="1h",
+        market="crypto",
+        user_type="trader"
     ):
 
-        market = self.market.analyze(
-            symbol,
-            interval
-        )
 
-        patterns = self.patterns.analyze(
-            symbol,
-            interval
-        )
+        # التحليل الكامل
+        analysis = self.signal_engine.analyze(
 
-        smart = self.smart_money.analyze(
-            symbol,
-            interval
-        )
+            symbol=symbol,
 
-        prediction = self.prediction.predict(
-            symbol,
-            interval
-        )
+            interval=interval,
 
-        news = self.news.analyze(
-            symbol
-        )
-
-        fibonacci = self.fibonacci.analyze(
-            symbol,
-            interval
-        )
-
-        confidence = self.calculate_confidence(
-
-            market,
-
-            prediction,
-
-            patterns,
-
-            smart,
-
-            news,
-
-            fibonacci
+            market=market
 
         )
 
-        direction = self.direction(
 
-            market,
+        # شرح التحليل
+        explanation = self.explanation.explain(
 
-            prediction,
+            analysis,
 
-            smart
-
-        )
-
-        risk = self.risk.calculate(
-
-            direction=direction,
-
-            price=market["price"],
-
-            confidence=confidence
+            user_type=user_type
 
         )
 
-        analysis = {
 
-            "symbol": symbol,
+        # مساعد FalconAI
+        assistant = self.assistant.explain(
 
-            "interval": interval,
+            analysis
 
-            "direction": direction,
+        )
 
-            "confidence": confidence,
-
-            "market": market,
-
-            "patterns": patterns,
-
-            "smart_money": smart,
-
-            "prediction": prediction,
-
-            "news": news,
-
-            "fibonacci": fibonacci,
-
-            "risk": risk
-
-        }
 
         return {
 
+
             "analysis": analysis,
 
-            "assistant": self.assistant.explain(
+            "explanation": explanation,
 
-                analysis
-
-            )
+            "assistant": assistant
 
         }
-
-    def calculate_confidence(
-
-        self,
-
-        market,
-
-        prediction,
-
-        patterns,
-
-        smart,
-
-        news,
-
-        fibonacci
-
-    ):
-
-        score = 0
-
-        if market["bullish"]:
-            score += 20
-
-        if prediction["bullish"]:
-            score += 20
-
-        if patterns["bullish"]:
-            score += 15
-
-        if smart["bullish"]:
-            score += 20
-
-        if news["bullish"]:
-            score += 15
-
-        if fibonacci["bullish"]:
-            score += 10
-
-        return min(score, 100)
-
-    def direction(
-
-        self,
-
-        market,
-
-        prediction,
-
-        smart
-
-    ):
-
-        buy = 0
-
-        sell = 0
-
-        if market["bullish"]:
-            buy += 1
-
-        if prediction["bullish"]:
-            buy += 1
-
-        if smart["bullish"]:
-            buy += 1
-
-        if market["bearish"]:
-            sell += 1
-
-        if prediction["bearish"]:
-            sell += 1
-
-        if smart["bearish"]:
-            sell += 1
-
-        if buy >= 2:
-            return "BUY"
-
-        if sell >= 2:
-            return "SELL"
-
-        return "WAIT"
