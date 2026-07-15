@@ -10,6 +10,7 @@ class PredictionEngine:
 
         self.opportunity = OpportunityEngine()
 
+
     def predict(
         self,
         symbol="BTCUSDT",
@@ -17,47 +18,106 @@ class PredictionEngine:
         market="crypto"
     ):
 
+
         market_data = self.market.analyze(
+
             symbol=symbol,
+
             interval=interval,
+
             market=market
+
         )
+
+
+        candles = market_data.get(
+            "candles",
+            []
+        )
+
 
         opportunity = self.opportunity.analyze(
 
             symbol=symbol,
 
-            candles=market_data["candles"]
+            candles=candles
 
         )
 
-        prediction = opportunity["signal"]
 
-        confidence = opportunity["confidence"]
+        prediction = opportunity.get(
+            "signal",
+            "WAIT"
+        )
 
-        bullish = prediction == "BUY"
 
-        bearish = prediction == "SELL"
+        confidence = opportunity.get(
+            "confidence",
+            0
+        )
+
+
+        bullish = False
+
+        bearish = False
+
+
+
+        if prediction == "BUY":
+
+            bullish = True
+
+
+
+        elif prediction == "SELL":
+
+            bearish = True
+
+
 
         return {
 
             "prediction": prediction,
 
+
             "confidence": confidence,
+
 
             "bullish": bullish,
 
+
             "bearish": bearish,
 
-            "trend": market_data["trend_strength"],
 
-            "rsi": market_data["rsi"],
+            "trend": market_data.get(
+                "trend_strength",
+                0
+            ),
 
-            "ema": market_data["ema"],
 
-            "price": market_data["price"],
+            "rsi": market_data.get(
+                "rsi",
+                0
+            ),
 
-            "volume": market_data["volume_power"],
+
+            "ema": market_data.get(
+                "ema",
+                0
+            ),
+
+
+            "price": market_data.get(
+                "price",
+                0
+            ),
+
+
+            "volume": market_data.get(
+                "volume_power",
+                0
+            ),
+
 
             "opportunity": opportunity
 
