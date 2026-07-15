@@ -10,7 +10,7 @@ from app.ai.news_ai import NewsAnalyzer
 from app.ai.fibonacci import FibonacciAnalyzer
 
 from app.ai.opportunity.opportunity_engine import OpportunityEngine
-
+from app.ai.multi_timeframe_engine import MultiTimeframeEngine
 
 
 class SignalEngine:
@@ -36,6 +36,9 @@ class SignalEngine:
 
         self.opportunity = OpportunityEngine()
 
+        # تحليل جميع الفريمات من المضارب للمستثمر
+        self.multi_timeframe = MultiTimeframeEngine()
+
 
 
     def analyze(
@@ -51,6 +54,15 @@ class SignalEngine:
             interval=interval,
             market=market
         )
+
+
+
+        # تحليل توافق جميع الفريمات
+        multi_timeframe = self.multi_timeframe.analyze(
+            symbol=symbol,
+            market=market
+        )
+
 
 
         opportunity = self.opportunity.analyze(
@@ -73,16 +85,19 @@ class SignalEngine:
         )
 
 
+
         patterns = self.patterns.analyze(
             symbol,
             interval
         )
 
 
+
         smart = self.smart_money.analyze(
             symbol,
             interval
         )
+
 
 
         prediction = self.prediction.predict(
@@ -92,9 +107,11 @@ class SignalEngine:
         )
 
 
+
         news = self.news.analyze(
             symbol
         )
+
 
 
         fibo = self.fibonacci.analyze(
@@ -120,7 +137,9 @@ class SignalEngine:
 
             fibo,
 
-            opportunity
+            opportunity,
+
+            multi_timeframe
 
         )
 
@@ -142,7 +161,9 @@ class SignalEngine:
 
             news,
 
-            opportunity
+            opportunity,
+
+            multi_timeframe
 
         )
 
@@ -188,7 +209,6 @@ class SignalEngine:
 
         return {
 
-
             "symbol": symbol,
 
             "interval": interval,
@@ -217,6 +237,8 @@ class SignalEngine:
 
             "opportunity": opportunity,
 
+            "multi_timeframe": multi_timeframe,
+
             "news": news,
 
             "fibonacci": fibo,
@@ -227,9 +249,6 @@ class SignalEngine:
             "created_at": datetime.utcnow().isoformat()
 
         }
-
-
-
 
     def calculate_confidence(
 
@@ -249,7 +268,9 @@ class SignalEngine:
 
         fibo,
 
-        opportunity
+        opportunity,
+
+        multi_timeframe
 
     ):
 
@@ -385,14 +406,36 @@ class SignalEngine:
 
 
 
+        # توافق الفريمات المتعددة
+        mtf_confidence = multi_timeframe.get(
+            "confidence",
+            0
+        )
+
+
+        if mtf_confidence >= 70:
+
+            score += 20
+
+            details.append(
+                "توافق قوي بين الفريمات"
+            )
+
+
+        elif mtf_confidence >= 50:
+
+            score += 10
+
+            details.append(
+                "توافق متوسط بين الفريمات"
+            )
+
+
+
         return min(
             score,
             100
         ), details
-
-
-
-
 
     def choose_direction(
 
@@ -412,7 +455,9 @@ class SignalEngine:
 
         news,
 
-        opportunity
+        opportunity,
+
+        multi_timeframe
 
     ):
 
@@ -505,6 +550,44 @@ class SignalEngine:
 
             reasons.append(
                 "Opportunity Engine SELL"
+            )
+
+
+
+        # إضافة توافق الفريمات
+        mtf_signal = multi_timeframe.get(
+            "signal",
+            "WAIT"
+        )
+
+
+        if mtf_signal in [
+
+            "BUY",
+
+            "STRONG_BUY"
+
+        ]:
+
+            bullish += 2
+
+            reasons.append(
+                "الفريمات الزمنية تدعم الصعود"
+            )
+
+
+        elif mtf_signal in [
+
+            "SELL",
+
+            "STRONG_SELL"
+
+        ]:
+
+            bearish += 2
+
+            reasons.append(
+                "الفريمات الزمنية تدعم الهبوط"
             )
 
 
