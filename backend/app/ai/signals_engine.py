@@ -291,6 +291,55 @@ class SignalEngine:
 
         )
 
+
+        return {
+
+            "symbol": symbol,
+
+            "interval": interval,
+
+            "market": market,
+
+            "direction": direction,
+
+            "confidence": confidence,
+
+            "confidence_details": confidence_details,
+
+            "decision_reasons": reasons,
+
+            "warnings": warnings,
+
+            "early_trend": early_trend,
+
+            "price": market_data.get(
+                "price"
+            ),
+
+            "market_analysis": market_data,
+
+            "trend": trend,
+
+            "multi_timeframe": multi_timeframe,
+
+            "opportunity": opportunity,
+
+            "smart_money": smart_money,
+
+            "prediction": prediction,
+
+            "patterns": patterns,
+
+            "fibonacci": fibonacci,
+
+            "news": news,
+
+            "risk": risk,
+
+            "created_at": datetime.utcnow().isoformat()
+
+        }
+
     # =====================================
     # حساب قوة الإشارة
     # =====================================
@@ -1074,52 +1123,3 @@ class SignalEngine:
             warnings
 
         )
-
-
-        return {
-
-            "symbol": symbol,
-
-            "interval": interval,
-
-            "market": market,
-
-            "direction": direction,
-
-            "confidence": confidence,
-
-            "confidence_details": confidence_details,
-
-            "decision_reasons": reasons,
-
-            "warnings": warnings,
-
-            "early_trend": early_trend,
-
-            "price": market_data.get(
-                "price"
-            ),
-
-            "market_analysis": market_data,
-
-            "trend": trend,
-
-            "multi_timeframe": multi_timeframe,
-
-            "opportunity": opportunity,
-
-            "smart_money": smart_money,
-
-            "prediction": prediction,
-
-            "patterns": patterns,
-
-            "fibonacci": fibonacci,
-
-            "news": news,
-
-            "risk": risk,
-
-            "created_at": datetime.utcnow().isoformat()
-
-        }
