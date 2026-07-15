@@ -1,137 +1,192 @@
 from math import fabs
 
 
+
 class CandlesAI:
 
-    def __init__(self):
-        pass
 
     def body(self, candle):
-        return fabs(candle["close"] - candle["open"])
 
-    def range(self, candle):
+        return fabs(
+            candle["close"] -
+            candle["open"]
+        )
+
+
+
+    def candle_range(self, candle):
+
         return candle["high"] - candle["low"]
 
+
+
     def upper_shadow(self, candle):
+
         return candle["high"] - max(
             candle["open"],
             candle["close"]
         )
 
+
+
     def lower_shadow(self, candle):
+
         return min(
             candle["open"],
             candle["close"]
         ) - candle["low"]
 
+
+
     def bullish(self, candle):
+
         return candle["close"] > candle["open"]
 
+
+
     def bearish(self, candle):
+
         return candle["close"] < candle["open"]
 
-    def analyze(self, candles):
+
+
+    def analyze(
+        self,
+        candles
+    ):
+
 
         if len(candles) < 5:
 
             return {
 
-                "pattern": "UNKNOWN",
+                "pattern":"UNKNOWN",
 
-                "confidence": 0,
+                "patterns":[],
 
-                "bullish": False,
+                "confidence":0,
 
-                "bearish": False,
+                "bullish":False,
 
-                "patterns": []
+                "bearish":False,
+
+                "reasons":[]
 
             }
 
+
+
         patterns = []
 
+        reasons = []
+
+
+
         last = candles[-1]
+
         prev = candles[-2]
 
-        b = self.body(last)
+        before = candles[-3]
 
-        u = self.upper_shadow(last)
 
-        l = self.lower_shadow(last)
 
+        body = self.body(last)
+
+        rng = self.candle_range(last)
+
+        upper = self.upper_shadow(last)
+
+        lower = self.lower_shadow(last)
+
+
+
+        if rng == 0:
+
+            return {
+
+                "pattern":"NONE",
+
+                "patterns":[],
+
+                "confidence":0,
+
+                "bullish":False,
+
+                "bearish":False,
+
+                "reasons":[]
+
+            }
+
+
+
+        # ======================
         # Hammer
-
-        if l > b * 2 and u < b:
-
-            patterns.append({
-
-                "name": "HAMMER",
-
-                "score": 25,
-
-                "bullish": True
-
-            })
-
-        # Inverted Hammer
-
-        if u > b * 2 and l < b:
-
-            patterns.append({
-
-                "name": "INVERTED_HAMMER",
-
-                "score": 20,
-
-                "bullish": True
-
-            })
-
-        # Hanging Man
+        # ======================
 
         if (
 
-            self.bullish(prev)
+            lower > body * 2
 
             and
 
-            l > b * 2
+            upper < body
 
         ):
 
+
             patterns.append({
 
-                "name": "HANGING_MAN",
+                "name":"HAMMER",
 
-                "score": 25,
+                "score":30,
 
-                "bearish": True
+                "bullish":True
 
             })
 
+
+            reasons.append(
+                "شمعة Hammer تشير لاحتمال انعكاس صاعد"
+            )
+
+
+
+        # ======================
         # Shooting Star
+        # ======================
 
         if (
 
-            self.bearish(last)
+            upper > body * 2
 
             and
 
-            u > b * 2
+            lower < body
 
         ):
 
+
             patterns.append({
 
-                "name": "SHOOTING_STAR",
+                "name":"SHOOTING_STAR",
 
-                "score": 25,
+                "score":30,
 
-                "bearish": True
+                "bearish":True
 
             })
 
+
+            reasons.append(
+                "شمعة Shooting Star تشير لاحتمال هبوط"
+            )
+
+
+
+        # ======================
         # Bullish Engulfing
+        # ======================
 
         if (
 
@@ -147,17 +202,28 @@ class CandlesAI:
 
         ):
 
+
             patterns.append({
 
-                "name": "BULLISH_ENGULFING",
+                "name":"BULLISH_ENGULFING",
 
-                "score": 35,
+                "score":40,
 
-                "bullish": True
+                "bullish":True
 
             })
 
+
+            reasons.append(
+                "ابتلاع شرائي قوي"
+            )
+
+
+
+        # ======================
         # Bearish Engulfing
+        # ======================
+
 
         if (
 
@@ -173,61 +239,220 @@ class CandlesAI:
 
         ):
 
+
             patterns.append({
 
-                "name": "BEARISH_ENGULFING",
+                "name":"BEARISH_ENGULFING",
 
-                "score": 35,
+                "score":40,
 
-                "bearish": True
+                "bearish":True
 
             })
 
+
+            reasons.append(
+                "ابتلاع بيعي قوي"
+            )
+
+
+
+        # ======================
+        # Morning Star
+        # ======================
+
+
+        if (
+
+            self.bearish(before)
+
+            and
+
+            abs(
+                self.body(prev)
+            )
+            <
+            self.body(before)*0.5
+
+            and
+
+            self.bullish(last)
+
+            and
+
+            last["close"] >
+            (
+                before["open"]
+                +
+                before["close"]
+            )/2
+
+        ):
+
+
+            patterns.append({
+
+                "name":"MORNING_STAR",
+
+                "score":50,
+
+                "bullish":True
+
+            })
+
+
+            reasons.append(
+                "نموذج Morning Star انعكاسي صاعد"
+            )
+
+
+
+        # ======================
+        # Evening Star
+        # ======================
+
+
+        if (
+
+            self.bullish(before)
+
+            and
+
+            self.body(prev)
+            <
+            self.body(before)*0.5
+
+            and
+
+            self.bearish(last)
+
+            and
+
+            last["close"]
+            <
+            (
+                before["open"]
+                +
+                before["close"]
+            )/2
+
+        ):
+
+
+            patterns.append({
+
+                "name":"EVENING_STAR",
+
+                "score":50,
+
+                "bearish":True
+
+            })
+
+
+            reasons.append(
+                "نموذج Evening Star انعكاسي هابط"
+            )
+
+
+
+        # ======================
         # Doji
+        # ======================
 
-        if b <= self.range(last) * 0.1:
+
+        if body <= rng*0.1:
+
 
             patterns.append({
 
-                "name": "DOJI",
+                "name":"DOJI",
 
-                "score": 15
+                "score":15
 
             })
+
+
+            reasons.append(
+                "شمعة حيرة في السوق"
+            )
+
+
 
         bullish = any(
-            p.get("bullish", False)
+
+            p.get(
+                "bullish",
+                False
+            )
+
             for p in patterns
+
         )
+
 
         bearish = any(
-            p.get("bearish", False)
+
+            p.get(
+                "bearish",
+                False
+            )
+
             for p in patterns
+
         )
 
+
+
         confidence = 0
+
 
         if patterns:
 
             confidence = max(
+
                 p["score"]
+
                 for p in patterns
+
             )
+
+
 
         return {
 
-            "pattern": (
-                patterns[0]["name"]
-                if patterns
-                else "NONE"
-            ),
 
-            "patterns": patterns,
+            "pattern":
 
-            "confidence": confidence,
+            patterns[0]["name"]
 
-            "bullish": bullish,
+            if patterns
 
-            "bearish": bearish
+            else "NONE",
 
-        }
+
+            "patterns":
+
+            patterns,
+
+
+            "confidence":
+
+            confidence,
+
+
+            "bullish":
+
+            bullish,
+
+
+            "bearish":
+
+            bearish,
+
+
+            "reasons":
+
+            reasons
+
+            }
