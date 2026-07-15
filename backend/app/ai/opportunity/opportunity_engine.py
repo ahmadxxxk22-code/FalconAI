@@ -55,7 +55,7 @@ class OpportunityEngine:
             closes
         )
 
-            score = 0
+        score = 0
 
         reasons = []
 
