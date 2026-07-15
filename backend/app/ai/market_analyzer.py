@@ -267,3 +267,5 @@ class MarketAnalyzer:
 
 
         return "UNKNOWN"
+
+"candles": candles,
