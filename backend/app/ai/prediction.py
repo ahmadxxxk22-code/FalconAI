@@ -1,10 +1,14 @@
 from app.ai.market_analyzer import MarketAnalyzer
+from app.ai.opportunity.opportunity_engine import OpportunityEngine
 
 
 class PredictionEngine:
 
     def __init__(self):
+
         self.market = MarketAnalyzer()
+
+        self.opportunity = OpportunityEngine()
 
     def predict(
         self,
@@ -19,57 +23,21 @@ class PredictionEngine:
             market=market
         )
 
-        bullish = False
-        bearish = False
+        opportunity = self.opportunity.analyze(
 
-        trend = market_data["trend_strength"]
-        rsi = market_data["rsi"]
-        volume = market_data["volume_power"]
-        ema = market_data["ema"]
-        price = market_data["price"]
+            symbol=symbol,
 
-        score = 0
+            candles=market_data["candles"]
 
-        if trend > 0:
-            score += 20
-
-        if price > ema:
-            score += 20
-
-        if volume > 1:
-            score += 20
-
-        if rsi < 35:
-            score += 20
-
-        if rsi > 65:
-            score -= 20
-
-        confidence = min(
-            max(
-                score,
-                0
-            ),
-            100
         )
 
-        if confidence >= 60:
-            bullish = True
+        prediction = opportunity["signal"]
 
-        if (
-            trend < 0
-            and price < ema
-            and rsi > 65
-        ):
-            bearish = True
+        confidence = opportunity["confidence"]
 
-        prediction = "WAIT"
+        bullish = prediction == "BUY"
 
-        if bullish:
-            prediction = "BUY"
-
-        elif bearish:
-            prediction = "SELL"
+        bearish = prediction == "SELL"
 
         return {
 
@@ -81,14 +49,16 @@ class PredictionEngine:
 
             "bearish": bearish,
 
-            "trend": trend,
+            "trend": market_data["trend_strength"],
 
-            "rsi": rsi,
+            "rsi": market_data["rsi"],
 
-            "ema": ema,
+            "ema": market_data["ema"],
 
-            "price": price,
+            "price": market_data["price"],
 
-            "volume": volume
+            "volume": market_data["volume_power"],
+
+            "opportunity": opportunity
 
         }
