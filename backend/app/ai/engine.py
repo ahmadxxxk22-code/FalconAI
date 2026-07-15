@@ -12,13 +12,16 @@ class AIEngine:
         # المحرك الرئيسي للتحليل
         self.signal_engine = SignalEngine()
 
+
         # شرح التحليل حسب نوع المستخدم
         self.explanation = ExplanationEngine()
+
 
         # نظام التعلم
         self.learning = LearningEngine()
 
-        # المساعد الذكي
+
+        # مساعد FalconAI
         self.assistant = FalconAssistant()
 
 
@@ -32,7 +35,7 @@ class AIEngine:
     ):
 
 
-        # التحليل الكامل
+        # التحليل الكامل من SignalEngine
         analysis = self.signal_engine.analyze(
 
             symbol=symbol,
@@ -44,7 +47,8 @@ class AIEngine:
         )
 
 
-        # شرح التحليل
+
+        # شرح النتيجة
         explanation = self.explanation.explain(
 
             analysis,
@@ -52,6 +56,7 @@ class AIEngine:
             user_type=user_type
 
         )
+
 
 
         # مساعد FalconAI
@@ -62,12 +67,15 @@ class AIEngine:
         )
 
 
+
         return {
 
 
             "analysis": analysis,
 
+
             "explanation": explanation,
+
 
             "assistant": assistant
 
