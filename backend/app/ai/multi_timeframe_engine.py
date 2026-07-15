@@ -7,33 +7,38 @@ class MultiTimeframeEngine:
 
         self.trend = TrendEngine()
 
-        # الفريمات المستخدمة للتحليل
+
+        # جميع الفريمات من المضارب إلى المستثمر
         self.timeframes = {
 
-            "15m": 1,
+            "1m": 1,
 
-            "1h": 2,
+            "5m": 2,
 
-            "4h": 3,
+            "15m": 3,
 
-            "1d": 4,
+            "30m": 4,
+            
+            "1h": 5,
 
-            "1w": 5,
+            "4h": 6,
 
-            "1M": 6
+            "1d": 7,
+
+            "1w": 8,
+
+            "1M": 9
 
         }
 
 
+
     def analyze(
-
         self,
-
         symbol="BTCUSDT",
-
         market="crypto"
-
     ):
+
 
         results = []
 
@@ -49,7 +54,9 @@ class MultiTimeframeEngine:
         sideways_count = 0
 
 
+
         for interval, weight in self.timeframes.items():
+
 
             try:
 
@@ -81,6 +88,7 @@ class MultiTimeframeEngine:
                 total_weight += weight
 
 
+
                 trend = analysis.get(
 
                     "trend",
@@ -90,14 +98,17 @@ class MultiTimeframeEngine:
                 )
 
 
+
                 if "BULL" in trend:
 
                     bullish_count += 1
 
 
+
                 elif "BEAR" in trend:
 
                     bearish_count += 1
+
 
 
                 else:
@@ -118,15 +129,25 @@ class MultiTimeframeEngine:
 
                     "trend": trend,
 
-                    "rsi": analysis.get("rsi"),
+                    "rsi": analysis.get(
+                        "rsi"
+                    ),
 
-                    "macd": analysis.get("macd"),
+                    "macd": analysis.get(
+                        "macd"
+                    ),
 
-                    "momentum": analysis.get("momentum"),
+                    "momentum": analysis.get(
+                        "momentum"
+                    ),
 
-                    "reasons": analysis.get("reasons", [])
+                    "reasons": analysis.get(
+                        "reasons",
+                        []
+                    )
 
                 })
+
 
 
             except Exception as e:
@@ -139,6 +160,7 @@ class MultiTimeframeEngine:
                     "error": str(e)
 
                 })
+
 
 
 
@@ -165,6 +187,7 @@ class MultiTimeframeEngine:
         )
 
 
+
         confidence = self.calculate_confidence(
 
             average_score,
@@ -176,6 +199,21 @@ class MultiTimeframeEngine:
             len(self.timeframes)
 
         )
+
+
+
+        trader_view = self.trader_summary(
+
+            signal,
+
+            confidence,
+
+            bullish_count,
+
+            bearish_count
+
+        )
+
 
 
         investor_view = self.investor_summary(
@@ -191,25 +229,38 @@ class MultiTimeframeEngine:
         )
 
 
+
         return {
+
 
             "symbol": symbol,
 
             "market": market,
 
+
             "signal": signal,
+
 
             "confidence": confidence,
 
+
             "average_score": average_score,
+
 
             "bullish_timeframes": bullish_count,
 
+
             "bearish_timeframes": bearish_count,
+
 
             "sideways_timeframes": sideways_count,
 
+
+            "trader_summary": trader_view,
+
+
             "investor_summary": investor_view,
+
 
             "timeframes": results
 
@@ -217,12 +268,10 @@ class MultiTimeframeEngine:
 
 
 
+
     def calculate_signal(
-
         self,
-
         score
-
     ):
 
 
@@ -250,19 +299,20 @@ class MultiTimeframeEngine:
 
 
 
+
     def calculate_confidence(
-
         self,
-
         score,
-
         bullish,
-
         bearish,
-
         total
-
     ):
+
+
+        if total == 0:
+
+            return 0
+
 
 
         agreement = max(
@@ -274,7 +324,9 @@ class MultiTimeframeEngine:
         ) / total * 100
 
 
+
         score_power = abs(score)
+
 
 
         confidence = (
@@ -290,7 +342,13 @@ class MultiTimeframeEngine:
 
         return round(
 
-            min(confidence, 100),
+            min(
+
+                confidence,
+
+                100
+
+            ),
 
             2
 
@@ -298,18 +356,13 @@ class MultiTimeframeEngine:
 
 
 
-    def investor_summary(
 
+    def trader_summary(
         self,
-
         signal,
-
         confidence,
-
         bullish,
-
         bearish
-
     ):
 
 
@@ -321,19 +374,19 @@ class MultiTimeframeEngine:
 
         ]:
 
+
             return (
 
-                f"الاتجاه العام إيجابي. "
+                f"اتجاه قصير ومتوسط المدى إيجابي. "
 
-                f"توافق {bullish} أطر زمنية "
+                f"توافق {bullish} فريمات "
 
-                f"مع ثقة {confidence}%."
+                f"بقوة {confidence}%. "
 
-                " مناسب لدراسة فرص الشراء "
-
-                "مع إدارة المخاطر."
+                "ينتظر تأكيد نقطة الدخول وإدارة المخاطر."
 
             )
+
 
 
         if signal in [
@@ -344,25 +397,91 @@ class MultiTimeframeEngine:
 
         ]:
 
+
             return (
 
-                f"الاتجاه العام سلبي. "
+                f"ضغط بيعي واضح. "
 
-                f"توافق {bearish} أطر زمنية "
+                f"توافق {bearish} فريمات "
 
-                f"مع ثقة {confidence}%."
+                f"بقوة {confidence}%. "
 
-                " يفضل الحذر وإدارة المراكز."
+                "يفضل انتظار تأكيد قبل الدخول."
 
             )
 
 
+
         return (
 
-            "السوق غير واضح حاليًا. "
+            "لا يوجد توافق كافٍ بين الفريمات. "
 
-            "يوجد تضارب بين الأطر الزمنية، "
+            "يفضل الانتظار."
 
-            "ويفضل انتظار إشارة أقوى."
+        )
 
-                )
+
+
+
+    def investor_summary(
+        self,
+        signal,
+        confidence,
+        bullish,
+        bearish
+    ):
+
+
+        if signal in [
+
+            "STRONG_BUY",
+
+            "BUY"
+
+        ]:
+
+
+            return (
+
+                f"الاتجاه العام إيجابي. "
+
+                f"عدد الفريمات الصاعدة: {bullish}. "
+
+                f"الثقة {confidence}%. "
+
+                "يجب متابعة المخاطر."
+
+            )
+
+
+
+        if signal in [
+
+            "STRONG_SELL",
+
+            "SELL"
+
+        ]:
+
+
+            return (
+
+                f"الاتجاه العام سلبي. "
+
+                f"عدد الفريمات الهابطة: {bearish}. "
+
+                f"الثقة {confidence}%. "
+
+                "يفضل الحذر."
+
+            )
+
+
+
+        return (
+
+            "السوق غير واضح حالياً "
+
+            "ولا يوجد اتجاه قوي."
+
+        )
