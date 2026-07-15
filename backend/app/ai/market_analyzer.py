@@ -196,48 +196,46 @@ class MarketAnalyzer:
 
         return {
 
-            "symbol": symbol,
+    "symbol": symbol,
 
-            "market": market,
+    "market": market,
 
-            "interval": interval,
+    "interval": interval,
 
+    "price": price,
 
-            "price": price,
+    "ema": ema,
 
-            "ema": ema,
+    "sma": sma,
 
-            "sma": sma,
+    "rsi": rsi,
 
-            "rsi": rsi,
+    "macd": macd,
 
-            "macd": macd,
+    "trend_strength": trend,
 
-            "trend_strength": trend,
+    "volatility": volatility,
 
-            "volatility": volatility,
+    "atr": atr,
 
-            "atr": atr,
+    "momentum": momentum,
 
-            "momentum": momentum,
+    "volume_power": round(
+        volume_power,
+        2
+    ),
 
-            "volume_power": round(
-                volume_power,
-                2
-            ),
+    "market_state": market_state,
 
+    "bullish": bullish,
 
-            "market_state": market_state,
+    "bearish": bearish,
 
+    "analysis_reasons": reasons,
 
-            "bullish": bullish,
+    "candles": candles
 
-            "bearish": bearish,
-
-
-            "analysis_reasons": reasons
-
-        }
+}
 
 
 
@@ -268,4 +266,3 @@ class MarketAnalyzer:
 
         return "UNKNOWN"
 
-"candles": candles,
