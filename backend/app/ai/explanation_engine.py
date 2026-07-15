@@ -33,7 +33,7 @@ class ExplanationEngine:
             return {
 
                 "title":
-                f"إشارة قصيرة المدى: {direction}",
+                f"تحليل مضارب: {direction}",
 
                 "message":
                 self.trader_message(
@@ -48,12 +48,12 @@ class ExplanationEngine:
             }
 
 
-        elif user_type == "investor":
+        if user_type == "investor":
 
             return {
 
                 "title":
-                f"تحليل استثماري: {direction}",
+                f"تحليل مستثمر: {direction}",
 
                 "message":
                 self.investor_message(
@@ -68,12 +68,12 @@ class ExplanationEngine:
             }
 
 
-        elif user_type == "company":
+        if user_type == "company":
 
             return {
 
                 "title":
-                "تقرير السوق",
+                "تقرير تحليل السوق",
 
                 "message":
                 self.company_message(
@@ -92,7 +92,7 @@ class ExplanationEngine:
             "Market Analysis",
 
             "message":
-            "No explanation available"
+            "Unknown user type"
 
         }
 
@@ -106,9 +106,9 @@ class ExplanationEngine:
     ):
 
         return (
-            f"القرار الحالي {direction} "
-            f"بثقة {confidence}%."
-            f" الأسباب: "
+            f"الاتجاه الحالي: {direction}\n"
+            f"قوة التحليل: {confidence}%\n"
+            f"العوامل المؤثرة: "
             + ", ".join(reasons)
         )
 
@@ -122,10 +122,9 @@ class ExplanationEngine:
     ):
 
         return (
-            f"الاتجاه العام المتوقع "
-            f"{direction} "
-            f"مع قوة {confidence}%."
-            f" يعتمد التحليل على: "
+            f"الاتجاه المتوقع على المدى الأوسع: {direction}\n"
+            f"درجة الثقة: {confidence}%\n"
+            f"يعتمد القرار على: "
             + ", ".join(reasons)
         )
 
@@ -136,21 +135,11 @@ class ExplanationEngine:
         analysis
     ):
 
-        return {
-
-            "market_direction":
-            analysis.get(
-                "direction"
-            ),
-
-            "confidence":
-            analysis.get(
-                "confidence"
-            ),
-
-            "risk_level":
-            analysis.get(
-                "risk"
-            )
-
-        }
+        return (
+            f"اتجاه السوق: "
+            f"{analysis.get('direction')}\n"
+            f"الثقة: "
+            f"{analysis.get('confidence')}%\n"
+            f"حالة السوق: "
+            f"{analysis.get('market',{}).get('market_state','UNKNOWN')}"
+        )
