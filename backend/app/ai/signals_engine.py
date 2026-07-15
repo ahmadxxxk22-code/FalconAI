@@ -9,6 +9,9 @@ from app.ai.risk_manager import RiskManager
 from app.ai.news_ai import NewsAnalyzer
 from app.ai.fibonacci import FibonacciAnalyzer
 
+from app.ai.opportunity.opportunity_engine import OpportunityEngine
+
+
 
 class SignalEngine:
 
@@ -16,13 +19,22 @@ class SignalEngine:
     def __init__(self):
 
         self.market = MarketAnalyzer()
+
         self.trend = TrendEngine()
+
         self.patterns = PatternAnalyzer()
+
         self.smart_money = SmartMoneyAnalyzer()
+
         self.prediction = PredictionEngine()
+
         self.risk = RiskManager()
+
         self.news = NewsAnalyzer()
+
         self.fibonacci = FibonacciAnalyzer()
+
+        self.opportunity = OpportunityEngine()
 
 
 
@@ -39,6 +51,19 @@ class SignalEngine:
             interval=interval,
             market=market
         )
+
+
+        opportunity = self.opportunity.analyze(
+
+            symbol=symbol,
+
+            candles=market_data.get(
+                "candles",
+                []
+            )
+
+        )
+
 
 
         trend = self.trend.analyze(
@@ -82,12 +107,20 @@ class SignalEngine:
         confidence, confidence_details = self.calculate_confidence(
 
             trend,
+
             market_data,
+
             patterns,
+
             smart,
+
             prediction,
+
             news,
-            fibo
+
+            fibo,
+
+            opportunity
 
         )
 
@@ -96,12 +129,20 @@ class SignalEngine:
         direction, decision_reasons = self.choose_direction(
 
             trend,
+
             market_data,
+
             prediction,
+
             smart,
+
             patterns,
+
             fibo,
-            news
+
+            news,
+
+            opportunity
 
         )
 
@@ -115,9 +156,15 @@ class SignalEngine:
 
             confidence=confidence,
 
-            atr=market_data.get("atr", 0),
+            atr=market_data.get(
+                "atr",
+                0
+            ),
 
-            volatility=market_data.get("volatility", 0),
+            volatility=market_data.get(
+                "volatility",
+                0
+            ),
 
             trend_strength=market_data.get(
                 "trend_strength",
@@ -168,6 +215,8 @@ class SignalEngine:
 
             "prediction": prediction,
 
+            "opportunity": opportunity,
+
             "news": news,
 
             "fibonacci": fibo,
@@ -178,6 +227,7 @@ class SignalEngine:
             "created_at": datetime.utcnow().isoformat()
 
         }
+
 
 
 
@@ -197,13 +247,14 @@ class SignalEngine:
 
         news,
 
-        fibo
+        fibo,
+
+        opportunity
 
     ):
 
 
         score = 0
-
 
         details = []
 
@@ -215,6 +266,7 @@ class SignalEngine:
         )
 
 
+
         if abs(trend_score) > 50:
 
             score += 20
@@ -222,6 +274,7 @@ class SignalEngine:
             details.append(
                 "قوة الاتجاه عالية"
             )
+
 
         elif abs(trend_score) > 20:
 
@@ -233,7 +286,9 @@ class SignalEngine:
 
 
 
-        if market.get("market_state") in [
+        if market.get(
+            "market_state"
+        ) in [
 
             "BULLISH_TREND",
 
@@ -317,10 +372,24 @@ class SignalEngine:
 
 
 
+        if opportunity.get(
+            "confidence",
+            0
+        ) >= 50:
+
+            score += 20
+
+            details.append(
+                "Opportunity Engine يدعم القرار"
+            )
+
+
+
         return min(
             score,
             100
         ), details
+
 
 
 
@@ -341,7 +410,9 @@ class SignalEngine:
 
         fibo,
 
-        news
+        news,
+
+        opportunity
 
     ):
 
@@ -359,6 +430,7 @@ class SignalEngine:
             "score",
             0
         )
+
 
 
         if trend_score > 0:
@@ -403,12 +475,37 @@ class SignalEngine:
                 bullish += 1
 
 
+
             if item.get(
                 "bearish",
                 False
             ):
 
                 bearish += 1
+
+
+
+
+        if opportunity.get(
+            "signal"
+        ) == "BUY":
+
+            bullish += 2
+
+            reasons.append(
+                "Opportunity Engine BUY"
+            )
+
+
+        elif opportunity.get(
+            "signal"
+        ) == "SELL":
+
+            bearish += 2
+
+            reasons.append(
+                "Opportunity Engine SELL"
+            )
 
 
 
@@ -427,6 +524,7 @@ class SignalEngine:
         ):
 
             bearish += 1
+
 
 
 
