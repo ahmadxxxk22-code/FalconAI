@@ -1,67 +1,112 @@
-import numpy as np
-
-
 class SupportResistanceEngine:
 
-    def __init__(self, window=5):
+
+    def __init__(
+        self,
+        window=5,
+        tolerance=0.005
+    ):
+
         self.window = window
+        self.tolerance = tolerance
 
-    def analyze(self, highs, lows, closes):
 
-        if len(highs) < self.window * 2:
+
+    def analyze(
+        self,
+        highs,
+        lows,
+        closes
+    ):
+
+
+        if len(highs) < self.window * 3:
+
             return {
+
                 "supports": [],
+
                 "resistances": [],
+
                 "nearest_support": None,
-                "nearest_resistance": None
+
+                "nearest_resistance": None,
+
+                "reasons": []
+
             }
 
+
+
         supports = []
+
         resistances = []
 
-        for i in range(self.window, len(lows) - self.window):
+        reasons = []
 
-            current_low = lows[i]
 
-            if current_low == min(
-                lows[i - self.window:i + self.window + 1]
-            ):
-                supports.append(float(current_low))
 
-        for i in range(self.window, len(highs) - self.window):
+        # ==========================
+        # استخراج الدعوم
+        # ==========================
 
-            current_high = highs[i]
+        for i in range(
+            self.window,
+            len(lows)-self.window
+        ):
 
-            if current_high == max(
-                highs[i - self.window:i + self.window + 1]
-            ):
-                resistances.append(float(current_high))
 
-        supports = sorted(list(set(supports)))
-        resistances = sorted(list(set(resistances)))
+            low = lows[i]
 
-        current_price = float(closes[-1])
 
-        nearest_support = None
-        nearest_resistance = None
+            zone = lows[
+                i-self.window:
+                i+self.window+1
+            ]
 
-        lower = [s for s in supports if s <= current_price]
-        upper = [r for r in resistances if r >= current_price]
 
-        if lower:
-            nearest_support = max(lower)
+            if low == min(zone):
 
-        if upper:
-            nearest_resistance = min(upper)
+                supports.append(low)
 
-        return {
 
-            "supports": supports,
 
-            "resistances": resistances,
+        # ==========================
+        # استخراج المقاومات
+        # ==========================
 
-            "nearest_support": nearest_support,
 
-            "nearest_resistance": nearest_resistance
+        for i in range(
+            self.window,
+            len(highs)-self.window
+        ):
 
-        }
+
+            high = highs[i]
+
+
+            zone = highs[
+                i-self.window:
+                i+self.window+1
+            ]
+
+
+            if high == max(zone):
+
+                resistances.append(high)
+
+
+
+
+        supports = self.merge_levels(
+            supports
+        )
+
+
+        resistances = self.merge_levels(
+            resistances
+        )
+
+
+
+        current_price
