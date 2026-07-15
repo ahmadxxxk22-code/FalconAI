@@ -21,50 +21,26 @@ class SignalEngine:
 
     def __init__(self):
 
-        # تحليل السوق الأساسي
         self.market = MarketAnalyzer()
 
-
-        # الاتجاه
         self.trend = TrendEngine()
 
-
-        # النماذج السعرية
         self.patterns = PatternAnalyzer()
 
-
-        # Smart Money / Liquidity
         self.smart_money = SmartMoneyAnalyzer()
 
-
-        # التوقع
         self.prediction = PredictionEngine()
 
-
-        # إدارة المخاطر
         self.risk = RiskManager()
 
-
-        # الأخبار والاقتصاد
         self.news = NewsAnalyzer()
 
-
-        # فيبوناتشي
         self.fibonacci = FibonacciAnalyzer()
 
-
-        # محرك الفرص
         self.opportunity = OpportunityEngine()
 
-
-        # تحليل كل الفريمات
         self.multi_timeframe = MultiTimeframeEngine()
 
-
-
-    # =====================================
-    # التحليل الرئيسي
-    # =====================================
 
 
     def analyze(
@@ -91,6 +67,14 @@ class SignalEngine:
         )
 
 
+        candles = market_data.get(
+
+            "candles",
+
+            []
+
+        )
+
 
         trend = self.trend.analyze(
 
@@ -103,7 +87,6 @@ class SignalEngine:
         )
 
 
-
         multi_timeframe = self.multi_timeframe.analyze(
 
             symbol=symbol,
@@ -113,21 +96,35 @@ class SignalEngine:
         )
 
 
+        # حماية Opportunity Engine من البيانات الناقصة
 
-        opportunity = self.opportunity.analyze(
+        if len(candles) < 50:
 
-            symbol=symbol,
+            opportunity = {
 
-            candles=market_data.get(
+                "signal": "WAIT",
 
-                "candles",
+                "confidence": 0,
 
-                []
+                "score": 0,
+
+                "reasons": [
+
+                    "Not enough candles"
+
+                ]
+
+            }
+
+        else:
+
+            opportunity = self.opportunity.analyze(
+
+                symbol=symbol,
+
+                candles=candles
 
             )
-
-        )
-
 
 
         smart_money = self.smart_money.analyze(
@@ -137,7 +134,6 @@ class SignalEngine:
             interval
 
         )
-
 
 
         prediction = self.prediction.predict(
@@ -151,7 +147,6 @@ class SignalEngine:
         )
 
 
-
         patterns = self.patterns.analyze(
 
             symbol,
@@ -159,7 +154,6 @@ class SignalEngine:
             interval
 
         )
-
 
 
         fibonacci = self.fibonacci.analyze(
@@ -171,7 +165,6 @@ class SignalEngine:
         )
 
 
-
         news = self.news.analyze(
 
             symbol
@@ -179,8 +172,6 @@ class SignalEngine:
         )
 
 
-
-        # كشف الترند قبل حدوثه
         early_trend = self.detect_early_trend(
 
             market_data,
@@ -192,7 +183,6 @@ class SignalEngine:
             multi_timeframe
 
         )
-
 
 
         confidence, confidence_details = self.calculate_confidence(
@@ -218,8 +208,7 @@ class SignalEngine:
         )
 
 
-
-        direction, reasons, warnings = self.make_decision(
+        direction, reasons, warnings, scores = self.make_decision(
 
             trend,
 
@@ -242,12 +231,30 @@ class SignalEngine:
         )
 
 
+        # WAIT لا يجب أن يحمل ثقة عالية
+
+        if direction == "WAIT":
+
+            confidence = min(
+
+                confidence,
+
+                40
+
+            )
+
 
         risk = self.risk.calculate(
 
             direction=direction,
 
-            price=market_data["price"],
+            price=market_data.get(
+
+                "price",
+
+                0
+
+            ),
 
             confidence=confidence,
 
@@ -310,10 +317,16 @@ class SignalEngine:
 
             "warnings": warnings,
 
+            "signal_strength": scores,
+
             "early_trend": early_trend,
 
             "price": market_data.get(
-                "price"
+
+                "price",
+
+                0
+
             ),
 
             "market_analysis": market_data,
@@ -339,10 +352,6 @@ class SignalEngine:
             "created_at": datetime.utcnow().isoformat()
 
         }
-
-    # =====================================
-    # حساب قوة الإشارة
-    # =====================================
 
     def calculate_confidence(
 
@@ -376,14 +385,17 @@ class SignalEngine:
 
 
         # ==========================
-        # Trend 25%
+        # Trend
         # ==========================
 
         trend_score = abs(
 
             trend.get(
+
                 "score",
+
                 0
+
             )
 
         )
@@ -394,7 +406,9 @@ class SignalEngine:
             score += 25
 
             details.append(
+
                 "اتجاه قوي جداً"
+
             )
 
 
@@ -403,13 +417,15 @@ class SignalEngine:
             score += 15
 
             details.append(
+
                 "اتجاه واضح"
+
             )
 
 
 
         # ==========================
-        # Multi Timeframe 20%
+        # Multi Timeframe
         # ==========================
 
         mtf_conf = multi_timeframe.get(
@@ -426,7 +442,9 @@ class SignalEngine:
             score += 20
 
             details.append(
+
                 "توافق قوي بين الفريمات"
+
             )
 
 
@@ -435,13 +453,15 @@ class SignalEngine:
             score += 10
 
             details.append(
+
                 "توافق متوسط بين الفريمات"
+
             )
 
 
 
         # ==========================
-        # Smart Money 20%
+        # Smart Money
         # ==========================
 
         smart_conf = smart_money.get(
@@ -458,7 +478,9 @@ class SignalEngine:
             score += 20
 
             details.append(
+
                 "Smart Money قوي"
+
             )
 
 
@@ -469,7 +491,7 @@ class SignalEngine:
 
 
         # ==========================
-        # Opportunity 15%
+        # Opportunity
         # ==========================
 
         opp_conf = opportunity.get(
@@ -486,7 +508,9 @@ class SignalEngine:
             score += 15
 
             details.append(
+
                 "فرصة تداول قوية"
+
             )
 
 
@@ -497,7 +521,7 @@ class SignalEngine:
 
 
         # ==========================
-        # Market Structure 10%
+        # Market Structure
         # ==========================
 
         if market.get(
@@ -512,7 +536,9 @@ class SignalEngine:
             score += 5
 
             details.append(
+
                 "حجم تداول داعم"
+
             )
 
 
@@ -531,7 +557,7 @@ class SignalEngine:
 
 
         # ==========================
-        # News + Fibonacci
+        # News
         # ==========================
 
         if news.get(
@@ -545,16 +571,23 @@ class SignalEngine:
 
             score += 5
 
-
             details.append(
+
                 "الأخبار مؤثرة"
+
             )
 
 
 
+        # ==========================
+        # Fibonacci
+        # ==========================
+
         if fibonacci.get(
 
-            "signal"
+            "signal",
+
+            "WAIT"
 
         ) != "WAIT":
 
@@ -562,13 +595,15 @@ class SignalEngine:
             score += 5
 
             details.append(
-                "فيبوناتشي يدعم منطقة"
+
+                "فيبوناتشي يدعم المنطقة"
+
             )
 
 
 
         # ==========================
-        # Pattern
+        # Patterns
         # ==========================
 
         if patterns.get(
@@ -586,19 +621,17 @@ class SignalEngine:
 
         return (
 
-            min(score,100),
+            min(
+
+                score,
+
+                100
+
+            ),
 
             details
 
         )
-
-
-
-
-
-    # =====================================
-    # كشف الترند المبكر
-    # =====================================
 
 
     def detect_early_trend(
@@ -632,7 +665,6 @@ class SignalEngine:
 
             bullish += 1
 
-
         else:
 
             bearish += 1
@@ -641,7 +673,9 @@ class SignalEngine:
 
         if opportunity.get(
 
-            "signal"
+            "signal",
+
+            "WAIT"
 
         ) == "BUY":
 
@@ -650,7 +684,9 @@ class SignalEngine:
 
         elif opportunity.get(
 
-            "signal"
+            "signal",
+
+            "WAIT"
 
         ) == "SELL":
 
@@ -682,7 +718,7 @@ class SignalEngine:
 
 
 
-        mtf = multi_timeframe.get(
+        mtf_signal = multi_timeframe.get(
 
             "signal",
 
@@ -691,7 +727,7 @@ class SignalEngine:
         )
 
 
-        if mtf in [
+        if mtf_signal in [
 
             "BUY",
 
@@ -703,7 +739,7 @@ class SignalEngine:
 
 
 
-        if mtf in [
+        elif mtf_signal in [
 
             "SELL",
 
@@ -715,24 +751,19 @@ class SignalEngine:
 
 
 
-        if bullish >= 4:
+        if bullish >= 4 and bullish > bearish:
 
             return "EARLY_BULLISH"
 
 
 
-        if bearish >= 4:
+        if bearish >= 4 and bearish > bullish:
 
             return "EARLY_BEARISH"
 
 
 
         return "NO_EARLY_SIGNAL"
-
-
-    # =====================================
-    # اتخاذ القرار النهائي
-    # =====================================
 
 
     def make_decision(
@@ -775,7 +806,6 @@ class SignalEngine:
         # Trend
         # ==========================
 
-
         trend_score = trend.get(
 
             "score",
@@ -790,7 +820,9 @@ class SignalEngine:
             bullish += 2
 
             reasons.append(
+
                 "الاتجاه العام صاعد"
+
             )
 
 
@@ -799,7 +831,9 @@ class SignalEngine:
             bearish += 2
 
             reasons.append(
+
                 "الاتجاه العام هابط"
+
             )
 
 
@@ -807,7 +841,6 @@ class SignalEngine:
         # ==========================
         # Multi Timeframe
         # ==========================
-
 
         mtf_signal = multi_timeframe.get(
 
@@ -829,7 +862,9 @@ class SignalEngine:
             bullish += 3
 
             reasons.append(
-                "كل الفريمات تدعم الصعود"
+
+                "توافق الفريمات يدعم الصعود"
+
             )
 
 
@@ -844,7 +879,9 @@ class SignalEngine:
             bearish += 3
 
             reasons.append(
-                "كل الفريمات تدعم الهبوط"
+
+                "توافق الفريمات يدعم الهبوط"
+
             )
 
 
@@ -852,7 +889,6 @@ class SignalEngine:
         # ==========================
         # Opportunity Engine
         # ==========================
-
 
         opp_signal = opportunity.get(
 
@@ -868,7 +904,9 @@ class SignalEngine:
             bullish += 2
 
             reasons.append(
+
                 "Opportunity Engine BUY"
+
             )
 
 
@@ -877,7 +915,9 @@ class SignalEngine:
             bearish += 2
 
             reasons.append(
+
                 "Opportunity Engine SELL"
+
             )
 
 
@@ -886,48 +926,44 @@ class SignalEngine:
         # Smart Money
         # ==========================
 
-
-        smart_bull = smart_money.get(
+        if smart_money.get(
 
             "bullish",
 
             False
 
-        )
+        ):
+
+            bullish += 2
+
+            reasons.append(
+
+                "Smart Money accumulation"
+
+            )
 
 
-        smart_bear = smart_money.get(
+        if smart_money.get(
 
             "bearish",
 
             False
 
-        )
-
-
-        if smart_bull:
-
-            bullish += 2
-
-            reasons.append(
-                "Smart Money accumulation"
-            )
-
-
-        if smart_bear:
+        ):
 
             bearish += 2
 
             reasons.append(
+
                 "Smart Money distribution"
+
             )
 
 
 
         # ==========================
-        # Prediction
+        # Prediction AI
         # ==========================
-
 
         if prediction.get(
 
@@ -950,7 +986,6 @@ class SignalEngine:
         ):
 
             bearish += 1
-
 
 
 
@@ -958,38 +993,41 @@ class SignalEngine:
         # Fibonacci
         # ==========================
 
+        fib_signal = fibonacci.get(
 
-        if fibonacci.get(
+            "signal",
 
-            "signal"
+            "WAIT"
 
-        ) == "BUY":
+        )
+
+
+        if fib_signal == "BUY":
 
             bullish += 1
 
             reasons.append(
-                "Fibonacci supports BUY"
+
+                "Fibonacci يدعم الشراء"
+
             )
 
 
-        elif fibonacci.get(
-
-            "signal"
-
-        ) == "SELL":
+        elif fib_signal == "SELL":
 
             bearish += 1
 
             reasons.append(
-                "Fibonacci supports SELL"
+
+                "Fibonacci يدعم البيع"
+
             )
 
 
 
         # ==========================
-        # News
+        # News AI
         # ==========================
-
 
         if news.get(
 
@@ -1016,12 +1054,35 @@ class SignalEngine:
 
 
         # ==========================
-        # كشف التعارض
+        # Early Trend
         # ==========================
 
+        if early_trend == "EARLY_BULLISH":
 
-        conflict = False
+            bullish += 1
 
+            reasons.append(
+
+                "بداية اتجاه صاعد مبكر"
+
+            )
+
+
+        elif early_trend == "EARLY_BEARISH":
+
+            bearish += 1
+
+            reasons.append(
+
+                "بداية اتجاه هابط مبكر"
+
+            )
+
+
+
+        # ==========================
+        # Conflict Detection
+        # ==========================
 
         if (
 
@@ -1031,20 +1092,22 @@ class SignalEngine:
 
             bearish >= 4
 
+            and
+
+            abs(
+
+                bullish - bearish
+
+            ) <= 2
+
         ):
-
-            conflict = True
-
 
             warnings.append(
 
-                "تعارض بين التحليلات"
+                "تعارض بين المحركات"
 
             )
 
-
-
-        if conflict:
 
             return (
 
@@ -1052,19 +1115,25 @@ class SignalEngine:
 
                 reasons,
 
-                warnings
+                warnings,
+
+                {
+
+                    "bullish": bullish,
+
+                    "bearish": bearish
+
+                }
 
             )
 
 
 
         # ==========================
-        # قرار نهائي
+        # Final Decision
         # ==========================
 
-
         if bullish >= 5 and bullish > bearish:
-
 
             reasons.append(
 
@@ -1079,14 +1148,21 @@ class SignalEngine:
 
                 reasons,
 
-                warnings
+                warnings,
+
+                {
+
+                    "bullish": bullish,
+
+                    "bearish": bearish
+
+                }
 
             )
 
 
 
         if bearish >= 5 and bearish > bullish:
-
 
             reasons.append(
 
@@ -1101,7 +1177,15 @@ class SignalEngine:
 
                 reasons,
 
-                warnings
+                warnings,
+
+                {
+
+                    "bullish": bullish,
+
+                    "bearish": bearish
+
+                }
 
             )
 
@@ -1120,6 +1204,14 @@ class SignalEngine:
 
             reasons,
 
-            warnings
+            warnings,
+
+            {
+
+                "bullish": bullish,
+
+                "bearish": bearish
+
+            }
 
         )
