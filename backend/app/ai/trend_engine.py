@@ -170,6 +170,31 @@ class TrendEngine:
             )
 
 
+        # ==========================
+        # EMA200 Slope
+        # ==========================
+
+        previous_ema200 = self.indicators.ema(
+            prices[:-1],
+            EMA_LONG
+        ) if len(prices[:-1]) >= EMA_LONG else ema200
+
+        if ema200 > previous_ema200:
+
+            score += 10
+
+            reasons.append(
+                "EMA200 Rising"
+            )
+
+        elif ema200 < previous_ema200:
+
+            score -= 10
+
+            reasons.append(
+                "EMA200 Falling"
+        )
+
 
         # ==========================
         # SMA200
@@ -254,6 +279,30 @@ class TrendEngine:
 
 
         # ==========================
+        # ATR Confirmation
+        # ==========================
+
+        average_atr = self.indicators.atr(
+            candles[:-20]
+        )
+
+        if average_atr > 0:
+
+            if atr > average_atr:
+
+            score += 5
+
+            reasons.append(
+                "ATR confirms movement"
+            )
+
+        else:
+
+            score -= 5
+
+
+
+        # ==========================
         # Trend Result
         # ==========================
 
@@ -287,13 +336,19 @@ class TrendEngine:
 
             "symbol": symbol,
 
+            "market": market,
+            
             "interval": interval,
 
             "price": last_price,
 
             "score": score,
 
-            "trend": trend,
+            "ema20": ema20,
+            "ema50": ema50,
+            "ema100": ema100,
+            "ema200": ema200,
+            "sma200": sma200,
 
             "rsi": rsi,
 
