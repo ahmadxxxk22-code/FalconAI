@@ -193,49 +193,28 @@ class MarketAnalyzer:
             bearish_score > bullish_score
         )
 
-
         return {
 
-    "symbol": symbol,
+            "symbol": symbol,
+            "market": market,
+            "interval": interval,
+            "price": price,
+            "ema": ema,
+            "sma": sma,
+            "rsi": rsi,
+            "macd": macd,
+            "trend_strength": trend,
+            "volatility": volatility,
+            "atr": atr,
+            "momentum": momentum,
+            "volume_power": round(volume_power, 2),
+            "market_state": market_state,
+            "bullish": bullish,
+            "bearish": bearish,
+            "analysis_reasons": reasons,
+            "candles": candles,
 
-    "market": market,
-
-    "interval": interval,
-
-    "price": price,
-
-    "ema": ema,
-
-    "sma": sma,
-
-    "rsi": rsi,
-
-    "macd": macd,
-
-    "trend_strength": trend,
-
-    "volatility": volatility,
-
-    "atr": atr,
-
-    "momentum": momentum,
-
-    "volume_power": round(
-        volume_power,
-        2
-    ),
-
-    "market_state": market_state,
-
-    "bullish": bullish,
-
-    "bearish": bearish,
-
-    "analysis_reasons": reasons,
-
-    "candles": candles
-
-}
+    }
 
 
 
