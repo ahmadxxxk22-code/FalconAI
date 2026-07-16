@@ -288,17 +288,17 @@ class TrendEngine:
 
         if average_atr > 0:
 
-             if atr > average_atr:
+            if atr > average_atr:
 
-             score += 5
+                score += 5
 
-             reasons.append(
-                 "ATR confirms movement"
-             )
+                reasons.append(
+                    "ATR confirms movement"
+                )
 
-         else:
+            else:
 
-             score -= 5
+                score -= 5
 
 
 
