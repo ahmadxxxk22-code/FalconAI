@@ -291,7 +291,17 @@ class SignalEngine:
 
             smart_money,
 
-            multi_timeframe
+            multi_timeframe,
+
+            volume_analysis,
+
+            liquidity_analysis,
+
+            order_blocks_analysis,
+
+            candle_analysis,
+
+            historical_analysis
 
         )
 
