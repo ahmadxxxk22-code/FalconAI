@@ -189,11 +189,11 @@ class TrendEngine:
 
         elif ema200 < previous_ema200:
 
-            score -= 10
+             score -= 10
 
-            reasons.append(
-                "EMA200 Falling"
-        )
+             reasons.append(
+                 "EMA200 Falling"
+             )
 
 
         # ==========================
@@ -288,17 +288,17 @@ class TrendEngine:
 
         if average_atr > 0:
 
-            if atr > average_atr:
+             if atr > average_atr:
 
-            score += 5
+             score += 5
 
-            reasons.append(
-                "ATR confirms movement"
-            )
+             reasons.append(
+                 "ATR confirms movement"
+             )
 
-        else:
+         else:
 
-            score -= 5
+             score -= 5
 
 
 
