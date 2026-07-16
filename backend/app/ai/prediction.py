@@ -1317,3 +1317,150 @@ class PredictionEngine:
             "reasons": reasons
 
         }
+
+
+
+    # ==========================
+    # Final Prediction Pipeline
+    # ==========================
+
+    def final_prediction(
+        self,
+        symbol="BTCUSDT",
+        interval="1h",
+        market="crypto",
+        smart_money=None,
+        liquidity=None,
+        order_blocks=None
+    ):
+
+        market_data = self.market.analyze(
+            symbol=symbol,
+            interval=interval,
+            market=market
+        )
+
+
+        trend_data = self.trend.analyze(
+            symbol=symbol,
+            interval=interval,
+            market=market
+        )
+
+
+        candles = market_data.get(
+            "candles",
+            []
+        )
+
+
+        opportunity = self.opportunity.analyze(
+            symbol=symbol,
+            candles=candles
+        )
+
+
+        fusion = self.advanced_fusion(
+            market_data,
+            trend_data,
+            smart_money,
+            liquidity,
+            order_blocks
+        )
+
+
+        score = fusion.get(
+            "score",
+            0
+        )
+
+
+        confidence = fusion.get(
+            "confidence",
+            0
+        )
+
+
+        signal = "WAIT"
+
+
+        if score >= 40:
+            signal = "BUY"
+
+
+        elif score <= -40:
+            signal = "SELL"
+
+
+
+        opportunity_signal = opportunity.get(
+            "signal",
+            "WAIT"
+        )
+
+
+        if signal == "WAIT":
+
+            if opportunity_signal == "BUY":
+                signal = "BUY"
+
+            elif opportunity_signal == "SELL":
+                signal = "SELL"
+
+
+
+        return {
+
+            "symbol": symbol,
+
+            "market": market,
+
+            "interval": interval,
+
+            "signal": signal,
+
+            "confidence": confidence,
+
+            "fusion_score": score,
+
+            "direction": fusion.get(
+                "direction"
+            ),
+
+            "reasons": fusion.get(
+                "reasons",
+                []
+            ),
+
+            "price": market_data.get(
+                "price",
+                0
+            ),
+
+            "rsi": market_data.get(
+                "rsi",
+                0
+            ),
+
+            "macd": market_data.get(
+                "macd",
+                0
+            ),
+
+            "momentum": market_data.get(
+                "momentum",
+                0
+            ),
+
+            "volume": market_data.get(
+                "volume_power",
+                0
+            ),
+
+            "market_analysis": market_data,
+
+            "trend_analysis": trend_data,
+
+            "opportunity": opportunity
+
+            }
