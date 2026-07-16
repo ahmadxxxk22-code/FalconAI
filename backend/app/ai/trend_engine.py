@@ -150,6 +150,28 @@ class TrendEngine:
 
 
         # ==========================
+        # EMA Alignment
+        # ==========================
+
+        if ema20 > ema50 > ema100 > ema200:
+
+            score += 15
+
+            reasons.append(
+                "EMA Alignment Bullish"
+            )
+
+        elif ema20 < ema50 < ema100 < ema200:
+
+            score -= 15
+
+            reasons.append(
+                "EMA Alignment Bearish"
+            )
+
+
+
+        # ==========================
         # SMA200
         # ==========================
 
