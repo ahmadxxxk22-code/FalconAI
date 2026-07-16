@@ -1230,38 +1230,27 @@ class SignalEngine:
 
                 bearish += 1
 
-
+    
 
         # ==========================
         # Historical Learning
         # ==========================
 
         if historical_analysis:
-
-
+ 
             if historical_analysis.get(
-
                 "bullish",
-
                 False
-
             ):
-
-
                 bullish += 1
-
-
+                reasons.append("التاريخ يدعم الصعود")
 
             if historical_analysis.get(
-
                 "bearish",
-
                 False
-
             ):
-
-
                 bearish += 1
+                reasons.append("التاريخ يدعم الهبوط")
 
 
 
