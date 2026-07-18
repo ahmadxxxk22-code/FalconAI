@@ -1068,30 +1068,6 @@ class SignalEngine:
 
 
         # ==========================
-        # Liquidity Analysis
-        # ==========================
-
-        if liquidity_analysis:
-
-            if liquidity_analysis.get("bullish", False):
-
-                bullish += 1
-
-                reasons.append(
-                    "السيولة تشير للصعود"
-                )
-
-
-            if liquidity_analysis.get("bearish", False):
-
-                bearish += 1
-
-                reasons.append(
-                    "السيولة تشير للهبوط"
-                )
-
-
-        # ==========================
         # Order Blocks
         # ==========================
 
