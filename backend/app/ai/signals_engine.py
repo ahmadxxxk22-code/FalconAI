@@ -68,11 +68,6 @@ class SignalEngine:
         self.multi_timeframe = MultiTimeframeEngine()
 
 
-
-        # ==========================
-        # التحليلات الإضافية
-        # ==========================
-
         # تحليل الحجم
         self.volume = VolumeEngine()
 
@@ -91,7 +86,6 @@ class SignalEngine:
 
         # التعلم التاريخي
         self.history = HistoricalLearning()
-
 
 
     # =====================================
@@ -133,11 +127,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # التحليلات الإضافية
-        # ==========================
-
-
         volume_analysis = self.volume.analyze(
 
             candles
@@ -173,7 +162,6 @@ class SignalEngine:
         )
 
 
-
         trend = self.trend.analyze(
 
             symbol=symbol,
@@ -185,7 +173,6 @@ class SignalEngine:
         )
 
 
-
         multi_timeframe = self.multi_timeframe.analyze(
 
             symbol=symbol,
@@ -195,21 +182,16 @@ class SignalEngine:
         )
 
 
-
         if len(candles) < 50:
 
 
             opportunity = {
 
-
                 "signal": "WAIT",
-
 
                 "confidence": 0,
 
-
                 "score": 0,
-
 
                 "reasons": [
 
@@ -241,7 +223,6 @@ class SignalEngine:
         )
 
 
-
         prediction = self.prediction.predict(
 
             symbol=symbol,
@@ -253,7 +234,6 @@ class SignalEngine:
         )
 
 
-
         patterns = self.patterns.analyze(
 
             symbol,
@@ -261,7 +241,6 @@ class SignalEngine:
             interval
 
         )
-
 
 
         fibonacci = self.fibonacci.analyze(
@@ -273,7 +252,6 @@ class SignalEngine:
         )
 
 
-
         news = self.news.analyze(
 
             symbol
@@ -283,6 +261,7 @@ class SignalEngine:
 
 
         # كشف بداية الاتجاه قبل ظهوره
+
         early_trend = self.detect_early_trend(
 
             market_data,
@@ -375,8 +354,6 @@ class SignalEngine:
 
 
 
-        # WAIT لا يحمل ثقة عالية
-
         if direction == "WAIT":
 
             confidence = min(
@@ -447,33 +424,23 @@ class SignalEngine:
 
         return {
 
-
             "symbol": symbol,
-
 
             "interval": interval,
 
-
             "market": market,
-
 
             "direction": direction,
 
-
             "confidence": confidence,
-
 
             "confidence_details": confidence_details,
 
-
             "decision_reasons": reasons,
-
 
             "warnings": warnings,
 
-
             "signal_strength": scores,
-
 
             "early_trend": early_trend,
 
@@ -514,7 +481,6 @@ class SignalEngine:
             "news": news,
 
 
-            # التحليلات الجديدة
             "volume_analysis": volume_analysis,
 
 
@@ -536,6 +502,7 @@ class SignalEngine:
             "created_at": datetime.utcnow().isoformat()
 
         }
+
 
 
     def calculate_confidence(
@@ -579,10 +546,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Trend
-        # ==========================
-
         trend_score = abs(
 
             trend.get(
@@ -619,10 +582,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Multi Timeframe
-        # ==========================
-
         mtf_conf = multi_timeframe.get(
 
             "confidence",
@@ -655,10 +614,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Smart Money
-        # ==========================
-
         smart_conf = smart_money.get(
 
             "confidence",
@@ -684,10 +639,6 @@ class SignalEngine:
             score += 10
 
 
-
-        # ==========================
-        # Opportunity Engine
-        # ==========================
 
         opp_conf = opportunity.get(
 
@@ -715,10 +666,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Market Structure
-        # ==========================
-
         if market.get(
 
             "volume_power",
@@ -726,7 +673,6 @@ class SignalEngine:
             0
 
         ) > 1:
-
 
             score += 5
 
@@ -737,6 +683,7 @@ class SignalEngine:
             )
 
 
+
         if market.get(
 
             "momentum",
@@ -745,23 +692,20 @@ class SignalEngine:
 
         ) > 0:
 
-
             score += 5
 
 
 
-        # ==========================
-        # News / Economy
-        # ==========================
-
-        if news.get(
+        news_conf = news.get(
 
             "confidence",
 
             0
 
-        ) >= 70:
+        )
 
+
+        if news_conf >= 70:
 
             score += 5
 
@@ -773,10 +717,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Fibonacci
-        # ==========================
-
         if fibonacci.get(
 
             "signal",
@@ -784,7 +724,6 @@ class SignalEngine:
             "WAIT"
 
         ) != "WAIT":
-
 
             score += 5
 
@@ -796,10 +735,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Patterns
-        # ==========================
-
         if patterns.get(
 
             "confidence",
@@ -807,7 +742,6 @@ class SignalEngine:
             0
 
         ) >= 30:
-
 
             score += 5
 
@@ -819,10 +753,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Volume AI
-        # ==========================
-
         if volume_analysis.get(
 
             "signal",
@@ -830,7 +760,6 @@ class SignalEngine:
             "WAIT"
 
         ) != "WAIT":
-
 
             score += 5
 
@@ -842,10 +771,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Liquidity
-        # ==========================
-
         if liquidity_analysis.get(
 
             "signal",
@@ -853,7 +778,6 @@ class SignalEngine:
             "WAIT"
 
         ) != "WAIT":
-
 
             score += 5
 
@@ -865,10 +789,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Order Blocks
-        # ==========================
-
         if order_blocks_analysis.get(
 
             "signal",
@@ -876,7 +796,6 @@ class SignalEngine:
             "WAIT"
 
         ) != "WAIT":
-
 
             score += 5
 
@@ -887,11 +806,6 @@ class SignalEngine:
             )
 
 
-
-        # ==========================
-        # Candle AI
-        # ==========================
-
         if candle_analysis.get(
 
             "confidence",
@@ -899,7 +813,6 @@ class SignalEngine:
             0
 
         ) >= 60:
-
 
             score += 5
 
@@ -911,10 +824,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Historical Learning
-        # ==========================
-
         if historical_analysis.get(
 
             "confidence",
@@ -922,7 +831,6 @@ class SignalEngine:
             0
 
         ) >= 60:
-
 
             score += 5
 
@@ -946,7 +854,8 @@ class SignalEngine:
 
             details
 
-            )
+        )
+
 
 
     def detect_early_trend(
@@ -979,11 +888,6 @@ class SignalEngine:
         bearish = 0
 
 
-
-        # ==========================
-        # Momentum
-        # ==========================
-
         if market.get(
 
             "momentum",
@@ -991,7 +895,6 @@ class SignalEngine:
             0
 
         ) > 0:
-
 
             bullish += 1
 
@@ -1002,10 +905,6 @@ class SignalEngine:
 
 
 
-        # ==========================
-        # Opportunity Engine
-        # ==========================
-
         if opportunity.get(
 
             "signal",
@@ -1013,7 +912,6 @@ class SignalEngine:
             "WAIT"
 
         ) == "BUY":
-
 
             bullish += 2
 
@@ -1026,14 +924,9 @@ class SignalEngine:
 
         ) == "SELL":
 
-
             bearish += 2
 
 
-
-        # ==========================
-        # Smart Money
-        # ==========================
 
         if smart_money.get(
 
@@ -1042,7 +935,6 @@ class SignalEngine:
             False
 
         ):
-
 
             bullish += 2
 
@@ -1056,14 +948,9 @@ class SignalEngine:
 
         ):
 
-
             bearish += 2
 
 
-
-        # ==========================
-        # Multi Timeframe
-        # ==========================
 
         mtf_signal = multi_timeframe.get(
 
@@ -1082,9 +969,7 @@ class SignalEngine:
 
         ]:
 
-
             bullish += 1
-
 
 
         elif mtf_signal in [
@@ -1095,17 +980,11 @@ class SignalEngine:
 
         ]:
 
-
             bearish += 1
 
 
 
-        # ==========================
-        # Volume AI
-        # ==========================
-
         if volume_analysis:
-
 
             if volume_analysis.get(
 
@@ -1115,9 +994,7 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
-
 
 
             if volume_analysis.get(
@@ -1128,18 +1005,12 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
 
 
-
-        # ==========================
-        # Liquidity
-        # ==========================
 
         if liquidity_analysis:
 
-
             if liquidity_analysis.get(
 
                 "bullish",
@@ -1148,9 +1019,7 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
-
 
 
             if liquidity_analysis.get(
@@ -1161,18 +1030,12 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
 
 
-
-        # ==========================
-        # Order Blocks
-        # ==========================
 
         if order_blocks_analysis:
 
-
             if order_blocks_analysis.get(
 
                 "bullish",
@@ -1181,9 +1044,7 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
-
 
 
             if order_blocks_analysis.get(
@@ -1194,18 +1055,12 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
 
 
-
-        # ==========================
-        # Candle AI
-        # ==========================
 
         if candle_analysis:
 
-
             if candle_analysis.get(
 
                 "bullish",
@@ -1214,9 +1069,7 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
-
 
 
             if candle_analysis.get(
@@ -1227,36 +1080,34 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
 
-    
 
-        # ==========================
-        # Historical Learning
-        # ==========================
 
         if historical_analysis:
- 
+
             if historical_analysis.get(
+
                 "bullish",
+
                 False
+
             ):
+
                 bullish += 1
-                reasons.append("التاريخ يدعم الصعود")
+
 
             if historical_analysis.get(
+
                 "bearish",
+
                 False
+
             ):
+
                 bearish += 1
-                reasons.append("التاريخ يدعم الهبوط")
 
 
-
-        # ==========================
-        # النتيجة المبكرة
-        # ==========================
 
         if bullish >= 5 and bullish > bearish:
 
@@ -1271,6 +1122,51 @@ class SignalEngine:
 
 
         return "NO_EARLY_SIGNAL"
+
+
+
+    def make_decision(
+
+        self,
+
+        trend,
+
+        multi_timeframe,
+
+        opportunity,
+
+        smart_money,
+
+        prediction,
+
+        market,
+
+        fibonacci,
+
+        news,
+
+        early_trend,
+
+        volume_analysis=None,
+
+        liquidity_analysis=None,
+
+        order_blocks_analysis=None,
+
+        candle_analysis=None,
+
+        historical_analysis=None
+
+    ):
+
+        bullish = 0
+
+        bearish = 0
+
+
+        reasons = []
+
+        warnings = []
 
 
     def make_decision(
@@ -1334,9 +1230,7 @@ class SignalEngine:
 
         if trend_score > 0:
 
-
             bullish += 2
-
 
             reasons.append(
 
@@ -1347,9 +1241,7 @@ class SignalEngine:
 
         elif trend_score < 0:
 
-
             bearish += 2
-
 
             reasons.append(
 
@@ -1380,16 +1272,13 @@ class SignalEngine:
 
         ]:
 
-
             bullish += 3
-
 
             reasons.append(
 
                 "توافق الفريمات يدعم الصعود"
 
             )
-
 
 
         elif mtf_signal in [
@@ -1400,9 +1289,7 @@ class SignalEngine:
 
         ]:
 
-
             bearish += 3
-
 
             reasons.append(
 
@@ -1416,7 +1303,7 @@ class SignalEngine:
         # Opportunity Engine
         # ==========================
 
-        opp_signal = opportunity.get(
+        opportunity_signal = opportunity.get(
 
             "signal",
 
@@ -1425,11 +1312,9 @@ class SignalEngine:
         )
 
 
-        if opp_signal == "BUY":
-
+        if opportunity_signal == "BUY":
 
             bullish += 2
-
 
             reasons.append(
 
@@ -1438,11 +1323,9 @@ class SignalEngine:
             )
 
 
-        elif opp_signal == "SELL":
-
+        elif opportunity_signal == "SELL":
 
             bearish += 2
-
 
             reasons.append(
 
@@ -1464,16 +1347,13 @@ class SignalEngine:
 
         ):
 
-
             bullish += 2
-
 
             reasons.append(
 
                 "Smart Money accumulation"
 
             )
-
 
 
         if smart_money.get(
@@ -1484,9 +1364,7 @@ class SignalEngine:
 
         ):
 
-
             bearish += 2
-
 
             reasons.append(
 
@@ -1508,9 +1386,7 @@ class SignalEngine:
 
         ):
 
-
             bullish += 1
-
 
 
         if prediction.get(
@@ -1521,9 +1397,7 @@ class SignalEngine:
 
         ):
 
-
             bearish += 1
-
 
 
         # ==========================
@@ -1541,9 +1415,7 @@ class SignalEngine:
 
         if fib_signal == "BUY":
 
-
             bullish += 1
-
 
             reasons.append(
 
@@ -1552,12 +1424,9 @@ class SignalEngine:
             )
 
 
-
         elif fib_signal == "SELL":
 
-
             bearish += 1
-
 
             reasons.append(
 
@@ -1579,9 +1448,14 @@ class SignalEngine:
 
         ):
 
-
             bullish += 1
 
+
+            reasons.append(
+
+                "الأخبار تدعم الصعود"
+
+            )
 
 
         if news.get(
@@ -1592,8 +1466,14 @@ class SignalEngine:
 
         ):
 
-
             bearish += 1
+
+
+            reasons.append(
+
+                "الأخبار تدعم الهبوط"
+
+            )
 
 
 
@@ -1603,9 +1483,7 @@ class SignalEngine:
 
         if early_trend == "EARLY_BULLISH":
 
-
             bullish += 1
-
 
             reasons.append(
 
@@ -1614,12 +1492,9 @@ class SignalEngine:
             )
 
 
-
         elif early_trend == "EARLY_BEARISH":
 
-
             bearish += 1
-
 
             reasons.append(
 
@@ -1630,11 +1505,10 @@ class SignalEngine:
 
 
         # ==========================
-        # Volume AI
+        # Volume Analysis
         # ==========================
 
         if volume_analysis:
-
 
             if volume_analysis.get(
 
@@ -1644,16 +1518,13 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
-
 
                 reasons.append(
 
                     "الحجم يدعم الصعود"
 
                 )
-
 
 
             if volume_analysis.get(
@@ -1664,9 +1535,7 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
-
 
                 reasons.append(
 
@@ -1677,11 +1546,10 @@ class SignalEngine:
 
 
         # ==========================
-        # Liquidity
+        # Liquidity Analysis
         # ==========================
 
         if liquidity_analysis:
-
 
             if liquidity_analysis.get(
 
@@ -1691,16 +1559,13 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
-
 
                 reasons.append(
 
                     "السيولة تشير للصعود"
 
                 )
-
 
 
             if liquidity_analysis.get(
@@ -1711,9 +1576,7 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
-
 
                 reasons.append(
 
@@ -1729,7 +1592,6 @@ class SignalEngine:
 
         if order_blocks_analysis:
 
-
             if order_blocks_analysis.get(
 
                 "bullish",
@@ -1738,16 +1600,13 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
-
 
                 reasons.append(
 
                     "Bullish Order Block"
 
                 )
-
 
 
             if order_blocks_analysis.get(
@@ -1758,15 +1617,13 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
-
 
                 reasons.append(
 
                     "Bearish Order Block"
 
-                )
+            )
 
 
 
@@ -1776,7 +1633,6 @@ class SignalEngine:
 
         if candle_analysis:
 
-
             if candle_analysis.get(
 
                 "bullish",
@@ -1785,16 +1641,13 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
-
 
                 reasons.append(
 
                     "شموع تدعم الشراء"
 
                 )
-
 
 
             if candle_analysis.get(
@@ -1805,9 +1658,7 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
-
 
                 reasons.append(
 
@@ -1823,7 +1674,6 @@ class SignalEngine:
 
         if historical_analysis:
 
-
             if historical_analysis.get(
 
                 "bullish",
@@ -1832,9 +1682,13 @@ class SignalEngine:
 
             ):
 
-
                 bullish += 1
 
+                reasons.append(
+
+                    "التاريخ يدعم الصعود"
+
+                )
 
 
             if historical_analysis.get(
@@ -1845,8 +1699,13 @@ class SignalEngine:
 
             ):
 
-
                 bearish += 1
+
+                reasons.append(
+
+                    "التاريخ يدعم الهبوط"
+
+                )
 
 
 
@@ -1867,7 +1726,6 @@ class SignalEngine:
             abs(bullish - bearish) <= 2
 
         ):
-
 
             warnings.append(
 
@@ -1895,13 +1753,11 @@ class SignalEngine:
             )
 
 
-
         # ==========================
         # Final Decision
         # ==========================
 
         if bullish >= 6 and bullish > bearish:
-
 
             reasons.append(
 
@@ -1931,7 +1787,6 @@ class SignalEngine:
 
 
         if bearish >= 6 and bearish > bullish:
-
 
             reasons.append(
 
@@ -1983,4 +1838,53 @@ class SignalEngine:
 
             }
 
-            )
+        )
+
+
+
+    def get_engine_status(self) -> Dict[str, Any]:
+        """
+        حالة محرك الإشارات
+        """
+
+        return {
+
+            "engine": "SignalEngine",
+
+            "status": "running",
+
+            "modules": {
+
+                "market": True,
+
+                "trend": True,
+
+                "patterns": True,
+
+                "smart_money": True,
+
+                "prediction": True,
+
+                "risk": True,
+
+                "news": True,
+
+                "fibonacci": True,
+
+                "opportunity": True,
+
+                "multi_timeframe": True,
+
+                "volume": True,
+
+                "liquidity": True,
+
+                "order_blocks": True,
+
+                "candles_ai": True,
+
+                "historical_learning": True
+
+            }
+
+        }
