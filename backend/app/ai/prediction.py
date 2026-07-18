@@ -634,27 +634,54 @@ class PredictionEngine:
 
 
 
-    # ==================================================
-    # MARKET REGIME DETECTOR
-    # ==================================================
+        # ==================================================
+        # MARKET REGIME DETECTOR
+        # ==================================================
 
-    def detect_market_regime(
-        self,
-        market_data,
-        trend_data
-    ):
-
-
-        trend = trend_data.get(
-
-            "trend",
-
-            "SIDEWAYS"
-
-        )
+        def detect_market_regime(
+            self,
+            market_data,
+            trend_data
+        ):
 
 
-        volatility =
+            trend = trend_data.get(
+
+                "trend",
+ 
+                "SIDEWAYS"
+
+           )
+
+
+        volatility = market_data.get(
+
+             "volatility",
+
+             0
+
+         )
+
+
+        if trend in [
+
+            "STRONG_BULL",
+
+            "STRONG_BEAR"
+
+        ]:
+
+            return "TRENDING"
+
+
+
+        if volatility > 3:
+
+            return "HIGH_VOLATILITY"
+
+
+
+        return "RANGE"    
 
 
 
