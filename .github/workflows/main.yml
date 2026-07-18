@@ -35,3 +35,8 @@ jobs:
         run: |
           cd backend
           python -c "from main import app; print('FalconAI API OK')"
+
+      - name: FastAPI Routes Test
+        run: |
+          cd backend
+          python -c "from main import app; print([r.path for r in app.routes])"
