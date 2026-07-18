@@ -28,7 +28,7 @@ ccxt
 
 beautifulsoup4
 lxml
-
+feedparser
 passlib[bcrypt]
 python-jose[cryptography]
 email-validator
