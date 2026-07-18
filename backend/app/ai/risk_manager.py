@@ -5,6 +5,8 @@ class RiskManager:
 
     def __init__(self):
 
+        self.max_position_percent = 10
+
         self.market_settings = {
 
             "crypto": {
@@ -57,6 +59,148 @@ class RiskManager:
 
         }
 
+
+
+    # ==========================================
+    # Dynamic Position Size
+    # ==========================================
+
+    def calculate_position_size(
+        self,
+        balance,
+        risk_amount,
+        stop_distance
+    ):
+
+        if stop_distance <= 0:
+            return 0
+
+        position = risk_amount / stop_distance
+
+        max_position = balance * (
+            self.max_position_percent / 100
+        )
+
+        return round(
+            min(position, max_position),
+            6
+        )
+
+
+
+    # ==========================================
+    # Risk Reward
+    # ==========================================
+
+    def calculate_rr(
+        self,
+        entry,
+        stop,
+        target
+    ):
+
+        risk = fabs(
+            entry - stop
+        )
+
+        reward = fabs(
+            target - entry
+        )
+
+        if risk <= 0:
+            return 0
+
+        return round(
+            reward / risk,
+            2
+        )
+
+
+    # ==========================================
+    # Trade Grade
+    # ==========================================
+
+    def trade_grade(
+        self,
+        confidence,
+        rr,
+        trend_strength
+    ):
+
+        score = 0
+
+        score += confidence * 0.6
+        score += rr * 15
+        score += abs(trend_strength) * 8
+
+        if score >= 95:
+            return "A+"
+
+        if score >= 85:
+            return "A"
+
+        if score >= 75:
+            return "B"
+
+        if score >= 65:
+            return "C"
+
+        return "D"
+
+
+    # ==========================================
+    # Breakeven
+    # ==========================================
+
+    def breakeven_price(
+        self,
+        entry,
+        stop
+    ):
+
+        risk = fabs(
+            entry - stop
+        )
+
+        return round(
+            entry + risk,
+            4
+        )
+
+
+    # ==========================================
+    # Trailing Stop
+    # ==========================================
+
+    def trailing_stop(
+        self,
+        direction,
+        current_price,
+        atr
+    ):
+
+        if direction == "BUY":
+
+            return round(
+                current_price - atr,
+                4
+            )
+
+        if direction == "SELL":
+
+            return round(
+                current_price + atr,
+                4
+            )
+
+        return None
+
+
+
+    # ==========================================
+    # MAIN RISK CALCULATION
+    # ==========================================
+
     def calculate(
         self,
         direction,
@@ -95,26 +239,46 @@ class RiskManager:
         multiplier = settings["atr_multiplier"]
 
         trade_allowed = True
+
         reasons = []
 
         smart_money = smart_money or {}
+
         fibonacci = fibonacci or {}
 
         if confidence < 60:
+
             trade_allowed = False
-            reasons.append("Low confidence")
+
+            reasons.append(
+                "Low confidence"
+            )
 
         if market_state == "SIDEWAYS":
+
             trade_allowed = False
-            reasons.append("Sideways market")
+
+            reasons.append(
+                "Sideways market"
+            )
 
         if abs(trend_strength) < 0.5:
+
             trade_allowed = False
-            reasons.append("Weak trend")
+
+            reasons.append(
+                "Weak trend"
+            )
 
         if direction == "WAIT":
+
             trade_allowed = False
-            reasons.append("No entry signal")
+
+            reasons.append(
+                "No entry signal"
+            )
+
+
 
         if direction == "BUY":
 
@@ -159,15 +323,20 @@ class RiskManager:
         else:
 
             entry = None
+
             stop_loss = None
+
             take_profit_1 = None
+
             take_profit_2 = None
+
             take_profit_3 = None
 
 
         if entry is None:
 
             position_size = 0
+
             risk_reward = 0
 
         else:
@@ -176,37 +345,56 @@ class RiskManager:
                 entry - stop_loss
             )
 
-            if stop_distance < 0.00000001:
-                stop_distance = 0.00000001
-
-            position_size = (
-                risk_amount /
+            position_size = self.calculate_position_size(
+                balance,
+                risk_amount,
                 stop_distance
             )
 
-            reward = fabs(
-                take_profit_2 -
-                entry
+            risk_reward = self.calculate_rr(
+                entry,
+                stop_loss,
+                take_profit_2
             )
 
-            risk_reward = round(
-                reward /
-                stop_distance,
-                2
+
+
+        grade = self.trade_grade(
+            confidence,
+            risk_reward,
+            trend_strength
+        )
+
+        breakeven = None
+
+        trailing = None
+
+        if entry is not None:
+
+            breakeven = self.breakeven_price(
+                entry,
+                stop_loss
             )
 
-            if risk_reward < 1.5:
+            trailing = self.trailing_stop(
+                direction,
+                entry,
+                atr
+            )
 
-                trade_allowed = False
+        if risk_reward < 1.5:
 
-                reasons.append(
-                    "Poor risk reward"
-                )
+            trade_allowed = False
+
+            reasons.append(
+                "Poor risk reward"
+            )
 
         if smart_money.get(
             "bullish",
             False
         ):
+
             reasons.append(
                 "Smart Money Bullish"
             )
@@ -215,6 +403,7 @@ class RiskManager:
             "bearish",
             False
         ):
+
             reasons.append(
                 "Smart Money Bearish"
             )
@@ -222,9 +411,25 @@ class RiskManager:
         if fibonacci.get(
             "signal"
         ):
+
             reasons.append(
                 f"Fibonacci: {fibonacci['signal']}"
             )
+
+        if volatility > atr * 2:
+
+            reasons.append(
+                "High volatility"
+            )
+
+        elif volatility < atr * 0.5:
+
+            reasons.append(
+                "Low volatility"
+            )
+
+
+
         return {
 
             "direction": direction,
@@ -259,14 +464,31 @@ class RiskManager:
                 else None
             ),
 
+            "breakeven": (
+                round(breakeven, 4)
+                if breakeven is not None
+                else None
+            ),
+
+            "trailing_stop": (
+                round(trailing, 4)
+                if trailing is not None
+                else None
+            ),
+
             "atr": round(
                 atr,
                 4
             ),
 
+            "volatility": round(
+                volatility,
+                4
+            ),
+
             "position_size": round(
                 position_size,
-                4
+                6
             ),
 
             "risk_percent": risk_percent,
@@ -278,6 +500,8 @@ class RiskManager:
 
             "risk_reward": risk_reward,
 
+            "grade": grade,
+
             "confidence": confidence,
 
             "market_state": market_state,
@@ -285,5 +509,4 @@ class RiskManager:
             "trade_allowed": trade_allowed,
 
             "reasons": reasons
-
         }
