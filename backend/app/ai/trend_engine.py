@@ -1,3 +1,5 @@
+from typing import Dict
+
 from app.services.market_data import MarketData
 from app.services.indicator_engine import IndicatorEngine
 
@@ -22,135 +24,195 @@ class TrendEngine:
     def __init__(self):
 
         self.market = MarketData()
+
         self.indicators = IndicatorEngine()
+
+        self.weights = {
+
+            "ema": 25,
+
+            "trend": 25,
+
+            "macd": 15,
+
+            "rsi": 10,
+
+            "momentum": 10,
+
+            "adx": 10,
+
+            "volume": 5
+
+        }
 
 
     def analyze(
+
         self,
+
         symbol="BTCUSDT",
+
         interval="1h",
+
         market="crypto"
-    ):
+
+    ) -> Dict:
+
 
         prices = self.market.get_close_prices(
+
             symbol=symbol,
+
             interval=interval,
-            limit=400,
+
+            limit=500,
+
             market=market
+
         )
 
+
         candles = self.market.get_candles(
+
             symbol=symbol,
+
             interval=interval,
-            limit=400,
+
+            limit=500,
+
             market=market
+
         )
 
 
         if len(prices) < EMA_LONG:
+
             raise Exception(
+
                 "Not enough candles."
+
             )
 
 
         last_price = prices[-1]
 
 
-        ema20 = self.indicators.ema(
-            prices,
-            EMA_FAST
-        )
+        ema20 = self.indicators.ema(prices, EMA_FAST)
 
-        ema50 = self.indicators.ema(
-            prices,
-            EMA_MEDIUM
-        )
+        ema50 = self.indicators.ema(prices, EMA_MEDIUM)
 
-        ema100 = self.indicators.ema(
-            prices,
-            EMA_SLOW
-        )
+        ema100 = self.indicators.ema(prices, EMA_SLOW)
 
-        ema200 = self.indicators.ema(
-            prices,
-            EMA_LONG
-        )
+        ema200 = self.indicators.ema(prices, EMA_LONG)
+
+        sma200 = self.indicators.sma(prices, SMA_LONG)
 
 
-        sma200 = self.indicators.sma(
-            prices,
-            SMA_LONG
-        )
+        rsi = self.indicators.rsi(prices)
+
+        macd = self.indicators.macd(prices)
+
+        momentum = self.indicators.momentum(prices)
+
+        atr = self.indicators.atr(candles)
+
+        trend_strength = self.indicators.trend_strength(prices)
+
+        volatility = self.indicators.volatility(prices)
 
 
-        rsi = self.indicators.rsi(
-            prices
-        )
+        try:
 
-        macd = self.indicators.macd(
-            prices
-        )
+            adx = self.indicators.adx(candles)
 
-        momentum = self.indicators.momentum(
-            prices
-        )
+        except Exception:
 
-        atr = self.indicators.atr(
-            candles
-        )
+            adx = 0
 
-        trend_strength = self.indicators.trend_strength(
-            prices
-        )
+
+        try:
+
+            volume_ratio = self.indicators.volume_ratio(
+
+                [
+
+                    candle["volume"]
+
+                    for candle in candles
+
+                ]
+
+            )
+
+        except Exception:
+
+            volume_ratio = 1
 
 
         score = 0
+
         reasons = []
 
 
+
         # ==========================
-        # EMA Score
+        # EMA SCORE
         # ==========================
 
         if last_price > ema20:
+
             score += 5
+
             reasons.append(
                 "Price above EMA20"
             )
+
         else:
+
             score -= 5
 
 
         if last_price > ema50:
-            score += 10
+
+            score += 8
+
             reasons.append(
                 "Price above EMA50"
             )
+
         else:
-            score -= 10
+
+            score -= 8
 
 
         if last_price > ema100:
-            score += 15
+
+            score += 10
+
             reasons.append(
                 "Price above EMA100"
             )
+
         else:
-            score -= 15
+
+            score -= 10
 
 
         if last_price > ema200:
-            score += 20
+
+            score += self.weights["ema"]
+
             reasons.append(
                 "Price above EMA200"
             )
-        else:
-            score -= 20
 
+        else:
+
+            score -= self.weights["ema"]
 
 
         # ==========================
-        # EMA Alignment
+        # EMA ALIGNMENT
         # ==========================
 
         if ema20 > ema50 > ema100 > ema200:
@@ -158,7 +220,7 @@ class TrendEngine:
             score += 15
 
             reasons.append(
-                "EMA Alignment Bullish"
+                "Bullish EMA Alignment"
             )
 
         elif ema20 < ema50 < ema100 < ema200:
@@ -166,18 +228,18 @@ class TrendEngine:
             score -= 15
 
             reasons.append(
-                "EMA Alignment Bearish"
+                "Bearish EMA Alignment"
             )
 
 
         # ==========================
-        # EMA200 Slope
+        # EMA200 SLOPE
         # ==========================
 
         previous_ema200 = self.indicators.ema(
             prices[:-1],
             EMA_LONG
-        ) if len(prices[:-1]) >= EMA_LONG else ema200
+        )
 
         if ema200 > previous_ema200:
 
@@ -189,11 +251,11 @@ class TrendEngine:
 
         elif ema200 < previous_ema200:
 
-             score -= 10
+            score -= 10
 
-             reasons.append(
-                 "EMA200 Falling"
-             )
+            reasons.append(
+                "EMA200 Falling"
+            )
 
 
         # ==========================
@@ -201,12 +263,43 @@ class TrendEngine:
         # ==========================
 
         if last_price > sma200:
+
             score += 10
+
             reasons.append(
                 "Above SMA200"
             )
+
         else:
+
             score -= 10
+
+
+        # ==========================
+        # ADX
+        # ==========================
+
+        if adx >= 30:
+
+            score += self.weights["adx"]
+
+            reasons.append(
+                "Strong Trend (ADX)"
+            )
+
+        elif adx >= 20:
+
+            score += 5
+
+            reasons.append(
+                "Medium Trend (ADX)"
+            )
+
+        else:
+
+            reasons.append(
+                "Weak Trend"
+            )
 
 
 
@@ -214,32 +307,37 @@ class TrendEngine:
         # RSI
         # ==========================
 
-        if rsi < RSI_OVERSOLD:
+        if rsi <= RSI_OVERSOLD:
 
-            score += 15
+            score += self.weights["rsi"]
 
             reasons.append(
                 "RSI Oversold"
             )
 
+        elif rsi >= RSI_OVERBOUGHT:
 
-        elif rsi > RSI_OVERBOUGHT:
-
-            score -= 15
+            score -= self.weights["rsi"]
 
             reasons.append(
                 "RSI Overbought"
             )
 
+        elif rsi > 55:
 
-        else:
+            score += 5
 
-            if rsi > 55:
-                score += 5
+            reasons.append(
+                "RSI Bullish"
+            )
 
-            elif rsi < 45:
-                score -= 5
+        elif rsi < 45:
 
+            score -= 5
+
+            reasons.append(
+                "RSI Bearish"
+            )
 
 
         # ==========================
@@ -248,107 +346,238 @@ class TrendEngine:
 
         if macd > 0:
 
-            score += 15
+            score += self.weights["macd"]
 
             reasons.append(
                 "MACD Bullish"
             )
 
-        else:
+        elif macd < 0:
 
-            score -= 15
+            score -= self.weights["macd"]
 
+            reasons.append(
+                "MACD Bearish"
+            )
 
 
         # ==========================
-        # Momentum
+        # MOMENTUM
         # ==========================
 
         if momentum > 0:
 
-            score += 10
+            score += self.weights["momentum"]
 
             reasons.append(
                 "Positive Momentum"
             )
 
+        elif momentum < 0:
+
+            score -= self.weights["momentum"]
+
+            reasons.append(
+                "Negative Momentum"
+            )
+
+
+        # ==========================
+        # VOLUME
+        # ==========================
+
+        if volume_ratio >= 1.5:
+
+            score += self.weights["volume"]
+
+            reasons.append(
+                "Strong Buying Volume"
+            )
+
+        elif volume_ratio <= 0.7:
+
+            score -= self.weights["volume"]
+
+            reasons.append(
+                "Weak Volume"
+            )
+
+
+        # ==========================
+        # ATR CONFIRMATION
+        # ==========================
+
+        try:
+
+            avg_atr = self.indicators.atr(
+
+                candles[:-20]
+
+            )
+
+        except Exception:
+
+            avg_atr = atr
+
+
+        if atr > avg_atr:
+
+            score += 5
+
+            reasons.append(
+                "ATR confirms movement"
+            )
+
         else:
 
-            score -= 10
+            score -= 2
+
+            reasons.append(
+                "Weak volatility"
+            )
+
+
+        # ==========================
+        # VOLATILITY
+        # ==========================
+
+        if volatility > atr:
+
+            score += 3
+
+            reasons.append(
+                "High Market Activity"
+            )
 
 
 
         # ==========================
-        # ATR Confirmation
+        # FINAL TREND
         # ==========================
 
-        average_atr = self.indicators.atr(
-            candles[:-20]
-        )
-
-        if average_atr > 0:
-
-            if atr > average_atr:
-
-                score += 5
-
-                reasons.append(
-                    "ATR confirms movement"
-                )
-
-            else:
-
-                score -= 5
-
-
-
-        # ==========================
-        # Trend Result
-        # ==========================
-
-        if score >= 70:
+        if score >= 90:
 
             trend = TREND_STRONG_BULL
 
-
-        elif score >= 35:
+        elif score >= 45:
 
             trend = TREND_BULL
 
-
-        elif score <= -70:
+        elif score <= -90:
 
             trend = TREND_STRONG_BEAR
 
-
-        elif score <= -35:
+        elif score <= -45:
 
             trend = TREND_BEAR
-
 
         else:
 
             trend = TREND_SIDEWAYS
 
 
+        # ==========================
+        # MARKET QUALITY
+        # ==========================
+
+        market_quality = round(
+
+            (
+
+                abs(score)
+
+                +
+
+                adx
+
+                +
+
+                volume_ratio * 10
+
+            ) / 3,
+
+            2
+
+        )
+
+
+        # ==========================
+        # CONFIDENCE
+        # ==========================
+
+        confidence = round(
+
+            min(
+
+                100,
+
+                abs(score) * 0.7
+
+                +
+
+                adx * 0.2
+
+                +
+
+                volume_ratio * 10 * 0.1
+
+            ),
+
+            2
+
+        )
+
+
+        # ==========================
+        # TREND POWER
+        # ==========================
+
+        trend_power = {
+
+            "bullish": score if score > 0 else 0,
+
+            "bearish": abs(score) if score < 0 else 0,
+
+            "quality": market_quality
+
+        }
+
+
+        # ==========================
+        # RETURN
+        # ==========================
 
         return {
 
             "symbol": symbol,
 
             "market": market,
-            
+
             "interval": interval,
 
             "price": last_price,
 
+            "trend": trend,
+
             "score": score,
 
+            "confidence": confidence,
+
+            "market_quality": market_quality,
+
+            "trend_power": trend_power,
+
             "ema20": ema20,
+
             "ema50": ema50,
+
             "ema100": ema100,
+
             "ema200": ema200,
+
             "sma200": sma200,
+
+            "adx": adx,
 
             "rsi": rsi,
 
@@ -357,6 +586,10 @@ class TrendEngine:
             "momentum": momentum,
 
             "atr": atr,
+
+            "volatility": volatility,
+
+            "volume_ratio": volume_ratio,
 
             "trend_strength": trend_strength,
 
