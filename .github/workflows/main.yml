@@ -30,3 +30,8 @@ jobs:
       - name: Compile Python files
         run: |
           python -m compileall backend
+
+      - name: FastAPI Import Test
+        run: |
+          cd backend
+          python -c "from main import app; print('FalconAI API OK')"
