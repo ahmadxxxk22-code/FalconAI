@@ -1,1 +1,1044 @@
+from typing import Dict, Any, Optional, List
+from datetime import datetime
 
+
+class FalconAssistant:
+
+    """
+    FalconAI Intelligent Assistant
+
+    يدعم:
+    - المحادثة الذكية
+    - شرح إشارات التداول
+    - تحليل أسئلة الأسواق
+    - Crypto / Forex / Gold / Stocks / Indices
+    - العربية والإنجليزية
+    - ذاكرة المستخدم
+    """
+
+    def __init__(self):
+
+        self.memory: Dict[str, List[Dict[str, Any]]] = {}
+
+        self.max_memory_messages = 50
+
+        self.supported_languages = [
+            "ar",
+            "en"
+        ]
+
+        self.supported_markets = {
+
+            "crypto": [
+                "btc",
+                "bitcoin",
+                "ethereum",
+                "crypto",
+                "usdt",
+                "عملة",
+                "بيتكوين"
+            ],
+
+            "forex": [
+                "eurusd",
+                "gbpusd",
+                "forex",
+                "دولار",
+                "يورو"
+            ],
+
+            "gold": [
+                "gold",
+                "xauusd",
+                "ذهب"
+            ],
+
+            "stocks": [
+                "stock",
+                "shares",
+                "aapl",
+                "tesla",
+                "أسهم"
+            ],
+
+            "indices": [
+                "nasdaq",
+                "sp500",
+                "dow",
+                "مؤشر"
+            ]
+        }
+
+
+    # =====================================================
+    # LANGUAGE DETECTION
+    # =====================================================
+
+    def detect_language(
+        self,
+        text: str
+    ) -> str:
+
+        arabic = 0
+        english = 0
+
+
+        for char in text:
+
+            if "\u0600" <= char <= "\u06FF":
+
+                arabic += 1
+
+            elif char.isalpha():
+
+                english += 1
+
+
+        if arabic > english:
+
+            return "ar"
+
+
+        return "en"
+
+
+
+    # =====================================================
+    # CLEAN MESSAGE
+    # =====================================================
+
+    def clean_message(
+        self,
+        message: str
+    ) -> str:
+
+
+        if not message:
+
+            return ""
+
+
+        return " ".join(
+            message.strip().split()
+        )
+
+
+
+    # =====================================================
+    # MEMORY
+    # =====================================================
+
+    def save_memory(
+        self,
+        user_id: str,
+        role: str,
+        content: str
+    ):
+
+
+        if user_id not in self.memory:
+
+            self.memory[user_id] = []
+
+
+        self.memory[user_id].append({
+
+            "role": role,
+
+            "content": content,
+
+            "time": datetime.utcnow().isoformat()
+
+        })
+
+
+        if len(self.memory[user_id]) > self.max_memory_messages:
+
+            self.memory[user_id] = (
+                self.memory[user_id]
+                [-self.max_memory_messages:]
+            )
+
+
+
+    def get_memory(
+        self,
+        user_id: str
+    ) -> List[Dict[str, Any]]:
+
+
+        return self.memory.get(
+            user_id,
+            []
+        )
+
+
+
+    # =====================================================
+    # MARKET DETECTION
+    # =====================================================
+
+    def detect_market(
+        self,
+        message: str
+    ) -> str:
+
+
+        text = message.lower()
+
+
+        for market, words in self.supported_markets.items():
+
+            for word in words:
+
+                if word in text:
+
+                    return market
+
+
+        return "unknown"
+
+
+
+    # =====================================================
+    # MAIN CHAT
+    # =====================================================
+
+    def chat(
+        self,
+        message: str,
+        user_id: Optional[str] = None,
+        language: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+
+
+        message = self.clean_message(
+            message
+        )
+
+
+        if not language:
+
+            language = self.detect_language(
+                message
+            )
+
+
+        market = self.detect_market(
+            message
+        )
+
+
+        if user_id:
+
+            self.save_memory(
+                user_id,
+                "user",
+                message
+            )
+
+
+        response = self.generate_response(
+
+            message,
+
+            language,
+
+            market,
+
+            context
+
+        )
+
+
+        if user_id:
+
+            self.save_memory(
+
+                user_id,
+
+                "assistant",
+
+                response
+
+            )
+
+
+        return {
+
+            "response": response,
+
+            "language": language,
+
+            "market": market,
+
+            "timestamp": datetime.utcnow().isoformat()
+
+        }
+
+
+
+    # =====================================================
+    # SMART RESPONSE ENGINE
+    # =====================================================
+
+    def generate_response(
+        self,
+        message: str,
+        language: str,
+        market: str,
+        context: Optional[Dict[str, Any]] = None
+    ) -> str:
+
+
+        text = message.lower()
+
+
+        data = context or {}
+
+
+
+        # ==============================
+        # Arabic
+        # ==============================
+
+        if language == "ar":
+
+
+            if "buy" in text or "شراء" in text or "دخول" in text:
+
+
+                return (
+
+                    f"تحليل FalconAI:\n\n"
+
+                    f"السوق: {market}\n"
+
+                    "سيتم فحص:\n"
+
+                    "- اتجاه السوق\n"
+
+                    "- Smart Money\n"
+
+                    "- السيولة\n"
+
+                    "- Order Blocks\n"
+
+                    "- الدعم والمقاومة\n"
+
+                    "- الأخبار الاقتصادية\n\n"
+
+                    "لن يتم إعطاء إشارة دخول إلا بعد توافق عدة عوامل."
+
+                )
+
+
+
+            if "sell" in text or "بيع" in text or "خروج" in text:
+
+
+                return (
+
+                    f"تحليل FalconAI للبيع:\n\n"
+
+                    f"السوق: {market}\n"
+
+                    "سيتم فحص:\n"
+
+                    "- تغير الاتجاه\n"
+
+                    "- سحب السيولة\n"
+
+                    "- ضعف المشترين\n"
+
+                    "- الأخبار المؤثرة\n\n"
+
+                    "القرار يعتمد على قوة التأكيدات."
+
+                )
+
+
+
+            if market != "unknown":
+
+
+                return (
+
+                    f"FalconAI يعمل على تحليل سوق {market}.\n\n"
+
+                    "المحركات المستخدمة:\n"
+
+                    "- Trend Engine\n"
+
+                    "- Smart Money\n"
+
+                    "- Liquidity Engine\n"
+
+                    "- Historical Learning\n"
+
+                    "- Risk Analysis\n"
+
+                )
+
+
+
+            if "مساعدة" in text or "help" in text:
+
+
+                return (
+
+                    "أنا FalconAI Assistant.\n"
+
+                    "أستطيع مساعدتك في:\n"
+
+                    "- تحليل الأسواق\n"
+
+                    "- شرح الإشارات\n"
+
+                    "- فهم أسباب الصعود والهبوط\n"
+
+                    "- تحليل العملات والذهب والفوركس والأسهم"
+
+                )
+
+
+
+            return (
+
+                "تم استلام طلبك.\n"
+
+                "FalconAI يقوم بتحليل البيانات المتاحة."
+
+            )
+
+
+
+
+        # ==============================
+        # English
+        # ==============================
+
+        else:
+
+
+            if any(
+
+                word in text
+
+                for word in [
+
+                    "buy",
+
+                    "entry",
+
+                    "long"
+
+                ]
+
+            ):
+
+
+                return (
+
+                    f"FalconAI Analysis:\n\n"
+
+                    f"Market: {market}\n\n"
+
+                    "Checking:\n"
+
+                    "- Trend\n"
+
+                    "- Smart Money\n"
+
+                    "- Liquidity\n"
+
+                    "- Order Blocks\n"
+
+                    "- Support / Resistance\n"
+
+                    "- Economic News\n\n"
+
+                    "No entry decision without confirmations."
+
+                )
+
+
+
+            if any(
+
+                word in text
+
+                for word in [
+
+                    "sell",
+
+                    "exit",
+
+                    "short"
+
+                ]
+
+            ):
+
+
+                return (
+
+                    f"FalconAI Sell Analysis:\n\n"
+
+                    f"Market: {market}\n\n"
+
+                    "Checking:\n"
+
+                    "- Market structure\n"
+
+                    "- Liquidity changes\n"
+
+                    "- Buyer weakness\n"
+
+                    "- News impact"
+
+                )
+
+
+
+            if market != "unknown":
+
+
+                return (
+
+                    f"FalconAI is analyzing {market} market.\n\n"
+
+                    "Engines:\n"
+
+                    "- Trend Engine\n"
+
+                    "- Smart Money\n"
+
+                    "- Liquidity Engine\n"
+
+                    "- Historical Learning\n"
+
+                    "- Risk Analysis"
+
+                )
+
+
+
+            if "help" in text:
+
+
+                return (
+
+                    "I am FalconAI Assistant.\n"
+
+                    "I can help with:\n"
+
+                    "- Market analysis\n"
+
+                    "- Trading signal explanation\n"
+
+                    "- Crypto\n"
+
+                    "- Gold\n"
+
+                    "- Forex\n"
+
+                    "- Stocks"
+
+                )
+
+
+
+            return (
+
+                "Your request has been received.\n"
+
+                "FalconAI is processing the analysis."
+
+            )
+
+
+
+    # =====================================================
+    # MARKET DETECTION
+    # =====================================================
+
+    def detect_market(
+        self,
+        text: str
+    ) -> str:
+
+
+        message = text.lower()
+
+
+        crypto_words = [
+            "btc",
+            "bitcoin",
+            "crypto",
+            "eth",
+            "ethereum",
+            "usdt",
+            "عملة",
+            "عملات"
+        ]
+
+
+        forex_words = [
+            "forex",
+            "eurusd",
+            "gbp",
+            "usd",
+            "دولار",
+            "فوركس"
+        ]
+
+
+        gold_words = [
+            "gold",
+            "xau",
+            "ذهب"
+        ]
+
+
+        stock_words = [
+            "stock",
+            "shares",
+            "nasdaq",
+            "sp500",
+            "سهم",
+            "أسهم"
+        ]
+
+
+
+        if any(word in message for word in crypto_words):
+
+            return "crypto"
+
+
+        if any(word in message for word in forex_words):
+
+            return "forex"
+
+
+        if any(word in message for word in gold_words):
+
+            return "gold"
+
+
+        if any(word in message for word in stock_words):
+
+            return "stocks"
+
+
+        return "unknown"
+
+
+
+    # =====================================================
+    # SIGNAL EXPLANATION ENGINE
+    # =====================================================
+
+    def explain_signal(
+        self,
+        signal: Dict[str, Any],
+        language: str = "ar"
+    ) -> str:
+
+
+        if not signal:
+
+
+            return (
+
+                "لا توجد بيانات إشارة."
+                if language == "ar"
+                else
+                "No signal data available."
+
+            )
+
+
+
+        direction = signal.get(
+            "signal",
+            "WAIT"
+        )
+
+
+        confidence = signal.get(
+            "confidence",
+            0
+        )
+
+
+        quality = signal.get(
+            "quality",
+            "D"
+        )
+
+
+        reasons = signal.get(
+            "reasons",
+            []
+        )
+
+
+
+        if language == "ar":
+
+
+            text = (
+
+                f"إشارة FalconAI: {direction}\n"
+
+                f"الثقة: {confidence}%\n"
+
+                f"الجودة: {quality}\n\n"
+
+                "الأسباب:\n"
+
+            )
+
+
+        else:
+
+
+            text = (
+
+                f"FalconAI Signal: {direction}\n"
+
+                f"Confidence: {confidence}%\n"
+
+                f"Quality: {quality}\n\n"
+
+                "Reasons:\n"
+
+            )
+
+
+
+        for reason in reasons:
+
+            text += f"- {reason}\n"
+
+
+
+        return text
+
+
+
+    # =====================================================
+    # MARKET ANALYSIS ENGINE
+    # =====================================================
+
+    def market_analysis(
+        self,
+        question: str,
+        context: Optional[Dict[str, Any]] = None,
+        language: str = "ar"
+    ) -> str:
+
+
+
+        question = self.clean_message(
+            question
+        )
+
+
+        market = self.detect_market(
+            question
+        )
+
+
+        data = context or {}
+
+
+
+        if language == "ar":
+
+
+            response = (
+
+                "تحليل FalconAI للسوق:\n\n"
+
+            )
+
+
+            response += (
+
+                f"السوق: {market}\n"
+
+            )
+
+
+            if data.get("symbol"):
+
+
+                response += (
+
+                    f"الأصل: {data['symbol']}\n"
+
+                )
+
+
+
+            if data.get("price"):
+
+
+                response += (
+
+                    f"السعر: {data['price']}\n"
+
+                )
+
+
+
+            if data.get("trend"):
+
+
+                response += (
+
+                    f"الاتجاه: {data['trend']}\n"
+
+                )
+
+
+
+            response += (
+
+                "\nالمحركات المستخدمة:\n"
+
+                "- Trend Engine\n"
+
+                "- Smart Money\n"
+
+                "- Liquidity\n"
+
+                "- Order Blocks\n"
+
+                "- Candle AI\n"
+
+                "- Historical Learning\n"
+
+                "- Risk Manager\n"
+
+            )
+
+
+            return response
+
+
+
+
+        else:
+
+
+            response = (
+
+                "FalconAI Market Analysis:\n\n"
+
+                f"Market: {market}\n"
+
+            )
+
+
+            if data.get("symbol"):
+
+
+                response += (
+
+                    f"Asset: {data['symbol']}\n"
+
+                )
+
+
+            if data.get("price"):
+
+
+                response += (
+
+                    f"Price: {data['price']}\n"
+
+                )
+
+
+            if data.get("trend"):
+
+
+                response += (
+
+                    f"Trend: {data['trend']}\n"
+
+                )
+
+
+
+            response += (
+
+                "\nEngines:\n"
+
+                "- Trend Engine\n"
+
+                "- Smart Money\n"
+
+                "- Liquidity\n"
+
+                "- Order Blocks\n"
+
+                "- Candle AI\n"
+
+                "- Historical Learning\n"
+
+                "- Risk Manager\n"
+
+            )
+
+
+            return response
+
+
+
+    # =====================================================
+    # ASSISTANT STATUS
+    # =====================================================
+
+    def status(
+        self
+    ) -> Dict[str, Any]:
+
+
+        return {
+
+            "assistant": "FalconAI",
+
+            "status": "online",
+
+            "version": "1.0",
+
+            "languages": [
+                "ar",
+                "en"
+            ],
+
+            "supported_markets": [
+
+                "crypto",
+
+                "forex",
+
+                "gold",
+
+                "stocks"
+
+            ],
+
+            "features": [
+
+                "Market Conversation",
+
+                "Signal Explanation",
+
+                "Trading Analysis",
+
+                "Smart Money Explanation",
+
+                "Risk Explanation",
+
+                "Multi Language Support"
+
+            ],
+
+            "memory_users": len(
+                self.memory
+            )
+
+        }
+
+
+
+    # =====================================================
+    # CLEAR USER MEMORY
+    # =====================================================
+
+    def clear_memory(
+        self,
+        user_id: str
+    ) -> bool:
+
+
+        if user_id in self.memory:
+
+            del self.memory[user_id]
+
+            return True
+
+
+        return False
+
+
+
+    # =====================================================
+    # GET USER CHAT HISTORY
+    # =====================================================
+
+    def history(
+        self,
+        user_id: str
+    ) -> List[Dict[str, str]]:
+
+
+        return self.get_memory(
+            user_id
+        )
+
+
+
+    # =====================================================
+    # SYSTEM INFORMATION
+    # =====================================================
+
+    def system_info(
+        self
+    ) -> Dict[str, Any]:
+
+
+        return {
+
+            "name": "FalconAI Assistant",
+
+            "role": [
+
+                "Trading Assistant",
+
+                "Market Explanation",
+
+                "User Support"
+
+            ],
+
+            "markets": [
+
+                "Crypto",
+
+                "Forex",
+
+                "Gold",
+
+                "Stocks"
+
+            ],
+
+            "languages": [
+
+                "Arabic",
+
+                "English"
+
+            ],
+
+            "status": "ready"
+
+        }
