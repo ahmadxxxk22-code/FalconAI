@@ -566,53 +566,53 @@ class SmartMoneyAnalyzer:
 
         signal = "BUY"
 
-    elif bearish and score >= 60:
+        elif bearish and score >= 60:
 
-        signal = "SELL"
+            signal = "SELL"
 
-    return {
+        return {
 
-        "signal": signal,
+            "signal": signal,
 
-        "confidence": confidence,
+            "confidence": confidence,
 
-        "smart_money_score": score,
+            "smart_money_score": score,
 
-        "bullish": bullish,
+            "bullish": bullish,
 
-        "bearish": bearish,
+            "bearish": bearish,
 
-        "bos": bos,
+            "bos": bos,
 
-        "bos_direction": bos_direction,
+            "bos_direction": bos_direction,
 
-        "choch": choch,
+            "choch": choch,
 
-        "choch_direction": choch_direction,
+            "choch_direction": choch_direction,
 
-        "internal_bos": internal_bos,
+            "internal_bos": internal_bos,
 
-        "liquidity_sweep": liquidity_sweep,
+            "liquidity_sweep": liquidity_sweep,
 
-        "liquidity_side": liquidity_side,
+            "liquidity_side": liquidity_side,
 
-        "equal_highs": equal_highs,
+            "equal_highs": equal_highs,
 
-        "equal_lows": equal_lows,
+            "equal_lows": equal_lows,
 
-        "displacement": displacement,
+            "displacement": displacement,
 
-        "premium_discount": premium_discount,
+            "premium_discount": premium_discount,
 
-        "order_block": order_block,
+            "order_block": order_block,
 
-        "mitigation_block": mitigation_block,
+            "mitigation_block": mitigation_block,
 
-        "breaker_block": breaker_block,
+            "breaker_block": breaker_block,
 
-        "reasons": reasons
+            "reasons": reasons
 
-    }
+        }
 
     # =====================================================
     # EMPTY RESULT
@@ -658,4 +658,4 @@ class SmartMoneyAnalyzer:
 
             "reasons": []
 
-    }
+        }
