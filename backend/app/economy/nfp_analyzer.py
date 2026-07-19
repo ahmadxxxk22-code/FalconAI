@@ -693,3 +693,230 @@ class NFPAnalyzer:
 
 
         return report
+
+
+
+# =====================================================
+# NFP LEARNING ENGINE
+# =====================================================
+
+
+    def evaluate_prediction(
+        self,
+        report: Dict[str, Any],
+        actual_market_move: Dict[str, str]
+    ) -> Dict[str, Any]:
+
+
+        predicted = report.get(
+
+            "market_impact",
+
+            {}
+
+        )
+
+
+        results = {}
+
+        correct = 0
+
+        total = 0
+
+
+
+        for market, movement in actual_market_move.items():
+
+
+            prediction = predicted.get(
+
+                market,
+
+                "neutral"
+
+            )
+
+
+
+            is_correct = (
+
+                prediction == movement
+
+            )
+
+
+            results[market] = {
+
+
+                "prediction":
+
+                    prediction,
+
+
+                "actual":
+
+                    movement,
+
+
+                "correct":
+
+                    is_correct
+
+            }
+
+
+
+            total += 1
+
+
+
+            if is_correct:
+
+                correct += 1
+
+
+
+
+        accuracy = 0
+
+
+
+        if total > 0:
+
+
+            accuracy = int(
+
+                (
+
+                    correct
+
+                    /
+
+                    total
+
+                )
+
+                *
+
+                100
+
+            )
+
+
+
+
+        return {
+
+
+            "accuracy":
+
+                accuracy,
+
+
+            "details":
+
+                results
+
+        }
+
+
+
+
+# =====================================================
+# HISTORY MANAGEMENT
+# =====================================================
+
+
+    def get_history(
+        self
+    ) -> List[Dict[str, Any]]:
+
+
+        return self.history
+
+
+
+
+    def latest_analysis(
+        self
+    ) -> Optional[Dict[str, Any]]:
+
+
+        if not self.history:
+
+            return None
+
+
+        return self.history[-1]
+
+
+
+
+# =====================================================
+# ENGINE STATUS
+# =====================================================
+
+
+    def status(
+        self
+    ) -> Dict[str, Any]:
+
+
+        return {
+
+
+            "engine":
+
+                "FalconAI NFP Analyzer",
+
+
+
+            "status":
+
+                "online",
+
+
+
+            "supported":
+
+                [
+
+                    "Non Farm Payroll",
+
+                    "Employment Change",
+
+                    "Unemployment Rate",
+
+                    "Average Hourly Earnings",
+
+                    "Fed Reaction",
+
+                    "USD Impact",
+
+                    "Gold Impact",
+
+                    "Crypto Impact",
+
+                    "Stocks Impact",
+
+                    "Bond Impact"
+
+                ],
+
+
+
+            "providers":
+
+                self.get_providers(),
+
+
+
+            "history_records":
+
+                len(
+
+                    self.history
+
+                )
+
+        }
