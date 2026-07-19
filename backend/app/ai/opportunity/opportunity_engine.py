@@ -697,6 +697,19 @@ class OpportunityEngine:
 
             "confirmations": 0,
 
+            "stop_loss": None,
+            "take_profit": None,
+            "risk_reward": 0.0,
+
+            "trend": {},
+            "volume": {},
+            "liquidity": {},
+            "order_blocks": {},
+            "candles": {},
+            "history": {},
+            "support": {},
+            "smart_money": {},
+            
             "reasons": [
 
                 "Not enough candles"
