@@ -637,3 +637,325 @@ class HistoricalManager:
                 "data": []
 
       }
+
+
+
+
+# =====================================================
+# CLEAN HISTORICAL DATA
+# =====================================================
+
+
+    def clean(
+
+        self,
+
+        symbol: str,
+
+        market: str,
+
+        interval: str
+
+    ) -> Dict[str, Any]:
+
+
+        try:
+
+
+            key = self._market_key(
+
+                symbol,
+
+                market,
+
+                interval
+
+            )
+
+
+            candles = self.market_cache.get(
+
+                key,
+
+                []
+
+            )
+
+
+            if not candles:
+
+
+                return {
+
+
+                    "status": "success",
+
+                    "removed": 0
+
+                }
+
+
+
+            cleaned = []
+
+
+
+            for candle in candles:
+
+
+                if (
+
+                    candle.get("open") is None
+
+                    or
+
+                    candle.get("close") is None
+
+                ):
+
+                    continue
+
+
+
+                cleaned.append(
+
+                    candle
+
+                )
+
+
+
+            removed = (
+
+                len(candles)
+
+                -
+
+                len(cleaned)
+
+            )
+
+
+
+            self.market_cache[key] = cleaned
+
+
+
+            return {
+
+
+                "status": "success",
+
+
+                "removed":
+
+                    removed,
+
+
+                "remaining":
+
+                    len(cleaned)
+
+            }
+
+
+
+        except Exception as e:
+
+
+            logger.error(
+
+                f"Historical clean error: {e}"
+
+            )
+
+
+            return {
+
+
+                "status": "error",
+
+                "message": str(e)
+
+            }
+
+
+
+
+# =====================================================
+# STORAGE EXPORT
+# =====================================================
+
+
+    def export(
+
+        self,
+
+        symbol: str,
+
+        market: str,
+
+        interval: str
+
+    ) -> Dict[str, Any]:
+
+
+        data = self.get(
+
+            symbol,
+
+            market,
+
+            interval
+
+        )
+
+
+        return {
+
+
+            "exported_at":
+
+                datetime.now(
+
+                    timezone.utc
+
+                ).isoformat(),
+
+
+            "data":
+
+                data
+
+        }
+
+
+
+
+# =====================================================
+# ENGINE STATUS
+# =====================================================
+
+
+    def get_status(
+
+        self
+
+    ) -> Dict[str, Any]:
+
+
+        return {
+
+
+            "engine":
+
+                "HistoricalManager",
+
+
+            "version":
+
+                self.version,
+
+
+            "status":
+
+                "running",
+
+
+            "markets":
+
+                len(
+
+                    self.market_cache
+
+                ),
+
+
+            "statistics":
+
+                self.statistics,
+
+
+            "storage":
+
+                self.storage is not None,
+
+
+            "timestamp":
+
+                datetime.now(
+
+                    timezone.utc
+
+                ).isoformat()
+
+        }
+
+
+
+
+# =====================================================
+# RESET CACHE
+# =====================================================
+
+
+    def clear(
+
+        self
+
+    ) -> Dict[str, Any]:
+
+
+        try:
+
+
+            size = len(
+
+                self.market_cache
+
+            )
+
+
+            self.market_cache.clear()
+
+
+
+            return {
+
+
+                "status":
+
+                    "success",
+
+
+                "cleared":
+
+                    size
+
+            }
+
+
+
+        except Exception as e:
+
+
+            logger.error(
+
+                f"Historical clear error: {e}"
+
+            )
+
+
+            return {
+
+
+                "status":
+
+                    "error",
+
+
+                "message":
+
+                    str(e)
+
+            }
