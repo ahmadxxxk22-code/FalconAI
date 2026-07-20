@@ -876,3 +876,679 @@ async def full_analysis(
 
 
     }
+
+
+
+# =====================================================
+# FALCON ASSISTANT API
+# =====================================================
+
+
+@app.get(
+    "/api/v1/falcon/chat/{symbol}"
+)
+async def falcon_chat(
+
+    symbol: str,
+
+    interval: str = "1h",
+
+    market: str = "crypto"
+
+):
+
+
+    if signal_engine is None or assistant is None:
+
+
+        return {
+
+
+            "status":
+
+                "error",
+
+
+            "message":
+
+                "AI services not ready"
+
+
+        }
+
+
+
+    try:
+
+
+        analysis = signal_engine.analyze(
+
+            symbol=symbol,
+
+            interval=interval,
+
+            market=market
+
+        )
+
+
+
+        explanation = assistant.explain(
+
+            analysis
+
+        )
+
+
+
+        return {
+
+
+            "status":
+
+                "success",
+
+
+            "symbol":
+
+                symbol,
+
+
+            "assistant":
+
+                explanation
+
+
+        }
+
+
+
+    except Exception as e:
+
+
+        logger.exception(
+
+            f"Assistant error: {e}"
+
+        )
+
+
+        return {
+
+
+            "status":
+
+                "error",
+
+
+            "message":
+
+                str(e)
+
+
+        }
+
+
+
+
+# =====================================================
+# SIGNAL STATISTICS
+# =====================================================
+
+
+@app.get(
+    "/api/v1/statistics"
+)
+async def signal_statistics():
+
+
+    if signal_engine is None:
+
+
+        return {
+
+
+            "status":
+
+                "error",
+
+
+            "message":
+
+                "Signal Engine not ready"
+
+
+        }
+
+
+
+    return {
+
+
+        "status":
+
+            "success",
+
+
+        "statistics":
+
+            getattr(
+
+                signal_engine,
+
+                "signal_statistics",
+
+                {}
+
+            )
+
+
+    }
+
+
+
+
+# =====================================================
+# AVAILABLE MARKETS
+# =====================================================
+
+
+@app.get(
+    "/api/v1/markets"
+)
+async def markets():
+
+
+    return {
+
+
+        "markets": [
+
+
+            "crypto",
+
+            "forex",
+
+            "stocks",
+
+            "gold",
+
+            "oil",
+
+            "indices"
+
+
+        ],
+
+
+        "timeframes": [
+
+
+            "1m",
+
+            "5m",
+
+            "15m",
+
+            "1h",
+
+            "4h",
+
+            "1d",
+
+            "1w",
+
+            "1M"
+
+
+        ]
+
+
+    }
+
+
+
+
+# =====================================================
+# QUICK ANALYSIS
+# =====================================================
+
+
+@app.get(
+    "/api/v1/quick/{symbol}"
+)
+async def quick_analysis(
+
+    symbol: str,
+
+    interval: str = "15m",
+
+    market: str = "crypto"
+
+):
+
+
+    result = signal_engine.analyze(
+
+        symbol=symbol,
+
+        interval=interval,
+
+        market=market
+
+    )
+
+
+
+    return {
+
+
+        "symbol":
+
+            symbol,
+
+
+        "signal":
+
+            result.get(
+
+                "signal",
+
+                "WAIT"
+
+            ),
+
+
+        "confidence":
+
+            result.get(
+
+                "confidence",
+
+                0
+
+            ),
+
+
+        "price":
+
+            result.get(
+
+                "price",
+
+                0
+
+            )
+
+
+    }
+
+
+
+# =====================================================
+# AI EXPLANATION API
+# =====================================================
+
+
+@app.get(
+    "/api/v1/explain/{symbol}"
+)
+async def explain_signal(
+
+    symbol: str,
+
+    interval: str = "1h",
+
+    market: str = "crypto"
+
+):
+
+
+    if signal_engine is None or assistant is None:
+
+
+        return {
+
+
+            "status":
+
+                "error",
+
+
+            "message":
+
+                "AI services not ready"
+
+
+        }
+
+
+
+    try:
+
+
+        analysis = signal_engine.analyze(
+
+            symbol=symbol,
+
+            interval=interval,
+
+            market=market
+
+        )
+
+
+
+        explanation = assistant.explain(
+
+            analysis
+
+        )
+
+
+
+        return {
+
+
+            "status":
+
+                "success",
+
+
+            "symbol":
+
+                symbol,
+
+
+            "explanation":
+
+                explanation,
+
+
+            "analysis":
+
+                analysis
+
+
+        }
+
+
+
+    except Exception as e:
+
+
+        logger.exception(
+
+            f"Explanation error: {e}"
+
+        )
+
+
+        return {
+
+
+            "status":
+
+                "error",
+
+
+            "message":
+
+                str(e)
+
+
+        }
+
+
+
+
+# =====================================================
+# SYMBOL AVAILABILITY CHECK
+# =====================================================
+
+
+@app.get(
+    "/api/v1/check/{symbol}"
+)
+async def check_symbol(
+
+    symbol: str
+
+):
+
+
+    try:
+
+
+        if signal_engine is None:
+
+
+            return {
+
+
+                "available":
+
+                    False,
+
+
+                "symbol":
+
+                    symbol,
+
+
+                "error":
+
+                    "Engine not ready"
+
+
+            }
+
+
+
+        result = signal_engine.analyze(
+
+            symbol=symbol
+
+        )
+
+
+
+        return {
+
+
+            "available":
+
+                True,
+
+
+            "symbol":
+
+                symbol,
+
+
+            "signal":
+
+                result.get(
+
+                    "signal",
+
+                    result.get(
+
+                        "direction",
+
+                        "WAIT"
+
+                    )
+
+                ),
+
+
+            "confidence":
+
+                result.get(
+
+                    "confidence",
+
+                    0
+
+                )
+
+
+        }
+
+
+
+    except Exception as e:
+
+
+        return {
+
+
+            "available":
+
+                False,
+
+
+            "symbol":
+
+                symbol,
+
+
+            "error":
+
+                str(e)
+
+
+        }
+
+
+
+
+# =====================================================
+# GLOBAL ERROR HANDLER
+# =====================================================
+
+
+@app.exception_handler(
+    Exception
+)
+async def global_exception_handler(
+
+    request: Request,
+
+    exc: Exception
+
+):
+
+
+    logger.exception(
+
+        f"Unhandled error: {exc}"
+
+    )
+
+
+    return JSONResponse(
+
+        status_code=500,
+
+
+        content={
+
+
+            "status":
+
+                "error",
+
+
+            "message":
+
+                str(exc),
+
+
+            "path":
+
+                request.url.path
+
+
+        }
+
+    )
+
+
+
+
+# =====================================================
+# ASSISTANT WEB PAGE
+# =====================================================
+
+
+@app.get(
+
+    "/assistant",
+
+    response_class=HTMLResponse
+
+)
+async def assistant_page(
+
+    request: Request
+
+):
+
+
+    return templates.TemplateResponse(
+
+        "assistant.html",
+
+
+        {
+
+
+            "request":
+
+                request
+
+
+        }
+
+    )
+
+
+
+
+# =====================================================
+# HOME
+# =====================================================
+
+
+@app.get(
+    "/"
+)
+async def home():
+
+
+    return {
+
+
+        "platform":
+
+            APP_NAME,
+
+
+        "status":
+
+            "online",
+
+
+        "version":
+
+            APP_VERSION,
+
+
+        "message":
+
+            "FalconAI API Running"
+
+
+    }
