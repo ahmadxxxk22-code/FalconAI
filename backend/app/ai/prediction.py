@@ -1,4 +1,8 @@
+# =====================================================
 # backend/app/ai/prediction.py
+# FalconAI Advanced Prediction Engine
+# Production Intelligence Layer
+# =====================================================
 
 
 from typing import (
@@ -9,46 +13,131 @@ from typing import (
 )
 
 from datetime import datetime
+import logging
+
+
+
+# =====================================================
+# AI MODULES
+# =====================================================
 
 
 from app.ai.market_analyzer import MarketAnalyzer
+
 from app.ai.trend_engine import TrendEngine
+
 from app.ai.opportunity.opportunity_engine import OpportunityEngine
 
 
 try:
 
+    from app.ai.models.prediction_model import (
+        prediction_to_json
+    )
+
+except Exception:
+
+    prediction_to_json = None
+
+
+
+# Optional Intelligence Modules
+
+try:
+
     from app.ai.smart_money import SmartMoneyAnalyzer
-    from app.ai.liquidity import LiquidityEngine
-    from app.ai.opportunity.order_blocks import OrderBlocksEngine
-    from app.ai.fibonacci import FibonacciAnalyzer
-    from app.ai.news_ai import NewsAnalyzer
 
 except Exception:
 
     SmartMoneyAnalyzer = None
-    LiquidityEngine = None
-    OrderBlocksEngine = None
+
+
+
+try:
+
+    from app.ai.liquidity import LiquidityAnalyzer
+
+except Exception:
+
+    LiquidityAnalyzer = None
+
+
+
+try:
+
+    from app.ai.order_blocks import OrderBlockAnalyzer
+
+except Exception:
+
+    OrderBlockAnalyzer = None
+
+
+
+try:
+
+    from app.ai.fibonacci import FibonacciAnalyzer
+
+except Exception:
+
     FibonacciAnalyzer = None
+
+
+
+try:
+
+    from app.ai.news_analyzer import NewsAnalyzer
+
+except Exception:
+
     NewsAnalyzer = None
 
 
 
+try:
+
+    from app.ai.economic_calendar import EconomicCalendar
+
+except Exception:
+
+    EconomicCalendar = None
+
+
+
+logger = logging.getLogger(
+    "FalconAI.Prediction"
+)
+
+
+
+
+# =====================================================
+# PREDICTION ENGINE
+# =====================================================
+
+
 class PredictionEngine:
+
+
     """
-    FalconAI Prediction Engine V2
+    FalconAI Advanced Prediction Engine
 
-    Advanced AI Fusion Layer
 
-    مسؤول عن:
+    المسؤوليات:
 
-    - دمج جميع محركات التحليل
-    - حساب احتمالية الاتجاه
+    - تحليل السوق
+
+    - دمج الذكاء الاصطناعي
+
+    - كشف الاتجاه
+
     - كشف الانعكاس
-    - كشف الاختراقات
-    - تقييم جودة الإشارة
-    - بناء قرار قابل للشرح
-    - التكيف مع حالة السوق
+
+    - كشف الاختراق
+
+    - تقييم الثقة
+
+    - تجهيز مخرجات API والموبايل
+
     """
 
 
@@ -56,22 +145,20 @@ class PredictionEngine:
     def __init__(self):
 
 
-        # =========================================
-        # Core Engines
-        # =========================================
-
 
         self.market = MarketAnalyzer()
 
+
         self.trend = TrendEngine()
+
 
         self.opportunity = OpportunityEngine()
 
 
 
-        # =========================================
-        # Intelligence Modules
-        # =========================================
+        # -------------------------------------
+        # Advanced Modules
+        # -------------------------------------
 
 
         self.smart_money = (
@@ -87,9 +174,9 @@ class PredictionEngine:
 
         self.liquidity = (
 
-            LiquidityEngine()
+            LiquidityAnalyzer()
 
-            if LiquidityEngine
+            if LiquidityAnalyzer
 
             else None
 
@@ -98,9 +185,9 @@ class PredictionEngine:
 
         self.order_blocks = (
 
-            OrderBlocksEngine()
+            OrderBlockAnalyzer()
 
-            if OrderBlocksEngine
+            if OrderBlockAnalyzer
 
             else None
 
@@ -130,100 +217,148 @@ class PredictionEngine:
 
 
 
-        # =========================================
-        # Dynamic Configuration
-        # =========================================
+        self.economic = (
+
+            EconomicCalendar()
+
+            if EconomicCalendar
+
+            else None
+
+        )
 
 
-        self.base_confidence = 50
+
+        # -------------------------------------
+        # Intelligence Weights
+        # -------------------------------------
 
 
-        self.minimum_signal_confidence = 60
+        self.weights = {
+
+
+            "trend": 0.25,
+
+
+            "momentum": 0.15,
+
+
+            "volume": 0.10,
+
+
+            "rsi": 0.10,
+
+
+            "macd": 0.10,
+
+
+            "opportunity": 0.15,
+
+
+            "smart_money": 0.10,
+
+
+            "liquidity": 0.05
+
+
+        }
+
+
+
+        # -------------------------------------
+        # Decision Settings
+        # -------------------------------------
+
+
+        self.minimum_confidence = 60
+
+
+        self.minimum_signal_score = 6
 
 
         self.maximum_confidence = 100
-
 
 
         self.allow_counter_trend = False
 
 
 
-        # =========================================
-        # Adaptive Weights
-        # =========================================
+        # -------------------------------------
+        # AI Filters
+        # -------------------------------------
 
 
-        self.weights = {
+        self.enable_news_filter = True
 
 
-            "trend": 0.20,
+        self.enable_economic_filter = True
 
 
-            "opportunity": 0.15,
+        self.enable_fibonacci_filter = True
 
 
-            "smart_money": 0.15,
+        self.enable_smart_money_filter = True
 
 
-            "momentum": 0.10,
+        self.enable_volume_filter = True
 
 
-            "volume": 0.10,
+        self.enable_liquidity_filter = True
 
 
-            "liquidity": 0.10,
-
-
-            "order_blocks": 0.05,
-
-
-            "fibonacci": 0.05,
-
-
-            "news": 0.05,
-
-
-            "market_state": 0.05
-
-        }
+        self.enable_orderblock_filter = True
 
 
 
-        # =========================================
+        # -------------------------------------
         # Performance Memory
-        # =========================================
+        # -------------------------------------
 
 
-        self.performance = {
+        self.signal_statistics = {
 
 
-            "signals": 0,
+            "buy": 0,
 
 
-            "correct": 0,
+            "sell": 0,
 
 
-            "failed": 0,
+            "wait": 0,
 
 
-            "accuracy": 0
+            "success": 0,
+
+
+            "failed": 0
+
 
         }
+
+
+
+        self.prediction_history = []
 
 
 
         self.version = (
 
-            "FalconAI Prediction Engine V2"
+            "FalconAI Prediction Engine V3.0"
+
+        )
+
+
+        logger.info(
+
+            "Prediction Engine initialized"
 
         )
 
 
 
-    # =====================================================
-    # MAIN PREDICTION PIPELINE
-    # =====================================================
+# =====================================================
+# MAIN PREDICTION PIPELINE
+# =====================================================
 
 
     def predict(
@@ -241,6 +376,7 @@ class PredictionEngine:
     ) -> Dict[str, Any]:
 
 
+
         market_data = self.market.analyze(
 
             symbol=symbol,
@@ -250,6 +386,7 @@ class PredictionEngine:
             market=market
 
         )
+
 
 
         trend_data = self.trend.analyze(
@@ -263,6 +400,7 @@ class PredictionEngine:
         )
 
 
+
         candles = market_data.get(
 
             "candles",
@@ -270,6 +408,7 @@ class PredictionEngine:
             []
 
         )
+
 
 
         opportunity = self.opportunity.analyze(
@@ -288,98 +427,219 @@ class PredictionEngine:
         }
 
 
-        return self.fusion_prediction(
 
-            symbol=symbol,
+        smart_money = self.safe_module_call(
 
-            market=market,
+            self.smart_money,
 
-            interval=interval,
+            symbol,
 
-            market_data=market_data,
-
-            trend_data=trend_data,
-
-            opportunity=opportunity,
-
-            economic_event=economic_event
+            interval
 
         )
 
 
 
-    # =====================================================
-    # AI FUSION PREDICTION
-    # =====================================================
+        liquidity = self.safe_module_call(
+
+            self.liquidity,
+
+            candles
+
+        )
+
+
+
+        order_blocks = self.safe_module_call(
+
+            self.order_blocks,
+
+            candles
+
+        )
+
+
+
+        fibonacci = self.safe_module_call(
+
+            self.fibonacci,
+
+            symbol,
+
+            interval
+
+        )
+
+
+
+        news = self.safe_module_call(
+
+            self.news,
+
+            symbol
+
+        )
+
+
+
+        prediction = self.fusion_prediction(
+
+            market_data,
+
+            trend_data,
+
+            opportunity,
+
+            smart_money,
+
+            liquidity,
+
+            order_blocks,
+
+            fibonacci,
+
+            news
+
+        )
+
+
+
+        prediction["symbol"] = symbol
+
+
+        prediction["market"] = market
+
+
+        prediction["interval"] = interval
+
+
+
+        prediction["created_at"] = datetime.utcnow().isoformat()
+
+
+
+        if prediction_to_json:
+
+
+            return prediction_to_json(
+
+                prediction
+
+            )
+
+
+
+        return prediction
+
+
+
+
+
+# =====================================================
+# SAFE MODULE CALL
+# =====================================================
+
+
+    def safe_module_call(
+
+        self,
+
+        module,
+
+        *args
+
+    ):
+
+
+        if module is None:
+
+            return {
+
+
+                "available": False
+
+            }
+
+
+
+        try:
+
+            return module.analyze(
+
+                *args
+
+            )
+
+
+        except Exception as e:
+
+
+            logger.warning(
+
+                f"Module error: {e}"
+
+            )
+
+
+            return {
+
+
+                "available": False,
+
+                "error": str(e)
+
+            }
+
+
+
+
+
+# =====================================================
+# AI FUSION PREDICTION
+# =====================================================
 
 
     def fusion_prediction(
 
         self,
 
-        symbol,
+        market_data: Dict[str, Any],
 
-        market,
+        trend_data: Dict[str, Any],
 
-        interval,
+        opportunity: Dict[str, Any],
 
-        market_data,
+        smart_money: Dict[str, Any],
 
-        trend_data,
+        liquidity: Dict[str, Any],
 
-        opportunity,
+        order_blocks: Dict[str, Any],
 
-        economic_event=None
+        fibonacci: Dict[str, Any],
 
-    ):
+        news: Dict[str, Any]
+
+    ) -> Dict[str, Any]:
+
 
 
         bullish_score = 0
 
+
         bearish_score = 0
 
 
+
         reasons = []
+
 
         conflicts = []
 
 
 
-        # =========================================
-        # Dynamic Market Values
-        # =========================================
-
-
         trend_score = trend_data.get(
 
             "score",
-
-            0
-
-        )
-
-
-        momentum = market_data.get(
-
-            "momentum",
-
-            0
-
-        )
-
-
-        volume = market_data.get(
-
-            "volume_ratio",
-
-            1
-
-        )
-
-
-        volatility = market_data.get(
-
-            "volatility",
 
             0
 
@@ -397,6 +657,26 @@ class PredictionEngine:
 
 
 
+        momentum = market_data.get(
+
+            "momentum",
+
+            0
+
+        )
+
+
+
+        volume = market_data.get(
+
+            "volume_ratio",
+
+            1
+
+        )
+
+
+
         opportunity_signal = opportunity.get(
 
             "signal",
@@ -404,6 +684,7 @@ class PredictionEngine:
             "WAIT"
 
         )
+
 
 
         opportunity_confidence = opportunity.get(
@@ -416,249 +697,360 @@ class PredictionEngine:
 
 
 
-        # =========================================
-        # TREND INTELLIGENCE
-        # =========================================
-
-
-        trend_power = min(
-
-            abs(trend_score),
-
-            100
-
-        )
-
+        # -----------------------------
+        # Trend Intelligence
+        # -----------------------------
 
 
         if trend_score > 0:
 
 
-            bullish_score += (
-
-                trend_power *
-
-                self.weights["trend"]
-
-            )
+            bullish_score += trend_score * self.weights["trend"]
 
 
             reasons.append(
 
-                "Trend Engine يدعم الاتجاه الصاعد"
+                "الاتجاه العام صاعد"
 
             )
-
 
 
         elif trend_score < 0:
 
 
-            bearish_score += (
-
-                trend_power *
-
-                self.weights["trend"]
-
-            )
+            bearish_score += abs(trend_score) * self.weights["trend"]
 
 
             reasons.append(
 
-                "Trend Engine يدعم الاتجاه الهابط"
+                "الاتجاه العام هابط"
 
             )
 
 
 
-        # =========================================
-        # OPPORTUNITY INTELLIGENCE
-        # =========================================
-
-
-        if opportunity_signal == "BUY":
-
-
-            bullish_score += (
-
-                opportunity_confidence *
-
-                self.weights["opportunity"]
-
-            )
-
-
-            reasons.append(
-
-                "Opportunity Engine إيجابي"
-
-            )
-
-
-
-        elif opportunity_signal == "SELL":
-
-
-            bearish_score += (
-
-                opportunity_confidence *
-
-                self.weights["opportunity"]
-
-            )
-
-
-            reasons.append(
-
-                "Opportunity Engine سلبي"
-
-            )
-
-
-
-        # =========================================
-        # MOMENTUM
-        # =========================================
-
-
-        momentum_power = min(
-
-            abs(momentum),
-
-            100
-
-        )
-
+        # -----------------------------
+        # Momentum
+        # -----------------------------
 
 
         if momentum > 0:
 
 
-            bullish_score += (
-
-                momentum_power *
-
-                self.weights["momentum"]
-
-            )
+            bullish_score += abs(momentum) * self.weights["momentum"]
 
 
             reasons.append(
 
-                "الزخم يدعم الصعود"
+                "الزخم إيجابي"
 
             )
-
 
 
         elif momentum < 0:
 
 
-            bearish_score += (
-
-                momentum_power *
-
-                self.weights["momentum"]
-
-            )
+            bearish_score += abs(momentum) * self.weights["momentum"]
 
 
             reasons.append(
 
-                "الزخم يدعم الهبوط"
+                "الزخم سلبي"
 
             )
 
 
 
-        # =========================================
-        # VOLUME INTELLIGENCE
-        # =========================================
+        # -----------------------------
+        # RSI
+        # -----------------------------
 
 
-        if volume > 1:
+        if rsi < 35:
 
 
-            bullish_score += (
-
-                min(volume * 20, 100)
-
-                *
-
-                self.weights["volume"]
-
-            )
+            bullish_score += 10
 
 
             reasons.append(
 
-                "حجم التداول فوق الطبيعي"
+                "تشبع بيع"
+
+            )
+
+
+        elif rsi > 65:
+
+
+            bearish_score += 10
+
+
+            reasons.append(
+
+                "تشبع شراء"
 
             )
 
 
 
-        elif volume < 0.8:
+        # -----------------------------
+        # Volume
+        # -----------------------------
+
+
+        if volume > 1.5:
+
+
+            bullish_score += 10
+
+
+            reasons.append(
+
+                "حجم تداول قوي"
+
+            )
+
+
+        elif volume < 0.7:
 
 
             conflicts.append(
 
-                "ضعف حجم التداول"
+                "ضعف الحجم"
 
             )
 
 
 
-        # =========================================
-        # RSI ADAPTIVE ANALYSIS
-        # =========================================
+        # -----------------------------
+        # Opportunity
+        # -----------------------------
 
 
-        dynamic_rsi_low = 35
-
-        dynamic_rsi_high = 65
+        if opportunity_signal == "BUY":
 
 
-
-        if volatility > 3:
-
-            dynamic_rsi_low = 30
-
-            dynamic_rsi_high = 70
+            bullish_score += opportunity_confidence * 0.25
 
 
+        elif opportunity_signal == "SELL":
 
-        if rsi <= dynamic_rsi_low:
+
+            bearish_score += opportunity_confidence * 0.25
 
 
-            bullish_score += 8
+
+# =====================================================
+# ADVANCED INTELLIGENCE FUSION
+# =====================================================
+
+
+        # -----------------------------
+        # Smart Money Intelligence
+        # -----------------------------
+
+
+        if smart_money.get("available"):
+
+
+            smart_direction = smart_money.get(
+
+                "direction",
+
+                "NONE"
+
+            )
+
+
+            smart_strength = smart_money.get(
+
+                "strength",
+
+                0
+
+            )
+
+
+
+            if smart_direction == "BUY":
+
+
+                bullish_score += (
+
+                    smart_strength *
+
+                    self.weights["smart_money"]
+
+                )
+
+
+                reasons.append(
+
+                    "الأموال الذكية تدعم الشراء"
+
+                )
+
+
+
+            elif smart_direction == "SELL":
+
+
+                bearish_score += (
+
+                    smart_strength *
+
+                    self.weights["smart_money"]
+
+                )
+
+
+                reasons.append(
+
+                    "الأموال الذكية تدعم البيع"
+
+                )
+
+
+
+
+
+        # -----------------------------
+        # Liquidity Intelligence
+        # -----------------------------
+
+
+        if liquidity.get("available"):
+
+
+            liquidity_strength = liquidity.get(
+
+                "strength",
+
+                0
+
+            )
+
+
+            bullish_score += (
+
+                liquidity_strength *
+
+                self.weights["liquidity"]
+
+            )
 
 
             reasons.append(
 
-                "RSI يعطي احتمال انعكاس صعودي"
+                "السيولة تؤكد النشاط"
 
             )
 
 
 
-        elif rsi >= dynamic_rsi_high:
 
 
-            bearish_score += 8
+        # -----------------------------
+        # Order Blocks
+        # -----------------------------
 
 
-            reasons.append(
+        if order_blocks.get("available"):
 
-                "RSI يعطي ضغط بيعي"
+
+            bullish_blocks = order_blocks.get(
+
+                "bullish_blocks",
+
+                []
 
             )
 
 
+            bearish_blocks = order_blocks.get(
 
-        # =========================================
-        # MARKET REGIME
-        # =========================================
+                "bearish_blocks",
+
+                []
+
+            )
+
+
+            if bullish_blocks:
+
+
+                bullish_score += 10
+
+
+                reasons.append(
+
+                    "منطقة طلب قوية"
+
+                )
+
+
+
+            if bearish_blocks:
+
+
+                bearish_score += 10
+
+
+                reasons.append(
+
+                    "منطقة عرض قوية"
+
+                )
+
+
+
+
+
+        # -----------------------------
+        # Fibonacci Filter
+        # -----------------------------
+
+
+        if self.enable_fibonacci_filter:
+
+
+            if fibonacci.get("available"):
+
+
+                reasons.append(
+
+                    "Fibonacci فعال في التحليل"
+
+                )
+
+
+
+
+
+        # -----------------------------
+        # News Risk
+        # -----------------------------
+
+
+        if self.enable_news_filter:
+
+
+            if news.get("impact") == "HIGH":
+
+
+                conflicts.append(
+
+                    "خبر عالي التأثير"
+
+                )
+
+
+
+
+
+        # -----------------------------
+        # Market Regime
+        # -----------------------------
 
 
         market_regime = self.detect_market_regime(
@@ -671,31 +1063,209 @@ class PredictionEngine:
 
 
 
-        return self.build_prediction_result(
 
-            symbol,
 
-            market,
+        # -----------------------------
+        # Probability Calculation
+        # -----------------------------
 
-            interval,
 
-            bullish_score,
+        total_score = (
 
-            bearish_score,
+            bullish_score +
 
-            reasons,
-
-            conflicts,
-
-            market_regime
+            bearish_score
 
         )
 
 
 
-    # =====================================================
-    # MARKET REGIME DETECTOR
-    # =====================================================
+        if total_score == 0:
+
+
+            bullish_probability = 50
+
+
+            bearish_probability = 50
+
+
+
+        else:
+
+
+            bullish_probability = (
+
+                bullish_score /
+
+                total_score
+
+            ) * 100
+
+
+
+            bearish_probability = (
+
+                bearish_score /
+
+                total_score
+
+            ) * 100
+
+
+
+
+
+        # -----------------------------
+        # Direction
+        # -----------------------------
+
+
+        if bullish_probability > bearish_probability:
+
+
+            direction = "BULLISH"
+
+
+
+        elif bearish_probability > bullish_probability:
+
+
+            direction = "BEARISH"
+
+
+
+        else:
+
+
+            direction = "NEUTRAL"
+
+
+
+
+
+        # -----------------------------
+        # Final Signal
+        # -----------------------------
+
+
+        signal = "WAIT"
+
+
+
+        if bullish_probability >= 65:
+
+
+            signal = "BUY"
+
+
+
+        elif bearish_probability >= 65:
+
+
+            signal = "SELL"
+
+
+
+
+
+        confidence = self.calculate_confidence(
+
+            bullish_probability,
+
+            bearish_probability,
+
+            len(conflicts)
+
+        )
+
+
+
+        quality = self.signal_quality(
+
+            confidence,
+
+            len(conflicts)
+
+        )
+
+
+
+        return {
+
+
+            "signal": signal,
+
+
+            "direction": direction,
+
+
+            "confidence": confidence,
+
+
+            "quality": quality,
+
+
+            "probability": {
+
+
+                "bullish": round(
+
+                    bullish_probability,
+
+                    2
+
+                ),
+
+
+                "bearish": round(
+
+                    bearish_probability,
+
+                    2
+
+                )
+
+            },
+
+
+            "market_regime": market_regime,
+
+
+            "reasons": reasons,
+
+
+            "conflicts": conflicts,
+
+
+            "scores": {
+
+
+                "bullish": round(
+
+                    bullish_score,
+
+                    2
+
+                ),
+
+
+                "bearish": round(
+
+                    bearish_score,
+
+                    2
+
+                )
+
+            }
+
+        }
+
+
+
+# =====================================================
+# MARKET REGIME DETECTOR
+# =====================================================
 
 
     def detect_market_regime(
@@ -753,234 +1323,9 @@ class PredictionEngine:
 
 
 
-    # =====================================================
-    # BUILD FINAL PREDICTION RESULT
-    # =====================================================
-
-
-    def build_prediction_result(
-
-        self,
-
-        symbol,
-
-        market,
-
-        interval,
-
-        bullish_score,
-
-        bearish_score,
-
-        reasons,
-
-        conflicts,
-
-        market_regime
-
-    ):
-
-
-        total_score = (
-
-            bullish_score +
-
-            bearish_score
-
-        )
-
-
-
-        if total_score <= 0:
-
-
-            bullish_probability = 50
-
-            bearish_probability = 50
-
-
-        else:
-
-
-            bullish_probability = (
-
-                bullish_score /
-
-                total_score
-
-            ) * 100
-
-
-
-            bearish_probability = (
-
-                bearish_score /
-
-                total_score
-
-            ) * 100
-
-
-
-
-        if bullish_probability > bearish_probability:
-
-
-            direction = "BULLISH"
-
-
-        elif bearish_probability > bullish_probability:
-
-
-            direction = "BEARISH"
-
-
-        else:
-
-
-            direction = "NEUTRAL"
-
-
-
-        signal = "WAIT"
-
-
-
-        if bullish_probability >= self.minimum_signal_confidence:
-
-
-            signal = "BUY"
-
-
-
-        elif bearish_probability >= self.minimum_signal_confidence:
-
-
-            signal = "SELL"
-
-
-
-
-        confidence = self.calculate_confidence(
-
-            bullish_probability,
-
-            bearish_probability,
-
-            conflicts
-
-        )
-
-
-
-        quality = self.signal_quality(
-
-            confidence,
-
-            len(conflicts)
-
-        )
-
-
-
-        return {
-
-
-            "symbol": symbol,
-
-
-            "market": market,
-
-
-            "interval": interval,
-
-
-            "signal": signal,
-
-
-            "direction": direction,
-
-
-            "confidence": confidence,
-
-
-            "probability": {
-
-
-                "bullish":
-
-                    round(
-
-                        bullish_probability,
-
-                        2
-
-                    ),
-
-
-                "bearish":
-
-                    round(
-
-                        bearish_probability,
-
-                        2
-
-                    )
-
-            },
-
-
-            "quality": quality,
-
-
-            "market_regime": market_regime,
-
-
-            "reasons": reasons,
-
-
-            "conflicts": conflicts,
-
-
-            "scores": {
-
-
-                "bullish":
-
-                    round(
-
-                        bullish_score,
-
-                        2
-
-                    ),
-
-
-                "bearish":
-
-                    round(
-
-                        bearish_score,
-
-                        2
-
-                    )
-
-            },
-
-
-            "created_at":
-
-                datetime.utcnow().isoformat()
-
-        }
-
-
-
-    # =====================================================
-    # ADVANCED CONFIDENCE CALIBRATION
-    # =====================================================
+# =====================================================
+# CONFIDENCE ENGINE
+# =====================================================
 
 
     def calculate_confidence(
@@ -991,7 +1336,7 @@ class PredictionEngine:
 
         bearish_probability,
 
-        conflicts
+        conflicts_count
 
     ):
 
@@ -1010,31 +1355,29 @@ class PredictionEngine:
 
 
 
-        conflict_penalty = (
+        penalty = (
 
-            len(conflicts) *
+            conflicts_count *
 
-            7
+            8
 
         )
 
 
 
-        confidence -= conflict_penalty
-
-
-
-        if confidence > self.maximum_confidence:
-
-
-            confidence = self.maximum_confidence
+        confidence -= penalty
 
 
 
         if confidence < 0:
 
-
             confidence = 0
+
+
+
+        if confidence > 100:
+
+            confidence = 100
 
 
 
@@ -1048,9 +1391,11 @@ class PredictionEngine:
 
 
 
-    # =====================================================
-    # SIGNAL QUALITY
-    # =====================================================
+
+
+# =====================================================
+# SIGNAL QUALITY
+# =====================================================
 
 
     def signal_quality(
@@ -1066,20 +1411,17 @@ class PredictionEngine:
 
         if confidence >= 85 and conflicts == 0:
 
-
             return "VERY_STRONG"
 
 
 
         if confidence >= 70:
 
-
             return "STRONG"
 
 
 
         if confidence >= 50:
-
 
             return "MEDIUM"
 
@@ -1089,259 +1431,11 @@ class PredictionEngine:
 
 
 
-    # =====================================================
-    # SMART MONEY INTELLIGENCE
-    # =====================================================
 
 
-    def analyze_smart_money(
-
-        self,
-
-        symbol,
-
-        interval
-
-    ):
-
-
-        if not self.smart_money:
-
-
-            return {
-
-
-                "available": False
-
-            }
-
-
-
-        try:
-
-
-            return self.smart_money.analyze(
-
-                symbol,
-
-                interval
-
-            )
-
-
-        except Exception:
-
-
-            return {
-
-
-                "available": False,
-
-                "error": "Smart Money unavailable"
-
-            }
-
-
-
-    # =====================================================
-    # LIQUIDITY INTELLIGENCE
-    # =====================================================
-
-
-    def analyze_liquidity(
-
-        self,
-
-        candles
-
-    ):
-
-
-        if not self.liquidity:
-
-
-            return {
-
-
-                "available": False
-
-            }
-
-
-
-        try:
-
-
-            return self.liquidity.analyze(
-
-                candles
-
-            )
-
-
-        except Exception:
-
-
-            return {
-
-
-                "available": False
-
-            }
-
-
-
-    # =====================================================
-    # ORDER BLOCK INTELLIGENCE
-    # =====================================================
-
-
-    def analyze_order_blocks(
-
-        self,
-
-        candles
-
-    ):
-
-
-        if not self.order_blocks:
-
-
-            return {
-
-
-                "available": False
-
-            }
-
-
-
-        try:
-
-
-            return self.order_blocks.analyze(
-
-                candles
-
-            )
-
-
-        except Exception:
-
-
-            return {
-
-
-                "available": False
-
-        }
-
-
-
-    # =====================================================
-    # FIBONACCI INTELLIGENCE
-    # =====================================================
-
-
-    def analyze_fibonacci(
-
-        self,
-
-        symbol,
-
-        interval
-
-    ):
-
-
-        if not self.fibonacci:
-
-
-            return {
-
-
-                "available": False
-
-            }
-
-
-
-        try:
-
-
-            return self.fibonacci.analyze(
-
-                symbol,
-
-                interval
-
-            )
-
-
-        except Exception:
-
-
-            return {
-
-
-                "available": False
-
-            }
-
-
-
-    # =====================================================
-    # NEWS INTELLIGENCE
-    # =====================================================
-
-
-    def analyze_news(
-
-        self,
-
-        symbol
-
-    ):
-
-
-        if not self.news:
-
-
-            return {
-
-
-                "available": False
-
-            }
-
-
-
-        try:
-
-
-            return self.news.analyze(
-
-                symbol
-
-            )
-
-
-        except Exception:
-
-
-            return {
-
-
-                "available": False
-
-            }
-
-
-
-    # =====================================================
-    # EARLY MOVE DETECTOR
-    # =====================================================
+# =====================================================
+# EARLY MOVE DETECTOR
+# =====================================================
 
 
     def detect_early_move(
@@ -1354,6 +1448,7 @@ class PredictionEngine:
 
 
         score = 0
+
 
         reasons = []
 
@@ -1390,7 +1485,7 @@ class PredictionEngine:
         if momentum > 0:
 
 
-            score += 20
+            score += 25
 
 
             reasons.append(
@@ -1403,12 +1498,12 @@ class PredictionEngine:
         elif momentum < 0:
 
 
-            score -= 20
+            score -= 25
 
 
             reasons.append(
 
-                "بداية ضعف زخم"
+                "بداية ضعف"
 
             )
 
@@ -1417,12 +1512,12 @@ class PredictionEngine:
         if volume > 1.5:
 
 
-            score += 25
+            score += 30
 
 
             reasons.append(
 
-                "دخول حجم تداول قوي"
+                "دخول سيولة قوية"
 
             )
 
@@ -1442,17 +1537,19 @@ class PredictionEngine:
 
 
 
-        probability = min(
-
-            abs(score),
-
-            100
-
-        )
-
-
-
         return {
+
+
+            "score": score,
+
+
+            "probability": min(
+
+                abs(score),
+
+                100
+
+            ),
 
 
             "direction":
@@ -1472,21 +1569,17 @@ class PredictionEngine:
                 "NONE",
 
 
-            "score": score,
-
-
-            "probability": probability,
-
-
             "reasons": reasons
 
         }
 
 
 
-    # =====================================================
-    # REVERSAL ENGINE
-    # =====================================================
+
+
+# =====================================================
+# REVERSAL ENGINE
+# =====================================================
 
 
     def reversal_probability(
@@ -1502,6 +1595,7 @@ class PredictionEngine:
 
         score = 0
 
+
         reasons = []
 
 
@@ -1515,16 +1609,7 @@ class PredictionEngine:
         )
 
 
-        momentum = market_data.get(
-
-            "momentum",
-
-            0
-
-        )
-
-
-        trend_score = trend_data.get(
+        trend = trend_data.get(
 
             "score",
 
@@ -1537,7 +1622,7 @@ class PredictionEngine:
         if rsi < 30:
 
 
-            score += 25
+            score += 30
 
 
             reasons.append(
@@ -1548,10 +1633,10 @@ class PredictionEngine:
 
 
 
-        elif rsi > 70:
+        if rsi > 70:
 
 
-            score -= 25
+            score -= 30
 
 
             reasons.append(
@@ -1562,7 +1647,7 @@ class PredictionEngine:
 
 
 
-        if momentum > 0 and trend_score < 0:
+        if trend < 0 and rsi < 35:
 
 
             score += 20
@@ -1570,21 +1655,7 @@ class PredictionEngine:
 
             reasons.append(
 
-                "تحول زخم ضد الاتجاه"
-
-            )
-
-
-
-        elif momentum < 0 and trend_score > 0:
-
-
-            score -= 20
-
-
-            reasons.append(
-
-                "ضعف اتجاه صاعد"
+                "انعكاس ضد الاتجاه"
 
             )
 
@@ -1611,16 +1682,18 @@ class PredictionEngine:
 
 
 
-    # =====================================================
-    # BREAKOUT INTELLIGENCE
-    # =====================================================
+
+
+# =====================================================
+# BREAKOUT INTELLIGENCE
+# =====================================================
 
 
     def breakout_probability(
 
         self,
 
-        candles: List[Dict[str, Any]]
+        candles
 
     ):
 
@@ -1642,7 +1715,7 @@ class PredictionEngine:
 
         closes = [
 
-            c.get(
+            x.get(
 
                 "close",
 
@@ -1650,13 +1723,14 @@ class PredictionEngine:
 
             )
 
-            for c in candles
+            for x in candles
 
         ]
 
 
 
         price = closes[-1]
+
 
 
         resistance = max(
@@ -1680,15 +1754,10 @@ class PredictionEngine:
             return {
 
 
-                "probability": 70,
+                "probability": 80,
 
 
-                "type": "BULLISH",
-
-
-                "reason":
-
-                    "اختراق مقاومة"
+                "type": "BULLISH"
 
             }
 
@@ -1700,15 +1769,10 @@ class PredictionEngine:
             return {
 
 
-                "probability": 70,
+                "probability": 80,
 
 
-                "type": "BEARISH",
-
-
-                "reason":
-
-                    "كسر دعم"
+                "type": "BEARISH"
 
             }
 
@@ -1726,45 +1790,40 @@ class PredictionEngine:
 
 
 
-    # =====================================================
-    # ADAPTIVE LEARNING UPDATE
-    # =====================================================
+
+
+# =====================================================
+# ADAPTIVE WEIGHT UPDATE
+# =====================================================
 
 
     def update_weights(
 
         self,
 
-        result: Dict[str, Any]
+        success: bool
 
     ):
 
 
-        success = result.get(
+        adjustment = (
 
-            "success",
+            0.01
 
-            False
+            if success
+
+            else
+
+            -0.01
 
         )
 
-
-        adjustment = 0.01
 
 
         for key in self.weights:
 
 
-            if success:
-
-
-                self.weights[key] += adjustment
-
-
-            else:
-
-
-                self.weights[key] -= adjustment
+            self.weights[key] += adjustment
 
 
 
@@ -1788,12 +1847,18 @@ class PredictionEngine:
 
 
 
-    # =====================================================
-    # HEALTH CHECK
-    # =====================================================
 
 
-    def health_check(self):
+# =====================================================
+# HEALTH CHECK
+# =====================================================
+
+
+    def health_check(
+
+        self
+
+    ):
 
 
         return {
@@ -1837,25 +1902,98 @@ class PredictionEngine:
                     self.liquidity is not None,
 
 
-                "order_blocks":
-
-                    self.order_blocks is not None,
-
-
                 "fibonacci":
 
-                    self.fibonacci is not None,
+                    self.fibonacci is not None
 
-
-                "news":
-
-                    self.news is not None,
-
-
-                "adaptive_learning":
-
-                    True
 
             }
 
-            }
+        }
+
+
+
+
+
+# =====================================================
+# FINAL REPORT
+# =====================================================
+
+
+    def generate_report(
+
+        self,
+
+        prediction
+
+    ):
+
+
+        return {
+
+
+            "summary": {
+
+
+                "signal":
+
+                    prediction.get(
+
+                        "signal"
+
+                    ),
+
+
+                "confidence":
+
+                    prediction.get(
+
+                        "confidence"
+
+                    ),
+
+
+                "quality":
+
+                    prediction.get(
+
+                        "quality"
+
+                    )
+
+            },
+
+
+            "probability":
+
+                prediction.get(
+
+                    "probability",
+
+                    {}
+
+                ),
+
+
+            "reasons":
+
+                prediction.get(
+
+                    "reasons",
+
+                    []
+
+                ),
+
+
+            "conflicts":
+
+                prediction.get(
+
+                    "conflicts",
+
+                    []
+
+                )
+
+        }
