@@ -306,9 +306,6 @@ app = FastAPI(
 
 )
 
-app.include_router(
-    notifications_router
-)
 
 
 # =====================================================
@@ -382,6 +379,9 @@ app.include_router(
 
 )
 
+app.include_router(
+    notifications_router
+)
 
 
 
