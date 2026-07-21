@@ -287,7 +287,14 @@ class NotificationManager:
 
         return self.notifications[-limit:]
 
-
+    def mark_read(
+        self,
+        symbol: str
+    ):
+        return {
+            "status": "read",
+            "symbol": symbol
+        }
 
 
 
