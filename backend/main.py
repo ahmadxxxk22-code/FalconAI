@@ -124,7 +124,9 @@ from app.api.multi_timeframe import (
     router as multi_timeframe_router
 )
 
-
+from app.notifications.router import (
+    router as notifications_router
+)
 
 
 # =====================================================
@@ -304,6 +306,9 @@ app = FastAPI(
 
 )
 
+app.include_router(
+    notifications_router
+)
 
 
 # =====================================================
