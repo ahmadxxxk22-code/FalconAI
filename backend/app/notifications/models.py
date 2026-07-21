@@ -1,11 +1,15 @@
 # =====================================================
-# FalconAI Alert Models
+# FalconAI Notification Data Models
+# Production Alert Structure
 # =====================================================
 
 
 from enum import Enum
 
-from dataclasses import dataclass, field
+from dataclasses import (
+    dataclass,
+    field
+)
 
 from datetime import datetime
 
@@ -41,6 +45,8 @@ class AlertType(str, Enum):
 
     NEWS = "NEWS"
 
+    ECONOMIC_EVENT = "ECONOMIC_EVENT"
+
     RISK = "RISK"
 
 
@@ -67,7 +73,7 @@ class AlertPriority(str, Enum):
 
 
 # =====================================================
-# ALERT OBJECT
+# ALERT MODEL
 # =====================================================
 
 
@@ -96,17 +102,17 @@ class Alert:
 
 
 
-    data: Dict[str, Any] = field(
+    reasons: List[str] = field(
 
-        default_factory=dict
+        default_factory=list
 
     )
 
 
 
-    reasons: List[str] = field(
+    data: Dict[str, Any] = field(
 
-        default_factory=list
+        default_factory=dict
 
     )
 
@@ -122,7 +128,9 @@ class Alert:
 
 
 
-    def to_dict(self):
+
+
+    def to_dict(self) -> Dict[str, Any]:
 
 
         return {
@@ -131,28 +139,50 @@ class Alert:
             "symbol": self.symbol,
 
 
-            "type": self.alert_type.value,
+            "alert_type":
+
+                self.alert_type.value,
 
 
-            "priority": self.priority.value,
+
+            "priority":
+
+                self.priority.value,
 
 
-            "title": self.title,
+
+            "title":
+
+                self.title,
 
 
-            "message": self.message,
+
+            "message":
+
+                self.message,
 
 
-            "confidence": self.confidence,
+
+            "confidence":
+
+                self.confidence,
 
 
-            "reasons": self.reasons,
+
+            "reasons":
+
+                self.reasons,
 
 
-            "data": self.data,
+
+            "data":
+
+                self.data,
 
 
-            "created_at": self.created_at
 
+            "created_at":
 
-}
+                self.created_at
+
+        }
