@@ -28,6 +28,7 @@ from app.ai.trend_engine import TrendEngine
 
 from app.ai.opportunity.opportunity_engine import OpportunityEngine
 
+from app.notifications.alert_engine import AlertEngine
 
 try:
 
@@ -154,6 +155,7 @@ class PredictionEngine:
 
         self.opportunity = OpportunityEngine()
 
+        self.alert_engine = AlertEngine()
 
 
         # -------------------------------------
