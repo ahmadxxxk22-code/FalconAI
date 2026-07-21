@@ -30,6 +30,8 @@ from app.ai.opportunity.opportunity_engine import OpportunityEngine
 
 from app.notifications.alert_engine import AlertEngine
 
+from app.notifications.notification_manager import NotificationManager
+
 try:
 
     from app.ai.models.prediction_model import (
@@ -157,7 +159,8 @@ class PredictionEngine:
 
         self.alert_engine = AlertEngine()
 
-
+        self.notification_manager = NotificationManager()
+        
         # -------------------------------------
         # Advanced Modules
         # -------------------------------------
@@ -504,6 +507,47 @@ class PredictionEngine:
 
         )
 
+# =====================================================
+# ALERT GENERATION
+# =====================================================
+
+
+        alert = self.alert_engine.analyze_prediction(
+
+            {
+
+                **prediction,
+
+                "symbol": symbol,
+
+                "market": market,
+
+                "interval": interval,
+
+                "early_move": self.detect_early_move(
+
+                    market_data
+
+                ),
+
+                "reversal": self.reversal_probability(
+
+                    market_data,
+
+                    trend_data
+
+                ),
+
+                "breakout": self.breakout_probability(
+
+                    candles
+
+                )
+
+            }
+
+        )
+
 
 
         prediction["symbol"] = symbol
@@ -529,7 +573,15 @@ class PredictionEngine:
 
             )
 
+            prediction["alert"] = (
 
+                alert.to_dict()
+
+                if alert
+
+                else None
+
+            )
 
         return prediction
 
