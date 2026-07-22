@@ -1,4 +1,14 @@
+# =====================================================
+# FALCONAI HISTORICAL LEARNING ENGINE
+# PRODUCTION VERSION
+# PART 1
+# =====================================================
+
+
+from datetime import datetime
+from collections import deque
 import statistics
+import math
 
 
 
@@ -7,63 +17,182 @@ class HistoricalLearning:
 
     def __init__(self):
 
-        self.lookback_window = 20
 
-        self.minimum_history = 300
-
+        self.version = "FalconAI Historical Learning v2"
 
 
-    # ==================================================
-    # Returns Calculation
-    # ==================================================
+        # عدد الشموع لتحليل النمط
+        self.lookback_window = 50
+
+
+        # أقل بيانات مطلوبة
+        self.minimum_history = 500
+
+
+        # ذاكرة الإشارات
+        self.signal_memory = deque(
+            maxlen=10000
+        )
+
+
+        # ذاكرة الأنماط
+        self.pattern_memory = deque(
+            maxlen=5000
+        )
+
+
+        # إحصائيات التعلم
+        self.statistics = {
+
+
+            "signals":
+
+                0,
+
+
+            "successful":
+
+                0,
+
+
+            "failed":
+
+                0,
+
+
+            "win_rate":
+
+                0
+
+
+        }
+
+
+
+    # =====================================================
+    # SAFE NUMBER
+    # =====================================================
+
+
+    def safe_number(
+
+        self,
+
+        value,
+
+        default=0
+
+    ):
+
+
+        try:
+
+            return float(value)
+
+
+        except:
+
+            return default
+
+
+
+    # =====================================================
+    # RETURNS ENGINE
+    # =====================================================
 
 
     def calculate_returns(
+
         self,
+
         closes
+
     ):
 
 
         returns = []
 
 
-        for i in range(
-            1,
-            len(closes)
-        ):
+        for i in range(1,len(closes)):
 
 
-            if closes[i-1] == 0:
+            previous = self.safe_number(
+
+                closes[i-1]
+
+            )
+
+
+            current = self.safe_number(
+
+                closes[i]
+
+            )
+
+
+            if previous == 0:
 
                 continue
 
 
 
-            move = (
+            change = (
 
-                closes[i]
-                -
-                closes[i-1]
+                current - previous
 
-            ) / closes[i-1]
+            ) / previous
 
 
-            returns.append(move)
 
+            returns.append(
+
+                change
+
+            )
 
 
         return returns
 
 
 
-    # ==================================================
-    # Volatility
-    # ==================================================
+    # =====================================================
+    # AVERAGE MOVE
+    # =====================================================
 
 
-    def calculate_volatility(
+    def average_move(
+
         self,
+
         returns
+
+    ):
+
+
+        if not returns:
+
+            return 0
+
+
+        return statistics.mean(
+
+            returns
+
+        )
+
+
+
+    # =====================================================
+    # VOLATILITY ENGINE
+    # =====================================================
+
+
+    def volatility(
+
+        self,
+
+        returns
+
     ):
 
 
@@ -72,30 +201,54 @@ class HistoricalLearning:
             return 0
 
 
+
         return statistics.stdev(
+
             returns
+
         )
 
 
 
-    # ==================================================
-    # Drawdown
-    # ==================================================
+    # =====================================================
+    # DRAWDOWN ANALYSIS ENGINE
+    # =====================================================
 
 
     def calculate_drawdown(
+
         self,
+
         closes
+
     ):
 
 
-        peak = closes[0]
+        if not closes:
 
-        max_drop = 0
+            return 0
+
+
+
+        peak = self.safe_number(
+
+            closes[0]
+
+        )
+
+
+        max_drawdown = 0
 
 
 
         for price in closes:
+
+
+            price = self.safe_number(
+
+                price
+
+            )
 
 
             if price > peak:
@@ -104,149 +257,29 @@ class HistoricalLearning:
 
 
 
+            if peak == 0:
+
+                continue
+
+
+
             drop = (
 
                 peak - price
 
-            ) / peak
+            ) / peak * 100
 
 
 
-            if drop > max_drop:
+            if drop > max_drawdown:
 
-                max_drop = drop
-
-
-
-        return max_drop * 100
-
-
-
-    # ==================================================
-    # Historical Pattern Similarity
-    # ==================================================
-
-
-    def compare_recent_pattern(
-        self,
-        returns
-    ):
-
-
-        if len(returns) < 100:
-
-            return 0
-
-
-
-        recent = returns[
-            -self.lookback_window:
-        ]
-
-
-
-        history = returns[
-            :-self.lookback_window
-        ]
-
-
-
-        matches = 0
-
-        best_similarity = 0
-
-
-
-        for i in range(
-
-            0,
-
-            len(history)
-            -
-            self.lookback_window
-
-        ):
-
-
-            old = history[
-
-                i:
-                i + self.lookback_window
-
-            ]
-
-
-
-            difference = sum(
-
-                abs(
-
-                    recent[j]
-                    -
-                    old[j]
-
-                )
-
-                for j in range(
-                    self.lookback_window
-                )
-
-            )
-
-
-
-            similarity = max(
-
-                0,
-
-                100 -
-                (
-                    difference * 100
-                )
-
-            )
-
-
-
-            if similarity > best_similarity:
-
-                best_similarity = similarity
-
-
-
-            if difference < 0.05:
-
-                matches += 1
-
-
-
-        frequency = (
-
-            matches /
-            max(
-                len(history),
-                1
-            )
-
-        ) * 100
+                max_drawdown = drop
 
 
 
         return round(
 
-            min(
-
-                (
-                    frequency * 10
-                )
-                +
-                (
-                    best_similarity * 0.5
-                ),
-
-                100
-
-            ),
+            max_drawdown,
 
             2
 
@@ -254,54 +287,57 @@ class HistoricalLearning:
 
 
 
-    # ==================================================
-    # Future Bias From History
-    # ==================================================
+    # =====================================================
+    # MARKET DIRECTION MEMORY
+    # =====================================================
 
 
-    def historical_bias(
+    def calculate_direction_memory(
+
         self,
+
         returns
+
     ):
 
 
         if not returns:
 
+
             return {
 
-                "bullish_probability":50,
 
-                "bearish_probability":50
+                "bullish":
+
+                    50,
+
+
+                "bearish":
+
+                    50
+
 
             }
 
 
 
-        bullish = len(
+        bullish = 0
 
-            [
-
-                x for x in returns
-
-                if x > 0
-
-            ]
-
-        )
+        bearish = 0
 
 
 
-        bearish = len(
+        for move in returns:
 
-            [
 
-                x for x in returns
+            if move > 0:
 
-                if x < 0
+                bullish += 1
 
-            ]
 
-        )
+            elif move < 0:
+
+                bearish += 1
 
 
 
@@ -311,11 +347,19 @@ class HistoricalLearning:
 
         if total == 0:
 
+
             return {
 
-                "bullish_probability":50,
 
-                "bearish_probability":50
+                "bullish":
+
+                    50,
+
+
+                "bearish":
+
+                    50
+
 
             }
 
@@ -324,206 +368,692 @@ class HistoricalLearning:
         return {
 
 
-            "bullish_probability":
+            "bullish":
 
-            round(
+                round(
 
-                bullish /
-                total
-                * 100,
+                    bullish /
+                    total *
+                    100,
 
-                2
+                    2
 
-            ),
+                ),
 
 
+            "bearish":
 
-            "bearish_probability":
+                round(
 
-            round(
+                    bearish /
+                    total *
+                    100,
 
-                bearish /
-                total
-                * 100,
+                    2
 
-                2
-
-            )
+                )
 
         }
 
 
 
-    # ==================================================
-    # Main Historical Analysis
-    # ==================================================
+    # =====================================================
+    # PATTERN MEMORY STORAGE
+    # =====================================================
 
 
-    def analyze(
+    def store_pattern(
+
         self,
-        candles
+
+        pattern
+
     ):
 
 
-        if len(candles) < self.minimum_history:
+        if not pattern:
+
+            return False
+
+
+
+        record = {
+
+
+            "time":
+
+                datetime.utcnow().isoformat(),
+
+
+            "pattern":
+
+                pattern
+
+        }
+
+
+
+        self.pattern_memory.append(
+
+            record
+
+        )
+
+
+        return True
+
+
+
+    # =====================================================
+    # PATTERN SIMILARITY AI
+    # =====================================================
+
+
+    def pattern_similarity(
+
+        self,
+
+        current,
+
+        previous
+
+    ):
+
+
+        if not current or not previous:
+
+            return 0
+
+
+
+        length = min(
+
+            len(current),
+
+            len(previous)
+
+        )
+
+
+        if length == 0:
+
+            return 0
+
+
+
+        difference = 0
+
+
+
+        for i in range(length):
+
+
+            difference += abs(
+
+                current[i]
+
+                -
+
+                previous[i]
+
+            )
+
+
+
+        average_difference = (
+
+            difference /
+
+            length
+
+        )
+
+
+
+        score = (
+
+            100 -
+
+            (
+                average_difference *
+                100
+            )
+
+        )
+
+
+
+        return round(
+
+            max(
+
+                0,
+
+                min(
+
+                    score,
+
+                    100
+
+                )
+
+            ),
+
+            2
+
+        )
+
+
+
+    # =====================================================
+    # SAVE SIGNAL LEARNING MEMORY
+    # =====================================================
+
+
+    def save_signal_result(
+
+        self,
+
+        symbol,
+
+        signal,
+
+        confidence,
+
+        entry_price,
+
+        result=None
+
+    ):
+
+
+        record = {
+
+
+            "symbol":
+
+                symbol,
+
+
+            "signal":
+
+                signal,
+
+
+            "confidence":
+
+                confidence,
+
+
+            "entry_price":
+
+                entry_price,
+
+
+            "result":
+
+                result,
+
+
+            "time":
+
+                datetime.utcnow().isoformat()
+
+        }
+
+
+
+        self.signal_memory.append(
+
+            record
+
+        )
+
+
+
+        self.statistics["signals"] += 1
+
+
+
+        return True
+
+
+
+    # =====================================================
+    # UPDATE SIGNAL RESULT
+    # =====================================================
+
+
+    def update_signal_result(
+
+        self,
+
+        index,
+
+        result
+
+    ):
+
+
+        if index < 0:
+
+            return False
+
+
+
+        if index >= len(
+
+            self.signal_memory
+
+        ):
+
+            return False
+
+
+
+        self.signal_memory[index]["result"] = result
+
+
+
+        if result == "SUCCESS":
+
+
+            self.statistics["successful"] += 1
+
+
+
+        elif result == "FAILED":
+
+
+            self.statistics["failed"] += 1
+
+
+
+        total = (
+
+            self.statistics["successful"]
+
+            +
+
+            self.statistics["failed"]
+
+        )
+
+
+
+        if total > 0:
+
+
+            self.statistics["win_rate"] = round(
+
+                (
+
+                    self.statistics["successful"]
+
+                    /
+
+                    total
+
+                )
+
+                *
+
+                100,
+
+                2
+
+            )
+
+
+
+        return True
+
+
+
+    # =====================================================
+    # LEARNING FROM HISTORY
+    # =====================================================
+
+
+    def learn_from_history(
+
+        self,
+
+        signal,
+
+        market_condition=None
+
+    ):
+
+
+        successful = []
+
+        failed = []
+
+
+
+        for item in self.signal_memory:
+
+
+
+            if item["signal"] != signal:
+
+                continue
+
+
+
+            if item["result"] == "SUCCESS":
+
+                successful.append(item)
+
+
+
+            elif item["result"] == "FAILED":
+
+                failed.append(item)
+
+
+
+        total = len(successful) + len(failed)
+
+
+
+        if total == 0:
+
 
             return {
 
 
-                "trend_probability":50,
+                "signal":
 
-                "bullish":False,
-
-                "bearish":False,
+                    signal,
 
 
-                "volatility":0,
+                "experience":
 
-                "average_move":0,
-
-                "historical_similarity":0,
+                    0,
 
 
-                "max_drawdown":0,
+                "success_rate":
 
+                    50
 
-                "bullish_probability":50,
-
-                "bearish_probability":50,
-
-
-                "confidence":0
 
             }
 
 
 
-        closes = [
+        success_rate = (
 
-            c["close"]
+            len(successful)
 
-            for c in candles
+            /
 
-        ]
+            total
+
+        ) * 100
 
 
 
-        returns = self.calculate_returns(
+        return {
 
-            closes
+
+            "signal":
+
+                signal,
+
+
+            "experience":
+
+                total,
+
+
+            "success_rate":
+
+                round(
+
+                    success_rate,
+
+                    2
+
+                ),
+
+
+            "market_condition":
+
+                market_condition
+
+        }
+
+
+
+    # =====================================================
+    # LEARNING REPORT
+    # =====================================================
+
+
+    def get_learning_report(
+
+        self
+
+    ):
+
+
+        return {
+
+
+            "engine":
+
+                self.version,
+
+
+            "memory_size":
+
+                len(
+
+                    self.signal_memory
+
+                ),
+
+
+            "patterns":
+
+                len(
+
+                    self.pattern_memory
+
+                ),
+
+
+            "statistics":
+
+                self.statistics,
+
+
+            "last_update":
+
+                datetime.utcnow().isoformat()
+
+        }
+
+
+
+    # =====================================================
+    # HISTORICAL SIGNAL GENERATOR
+    # =====================================================
+
+
+    def get_historical_signal(
+
+        self,
+
+        analysis
+
+    ):
+
+
+        if not analysis:
+
+
+            return {
+
+
+                "signal":
+
+                    "WAIT",
+
+
+                "strength":
+
+                    0,
+
+
+                "reason":
+
+                    "No historical data"
+
+            }
+
+
+
+        probability = self.safe_number(
+
+            analysis.get(
+
+                "trend_probability",
+
+                50
+
+            )
+
+        )
+
+
+        confidence = self.safe_number(
+
+            analysis.get(
+
+                "confidence",
+
+                0
+
+            )
 
         )
 
 
 
-        if not returns:
+        if (
+
+            probability >= 65
+
+            and
+
+            confidence >= 60
+
+        ):
+
+
+            return {
+
+
+                "signal":
+
+                    "BUY",
+
+
+                "strength":
+
+                    confidence,
+
+
+                "reason":
+
+                    "Historical bullish advantage"
+
+            }
+
+
+
+
+        if (
+
+            probability <= 35
+
+            and
+
+            confidence >= 60
+
+        ):
+
+
+            return {
+
+
+                "signal":
+
+                    "SELL",
+
+
+                "strength":
+
+                    confidence,
+
+
+                "reason":
+
+                    "Historical bearish advantage"
+
+            }
+
+
+
+
+        return {
+
+
+            "signal":
+
+                "WAIT",
+
+
+            "strength":
+
+                confidence,
+
+
+            "reason":
+
+                "Historical confirmation weak"
+
+        }
+
+
+
+    # =====================================================
+    # HISTORICAL MARKET SUMMARY
+    # =====================================================
+
+
+    def market_summary(
+
+        self,
+
+        analysis
+
+    ):
+
+
+        if not analysis:
+
 
             return {}
 
 
 
-        average_move = statistics.mean(
+        signal = self.get_historical_signal(
 
-            returns
-
-        )
-
-
-
-        volatility = self.calculate_volatility(
-
-            returns
-
-        )
-
-
-
-        bias = self.historical_bias(
-
-            returns
-
-        )
-
-
-
-        similarity = self.compare_recent_pattern(
-
-            returns
-
-        )
-
-
-
-        drawdown = self.calculate_drawdown(
-
-            closes
-
-        )
-
-
-
-        probability = 50
-
-
-
-        if bias["bullish_probability"] > 55:
-
-            probability += 25
-
-
-
-        elif bias["bearish_probability"] > 55:
-
-            probability -= 25
-
-
-
-        if similarity > 50:
-
-
-            if average_move > 0:
-
-                probability += 10
-
-
-            elif average_move < 0:
-
-                probability -= 10
-
-
-
-        probability = max(
-
-            min(
-                probability,
-                100
-            ),
-
-            0
-
-        )
-
-
-
-        confidence = (
-
-            abs(
-                probability - 50
-            )
-
-            +
-
-            similarity * 0.4
-
-        )
-
-
-
-        confidence = min(
-
-            confidence,
-
-            100
+            analysis
 
         )
 
@@ -532,98 +1062,503 @@ class HistoricalLearning:
         return {
 
 
-            "trend_probability":
+            "historical_signal":
 
-            round(
-
-                probability,
-
-                2
-
-            ),
+                signal["signal"],
 
 
+            "historical_strength":
 
-            "bullish":
-
-            probability > 60,
-
+                signal["strength"],
 
 
-            "bearish":
+            "historical_reason":
 
-            probability < 40,
-
-
-
-            "volatility":
-
-            round(
-
-                volatility,
-
-                5
-
-            ),
-
-
-
-            "average_move":
-
-            round(
-
-                average_move,
-
-                6
-
-            ),
-
-
-
-            "historical_similarity":
-
-            round(
-
-                similarity,
-
-                2
-
-            ),
-
-
-
-            "max_drawdown":
-
-            round(
-
-                drawdown,
-
-                2
-
-            ),
-
+                signal["reason"],
 
 
             "bullish_probability":
 
-            bias["bullish_probability"],
+                analysis.get(
 
+                    "bullish_probability",
+
+                    50
+
+                ),
 
 
             "bearish_probability":
 
-            bias["bearish_probability"],
+                analysis.get(
 
+                    "bearish_probability",
+
+                    50
+
+                ),
+
+
+            "similarity":
+
+                analysis.get(
+
+                    "historical_similarity",
+
+                    0
+
+                ),
 
 
             "confidence":
 
-            round(
+                analysis.get(
 
-                confidence,
+                    "confidence",
 
-                2
+                    0
+
+                )
+
+        }
+
+
+
+    # =====================================================
+    # RECENT HISTORY SNAPSHOT
+    # =====================================================
+
+
+    def recent_history(
+
+        self,
+
+        limit=20
+
+    ):
+
+
+        return list(
+
+            self.signal_memory[-limit:]
 
             )
+
+
+
+    # =====================================================
+    # MEMORY EXPORT
+    # =====================================================
+
+
+    def export_memory(
+
+        self
+
+    ):
+
+
+        return {
+
+
+            "signals":
+
+                list(
+
+                    self.signal_memory
+
+                ),
+
+
+            "patterns":
+
+                list(
+
+                    self.pattern_memory
+
+                ),
+
+
+            "statistics":
+
+                self.statistics,
+
+
+            "export_time":
+
+                datetime.utcnow().isoformat()
+
+        }
+
+
+
+    # =====================================================
+    # RESET LEARNING MEMORY
+    # =====================================================
+
+
+    def reset_learning(
+
+        self
+
+    ):
+
+
+        self.signal_memory.clear()
+
+
+        self.pattern_memory.clear()
+
+
+
+        self.statistics = {
+
+
+            "signals":
+
+                0,
+
+
+            "successful":
+
+                0,
+
+
+            "failed":
+
+                0,
+
+
+            "win_rate":
+
+                0
+
+        }
+
+
+
+        return True
+
+
+
+    # =====================================================
+    # HEALTH CHECK
+    # =====================================================
+
+
+    def health_check(
+
+        self
+
+    ):
+
+
+        return {
+
+
+            "engine":
+
+                self.version,
+
+
+            "status":
+
+                "ACTIVE",
+
+
+            "signal_memory":
+
+                len(
+
+                    self.signal_memory
+
+                ),
+
+
+            "pattern_memory":
+
+                len(
+
+                    self.pattern_memory
+
+                ),
+
+
+            "win_rate":
+
+                self.statistics.get(
+
+                    "win_rate",
+
+                    0
+
+                ),
+
+
+            "time":
+
+                datetime.utcnow().isoformat()
+
+        }
+
+
+
+    # =====================================================
+    # ENGINE STATUS
+    # =====================================================
+
+
+    def status(
+
+        self
+
+    ):
+
+
+        return {
+
+
+            "name":
+
+                "HistoricalLearning",
+
+
+            "version":
+
+                self.version,
+
+
+            "ready":
+
+                True,
+
+
+            "memory":
+
+            {
+
+
+                "signals":
+
+                    len(
+
+                        self.signal_memory
+
+                    ),
+
+
+                "patterns":
+
+                    len(
+
+                        self.pattern_memory
+
+                    )
+
+            },
+
+
+            "statistics":
+
+                self.statistics
+
+        }
+
+
+
+# =====================================================
+# MULTI TIMEFRAME MEMORY
+# =====================================================
+
+    def save_timeframe_result(
+
+        self,
+
+        symbol,
+
+        timeframe,
+
+        signal,
+
+        confidence,
+
+        result
+
+    ):
+
+        if not hasattr(self, "timeframe_memory"):
+
+            self.timeframe_memory = {}
+
+        key = f"{symbol}_{timeframe}"
+
+        if key not in self.timeframe_memory:
+
+            self.timeframe_memory[key] = []
+
+        self.timeframe_memory[key].append({
+
+            "signal": signal,
+
+            "confidence": confidence,
+
+            "result": result,
+
+            "time": datetime.utcnow().isoformat()
+
+        })
+
+        if len(self.timeframe_memory[key]) > 500:
+
+            self.timeframe_memory[key] = self.timeframe_memory[key][-500:]
+
+        return True
+
+
+# =====================================================
+# BEST TIMEFRAME
+# =====================================================
+
+    def best_timeframe(
+
+        self,
+
+        symbol
+
+    ):
+
+        if not hasattr(self, "timeframe_memory"):
+
+            return None
+
+        best_tf = None
+        best_rate = 0
+
+        for key, records in self.timeframe_memory.items():
+
+            if not key.startswith(symbol):
+
+                continue
+
+            success = sum(
+                1 for r in records
+                if r["result"] == "SUCCESS"
+            )
+
+            total = len(records)
+
+            if total == 0:
+
+                continue
+
+            rate = success / total * 100
+
+            if rate > best_rate:
+
+                best_rate = rate
+                best_tf = key.split("_")[1]
+
+        return {
+
+            "timeframe": best_tf,
+
+            "success_rate": round(best_rate, 2)
+
+        }
+
+
+# =====================================================
+# PERFORMANCE MONITOR
+# =====================================================
+
+    def performance_monitor(self):
+
+        success = self.statistics.get(
+            "successful",
+            0
+        )
+
+        failed = self.statistics.get(
+            "failed",
+            0
+        )
+
+        total = success + failed
+
+        if total == 0:
+
+            return {
+
+                "status": "NO_DATA",
+
+                "warning": False
+
+            }
+
+        win_rate = success / total * 100
+
+        warning = win_rate < 55
+
+        return {
+
+            "status": "OK" if not warning else "DEGRADED",
+
+            "win_rate": round(win_rate, 2),
+
+            "warning": warning
+
+        }
+
+
+# =====================================================
+# LEARNING RECOMMENDATION
+# =====================================================
+
+    def learning_recommendation(self):
+
+        monitor = self.performance_monitor()
+
+        if monitor["status"] == "DEGRADED":
+
+            return {
+
+                "action": "RETRAIN_AI",
+
+                "reason": "Historical performance dropped"
+
+            }
+
+        return {
+
+            "action": "KEEP_RUNNING",
+
+            "reason": "Performance stable"
+
+        }
+
+
+# =====================================================
+# FINAL PRODUCTION STATUS
+# =====================================================
+
+    def production_status(self):
+
+        return {
+
+            "engine": self.version,
+
+            "status": "ACTIVE",
+
+            "signals": len(self.signal_memory),
+
+            "patterns": len(self.pattern_memory),
+
+            "statistics": self.statistics,
+
+            "performance": self.performance_monitor(),
+
+            "recommendation": self.learning_recommendation(),
+
+            "ready": True
 
         }
