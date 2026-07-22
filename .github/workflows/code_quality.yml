@@ -1,5 +1,6 @@
 name: FalconAI Code Quality Check
 
+
 on:
 
   push:
@@ -11,24 +12,32 @@ on:
       - main
 
 
+
 jobs:
+
 
   quality-check:
 
+
     runs-on: ubuntu-latest
+
 
 
     steps:
 
 
       - name: Checkout
+
         uses: actions/checkout@v4
 
 
 
       - name: Setup Python
+
         uses: actions/setup-python@v5
+
         with:
+
           python-version: "3.12"
 
 
@@ -38,17 +47,21 @@ jobs:
       # ==========================================
 
       - name: Python Compile Check
+
         run: |
 
           python -m compileall backend
 
 
 
+
+
       # ==========================================
-      # Duplicate Detection
+      # Duplicate Code Detection
       # ==========================================
 
       - name: Duplicate Code Detection
+
         run: |
 
           python - <<'PY'
@@ -56,86 +69,88 @@ jobs:
           import ast
 
 
-          file = "backend/app/ai/signals_engine.py"
 
+          files = [
 
-          with open(file, "r", encoding="utf-8") as f:
+              "backend/app/ai/signals_engine.py",
 
-              tree = ast.parse(f.read())
-
-
-
-          classes = []
-
-          functions = []
-
-
-
-          for node in ast.walk(tree):
-
-              if isinstance(node, ast.ClassDef):
-
-                  classes.append(node.name)
-
-
-
-              if isinstance(node, ast.FunctionDef):
-
-                  functions.append(node.name)
-
-
-
-          print("Checking classes...")
-
-
-          for name in set(classes):
-
-              if classes.count(name) > 1:
-
-                  raise Exception(
-                      f"Duplicate class found: {name}"
-                  )
-
-
-
-          print("Checking important functions...")
-
-
-
-          important = [
-
-              "analyze",
-
-              "analyze_market",
-
-              "detect_market_regime",
-
-              "detect_early_trend",
-
-              "calculate_confidence",
-
-              "make_decision",
-
-              "health_check"
+              "backend/app/ai/opportunity/opportunity_engine.py"
 
           ]
 
 
 
-          for name in important:
+          for file in files:
 
-              if functions.count(name) > 1:
 
-                  raise Exception(
-                      f"Duplicate function found: {name}"
-                  )
+              print("\nChecking:", file)
 
 
 
-          print("Duplicate check passed")
+              with open(
+                  file,
+                  "r",
+                  encoding="utf-8"
+              ) as f:
+
+                  tree = ast.parse(f.read())
+
+
+
+              classes = []
+
+              functions = []
+
+
+
+              for node in ast.walk(tree):
+
+                  if isinstance(node, ast.ClassDef):
+
+                      classes.append(node.name)
+
+
+
+                  if isinstance(node, ast.FunctionDef):
+
+                      functions.append(node.name)
+
+
+
+              for name in set(classes):
+
+
+                  if classes.count(name) > 1:
+
+                      raise Exception(
+
+                          f"{file}: Duplicate class {name}"
+
+                      )
+
+
+
+              for name in set(functions):
+
+
+                  if functions.count(name) > 1:
+
+                      raise Exception(
+
+                          f"{file}: Duplicate function {name}"
+
+                      )
+
+
+
+              print(
+                  "Duplicate check OK"
+              )
+
 
 
           PY
+
 
 
 
@@ -145,7 +160,9 @@ jobs:
       # ==========================================
 
       - name: SignalEngine Structure Check
+
         run: |
+
 
           python - <<'PY'
 
@@ -154,13 +171,24 @@ jobs:
 
 
 
-          file = "backend/app/ai/signals_engine.py"
+          file = (
+
+              "backend/app/ai/signals_engine.py"
+
+          )
 
 
 
-          with open(file, "r", encoding="utf-8") as f:
+          with open(
+              file,
+              "r",
+              encoding="utf-8"
+          ) as f:
 
-              tree = ast.parse(f.read())
+
+              tree = ast.parse(
+                  f.read()
+              )
 
 
 
@@ -170,7 +198,10 @@ jobs:
 
               for n in ast.walk(tree)
 
-              if isinstance(n, ast.ClassDef)
+              if isinstance(
+                  n,
+                  ast.ClassDef
+              )
 
           ]
 
@@ -182,16 +213,22 @@ jobs:
 
               for n in ast.walk(tree)
 
-              if isinstance(n, ast.FunctionDef)
+              if isinstance(
+                  n,
+                  ast.FunctionDef
+              )
 
           ]
 
 
 
-          if classes.count("SignalEngine") != 1:
+          if classes.count(
+              "SignalEngine"
+          ) != 1:
+
 
               raise Exception(
-                  "SignalEngine class problem"
+                  "SignalEngine class invalid"
               )
 
 
@@ -212,20 +249,187 @@ jobs:
 
           for fn in required:
 
+
               if fn not in functions:
 
+
                   raise Exception(
-                      f"Missing function: {fn}"
+
+                      f"Missing SignalEngine method: {fn}"
+
                   )
 
 
 
           print(
-              "SignalEngine structure OK"
+              "SignalEngine READY"
           )
 
 
           PY
+
+
+
+
+
+      # ==========================================
+      # OpportunityEngine Structure Check
+      # ==========================================
+
+      - name: OpportunityEngine Structure Check
+
+        run: |
+
+
+          python - <<'PY'
+
+
+          import ast
+
+
+
+          file = (
+
+              "backend/app/ai/opportunity/opportunity_engine.py"
+
+          )
+
+
+
+          with open(
+              file,
+              "r",
+              encoding="utf-8"
+          ) as f:
+
+
+              tree = ast.parse(
+                  f.read()
+              )
+
+
+
+          classes = [
+
+              n.name
+
+              for n in ast.walk(tree)
+
+              if isinstance(
+                  n,
+                  ast.ClassDef
+              )
+
+          ]
+
+
+
+          functions = [
+
+              n.name
+
+              for n in ast.walk(tree)
+
+              if isinstance(
+                  n,
+                  ast.FunctionDef
+              )
+
+          ]
+
+
+
+          if classes.count(
+              "OpportunityEngine"
+          ) != 1:
+
+
+              raise Exception(
+
+                  "OpportunityEngine class invalid"
+
+              )
+
+
+
+          required = [
+
+              "analyze",
+
+              "empty_result",
+
+              "detect_market_regime",
+
+              "health_check"
+
+          ]
+
+
+
+          for fn in required:
+
+
+              if fn not in functions:
+
+
+                  raise Exception(
+
+                      f"Missing OpportunityEngine method: {fn}"
+
+                  )
+
+
+
+          engines = [
+
+              "TrendEngine",
+
+              "VolumeEngine",
+
+              "LiquidityEngine",
+
+              "OrderBlocksEngine",
+
+              "SupportResistanceEngine",
+
+              "CandlesAI",
+
+              "HistoricalLearning",
+
+              "SmartMoneyAnalyzer"
+
+          ]
+
+
+
+          code = open(
+              file,
+              encoding="utf-8"
+          ).read()
+
+
+
+          for engine in engines:
+
+
+              if engine not in code:
+
+
+                  raise Exception(
+
+                      f"Missing engine: {engine}"
+
+                  )
+
+
+
+          print(
+              "OpportunityEngine READY"
+          )
+
+
+          PY
+
 
 
 
@@ -235,45 +439,60 @@ jobs:
       # ==========================================
 
       - name: File Size Check
+
         run: |
+
 
           python - <<'PY'
 
 
-          file = "backend/app/ai/signals_engine.py"
+          files = [
+
+              "backend/app/ai/signals_engine.py",
+
+              "backend/app/ai/opportunity/opportunity_engine.py"
+
+          ]
 
 
 
-          lines = sum(
+          for file in files:
 
-              1
 
-              for _ in open(
+              lines = sum(
+
+                  1
+
+                  for _ in open(
+                      file,
+                      encoding="utf-8"
+                  )
+
+              )
+
+
+
+              print(
                   file,
-                  encoding="utf-8"
-              )
-
-          )
-
-
-
-          print(
-              "signals_engine.py lines:",
-              lines
-          )
-
-
-
-          if lines > 15000:
-
-              raise Exception(
-                  "signals_engine.py too large"
+                  "lines:",
+                  lines
               )
 
 
 
+              if lines > 15000:
+
+
+                  raise Exception(
+
+                      f"{file} too large"
+
+                  )
+
+
+
           print(
-              "File size OK"
+              "File sizes OK"
           )
 
 
@@ -282,12 +501,15 @@ jobs:
 
 
 
+
       # ==========================================
-      # Final Production Audit
+      # Final FalconAI Production Audit
       # ==========================================
 
-      - name: FalconAI Final Audit
+      - name: FalconAI Final Production Audit
+
         run: |
+
 
           python - <<'PY'
 
@@ -296,80 +518,135 @@ jobs:
 
 
 
-          file = "backend/app/ai/signals_engine.py"
+          files = [
 
+              "backend/app/ai/signals_engine.py",
 
-
-          with open(file, "r", encoding="utf-8") as f:
-
-              code = f.read()
-
-              tree = ast.parse(code)
-
-
-
-          print(
-              "Starting FalconAI Final Audit..."
-          )
-
-
-
-          # TODO Check
-
-          if "TODO" in code:
-
-              print(
-                  "WARNING: TODO found"
-              )
-
-
-
-          # Pass Check
-
-          pass_count = sum(
-
-              1
-
-              for node in ast.walk(tree)
-
-              if isinstance(node, ast.Pass)
-
-          )
-
-
-
-          print(
-              "Pass statements:",
-              pass_count
-          )
-
-
-
-          # Import Check
-
-          imports = [
-
-              node.names[0].name
-
-              for node in ast.walk(tree)
-
-              if isinstance(
-                  node,
-                  ast.Import
-              )
+              "backend/app/ai/opportunity/opportunity_engine.py"
 
           ]
 
 
 
           print(
-              "Imports detected:",
-              len(imports)
+              "================================"
+          )
+
+          print(
+              "FalconAI Final Audit Started"
+          )
+
+          print(
+              "================================"
           )
 
 
 
-          # Final confirmation
+          for file in files:
+
+
+              with open(
+                  file,
+                  encoding="utf-8"
+              ) as f:
+
+
+                  code = f.read()
+
+
+
+              tree = ast.parse(code)
+
+
+
+              todo = code.count(
+                  "TODO"
+              )
+
+
+
+              passes = sum(
+
+                  1
+
+                  for node in ast.walk(tree)
+
+                  if isinstance(
+                      node,
+                      ast.Pass
+                  )
+
+              )
+
+
+
+              functions = len(
+
+                  [
+
+                      n
+
+                      for n in ast.walk(tree)
+
+                      if isinstance(
+                          n,
+                          ast.FunctionDef
+                      )
+
+                  ]
+
+              )
+
+
+
+              classes = len(
+
+                  [
+
+                      n
+
+                      for n in ast.walk(tree)
+
+                      if isinstance(
+                          n,
+                          ast.ClassDef
+                      )
+
+                  ]
+
+              )
+
+
+
+              print()
+
+              print(
+                  file
+              )
+
+              print(
+                  "Classes:",
+                  classes
+              )
+
+              print(
+                  "Functions:",
+                  functions
+              )
+
+              print(
+                  "TODO:",
+                  todo
+              )
+
+              print(
+                  "Pass:",
+                  passes
+              )
+
+
+
+          print()
 
           print(
               "================================"
@@ -380,12 +657,13 @@ jobs:
           )
 
           print(
-              "SignalEngine READY"
+              "Engines READY"
           )
 
           print(
               "================================"
           )
+
 
 
           PY
