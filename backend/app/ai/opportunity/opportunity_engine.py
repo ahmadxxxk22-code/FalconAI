@@ -2795,3 +2795,495 @@ class OpportunityEngine:
                 True
 
         }
+
+
+
+# ==========================================================
+# FalconAI Opportunity Engine
+# Production Version
+# Part 8
+# Production Intelligence Layer
+# ==========================================================
+
+
+    # ==================================================
+    # Market Regime Detection
+    # ==================================================
+
+    def detect_market_regime(
+        self,
+        candles: list
+    ) -> Dict[str, Any]:
+
+
+        if not candles or len(candles) < 50:
+
+            return {
+
+                "regime": "UNKNOWN",
+
+                "volatility": 0,
+
+                "trend_strength": 0
+
+            }
+
+
+
+        closes = [
+
+            c["close"]
+
+            for c in candles
+
+        ]
+
+
+
+        moves = []
+
+
+        for i in range(1, len(closes)):
+
+            if closes[i-1] == 0:
+
+                continue
+
+
+            moves.append(
+
+                abs(
+
+                    (
+                        closes[i]
+                        -
+                        closes[i-1]
+
+                    )
+                    /
+                    closes[i-1]
+
+                )
+
+            )
+
+
+
+        volatility = (
+
+            sum(moves)
+            /
+            max(
+                len(moves),
+                1
+            )
+
+        ) * 100
+
+
+
+        first = closes[0]
+
+        last = closes[-1]
+
+
+        trend_strength = abs(
+
+            (
+                last
+                -
+                first
+
+            )
+            /
+            first
+
+        ) * 100
+
+
+
+        if volatility > 3:
+
+            regime = "HIGH_VOLATILITY"
+
+
+        elif trend_strength > 5:
+
+            regime = "TRENDING"
+
+
+        elif volatility < 0.5:
+
+            regime = "LOW_VOLATILITY"
+
+
+        else:
+
+            regime = "RANGING"
+
+
+
+        return {
+
+
+            "regime": regime,
+
+
+            "volatility": round(
+
+                volatility,
+
+                3
+
+            ),
+
+
+            "trend_strength": round(
+
+                trend_strength,
+
+                3
+
+            )
+
+        }
+
+
+
+    # ==================================================
+    # News Risk Protection
+    # ==================================================
+
+    def analyze_news_risk(
+        self,
+        symbol: str
+    ) -> Dict[str, Any]:
+
+
+        if not self.news_engine:
+
+            return {
+
+
+                "risk": False,
+
+
+                "score": 0,
+
+
+                "message": "News engine unavailable"
+
+            }
+
+
+
+        try:
+
+
+            news = self.news_engine.analyze(
+
+                symbol
+
+            )
+
+
+            impact = news.get(
+
+                "impact",
+
+                0
+
+            )
+
+
+            if impact >= 70:
+
+
+                return {
+
+
+                    "risk": True,
+
+
+                    "score": impact,
+
+
+                    "message":
+
+                    "High impact news detected"
+
+                }
+
+
+
+            return {
+
+
+                "risk": False,
+
+
+                "score": impact,
+
+
+                "message":
+
+                "News risk normal"
+
+            }
+
+
+
+        except Exception:
+
+
+            return {
+
+
+                "risk": False,
+
+
+                "score": 0,
+
+
+                "message":
+
+                "News analysis failed"
+
+            }
+
+
+
+    # ==================================================
+    # Falcon Intelligence Score
+    # ==================================================
+
+    def calculate_falcon_score(
+        self,
+        analysis: Dict[str, Any]
+    ) -> float:
+
+
+        score = 0
+
+
+
+        confidence = analysis.get(
+
+            "confidence",
+
+            0
+
+        )
+
+
+        quality_score = analysis.get(
+
+            "quality_score",
+
+            0
+
+        )
+
+
+        confirmations = analysis.get(
+
+            "confirmations",
+
+            0
+
+        )
+
+
+
+        score += confidence * 0.5
+
+
+        score += quality_score * 3
+
+
+        score += min(
+
+            confirmations * 5,
+
+            25
+
+        )
+
+
+
+        return round(
+
+            min(
+
+                score,
+
+                100
+
+            ),
+
+            2
+
+        )
+
+
+
+    # ==================================================
+    # Final User Explanation
+    # ==================================================
+
+    def explain_signal(
+        self,
+        result: Dict[str, Any]
+    ) -> str:
+
+
+
+        signal = result.get(
+
+            "signal",
+
+            "WAIT"
+
+        )
+
+
+
+        reasons = result.get(
+
+            "reasons",
+
+            []
+
+        )
+
+
+
+        if signal == "BUY":
+
+
+            return (
+
+                "FalconAI detected a BUY opportunity. "
+
+                "Reasons: "
+
+                +
+                ", ".join(reasons)
+
+            )
+
+
+
+        if signal == "SELL":
+
+
+            return (
+
+                "FalconAI detected a SELL opportunity. "
+
+                "Reasons: "
+
+                +
+                ", ".join(reasons)
+
+            )
+
+
+
+        return (
+
+            "FalconAI recommends WAIT. "
+
+            "Market confirmation is not strong enough. "
+
+            +
+            ", ".join(reasons)
+
+        )
+
+
+
+    # ==================================================
+    # Final Production Validation
+    # ==================================================
+
+    def production_validation(
+        self,
+        result: Dict[str, Any]
+    ) -> Dict[str, Any]:
+
+
+        warnings = []
+
+
+
+        if result.get(
+
+            "confidence",
+
+            0
+
+        ) < 60:
+
+
+            warnings.append(
+
+                "Low confidence"
+
+            )
+
+
+
+        if result.get(
+
+            "quality",
+
+            "D"
+
+        ) in [
+
+            "C",
+
+            "D"
+
+        ]:
+
+
+            warnings.append(
+
+                "Low signal quality"
+
+            )
+
+
+
+        if result.get(
+
+            "risk_reward",
+
+            0
+
+        ) < 2:
+
+
+            warnings.append(
+
+                "Poor risk reward"
+
+            )
+
+
+
+        return {
+
+
+            "approved":
+
+            len(warnings) == 0,
+
+
+            "warnings":
+
+            warnings
+
+        }
