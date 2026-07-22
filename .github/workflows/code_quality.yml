@@ -122,6 +122,89 @@ jobs:
 
 
 
+      # فحص بنية SignalEngine
+      - name: SignalEngine Structure Check
+        run: |
+
+          python - <<'PY'
+
+          import ast
+
+
+          file = "backend/app/ai/signals_engine.py"
+
+
+          with open(file, "r", encoding="utf-8") as f:
+              tree = ast.parse(f.read())
+
+
+          classes = [
+
+              node.name
+
+              for node in ast.walk(tree)
+
+              if isinstance(node, ast.ClassDef)
+
+          ]
+
+
+          functions = [
+
+              node.name
+
+              for node in ast.walk(tree)
+
+              if isinstance(node, ast.FunctionDef)
+
+          ]
+
+
+          print(
+              "SignalEngine classes:",
+              classes.count("SignalEngine")
+          )
+
+
+          if classes.count("SignalEngine") != 1:
+
+              raise Exception(
+                  "SignalEngine class missing or duplicated"
+              )
+
+
+
+          required = [
+
+              "analyze",
+
+              "calculate_confidence",
+
+              "make_decision",
+
+              "health_check"
+
+          ]
+
+
+          for func in required:
+
+              if func not in functions:
+
+                  raise Exception(
+                      f"Missing function: {func}"
+                  )
+
+
+          print(
+              "SignalEngine structure OK"
+          )
+
+
+          PY
+
+
+
       # مراقبة حجم الملف
       - name: File Size Check
         run: |
@@ -132,10 +215,14 @@ jobs:
 
 
           lines = sum(
-              1 for _ in open(
+
+              1
+
+              for _ in open(
                   file,
                   encoding="utf-8"
               )
+
           )
 
 
