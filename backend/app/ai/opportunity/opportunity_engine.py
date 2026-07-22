@@ -3287,3 +3287,1223 @@ class OpportunityEngine:
             warnings
 
         }
+
+
+
+# ==========================================================
+# PART 8
+# Adaptive AI Learning Layer
+# ==========================================================
+
+    def adaptive_learning_update(
+
+        self,
+
+        result,
+
+        candles
+
+    ):
+
+
+        if not result:
+
+            return
+
+
+        memory = {
+
+            "signal": result.get("signal"),
+
+            "confidence": result.get("confidence"),
+
+            "quality": result.get("quality"),
+
+            "score": result.get("score"),
+
+            "price": candles[-1]["close"],
+
+            "confirmations": result.get("confirmations"),
+
+            "risk_reward": result.get("risk_reward"),
+
+            "timestamp": candles[-1].get("time")
+
+        }
+
+
+        self.signal_memory.append(memory)
+
+
+        if len(self.signal_memory) > self.max_memory:
+
+            self.signal_memory.pop(0)
+
+
+
+    def adaptive_signal_threshold(self):
+
+
+        if len(self.signal_memory) < 200:
+
+            return self.minimum_score
+
+
+        wins = 0
+
+
+        for item in self.signal_memory:
+
+            if item["quality"] in ["A+", "A"]:
+
+                wins += 1
+
+
+        ratio = wins / len(self.signal_memory)
+
+
+        if ratio >= 0.75:
+
+            return max(
+
+                self.minimum_score - 3,
+
+                40
+
+            )
+
+
+        if ratio <= 0.45:
+
+            return min(
+
+                self.minimum_score + 5,
+
+                60
+
+            )
+
+
+        return self.minimum_score
+
+
+
+# ==========================================================
+# PART 9
+# Multi-Timeframe Consensus Layer
+# ==========================================================
+
+    def timeframe_consensus(
+
+        self,
+
+        analyses
+
+    ):
+
+
+        if not analyses:
+
+            return {
+
+                "direction": "WAIT",
+
+                "score": 0,
+
+                "confidence": 0
+
+            }
+
+
+        bullish = 0
+
+        bearish = 0
+
+        weight_sum = 0
+
+
+        for tf, result in analyses.items():
+
+            weight = self.get_timeframe_weight(tf)
+
+            weight_sum += weight
+
+
+            signal = result.get("signal", "WAIT")
+
+
+            if signal == "BUY":
+
+                bullish += weight
+
+
+            elif signal == "SELL":
+
+                bearish += weight
+
+
+        score = bullish - bearish
+
+
+        confidence = 0
+
+
+        if weight_sum > 0:
+
+            confidence = int(
+
+                max(
+
+                    bullish,
+
+                    bearish
+
+                )
+
+                /
+
+                weight_sum
+
+                *
+
+                100
+
+            )
+
+
+        direction = "WAIT"
+
+
+        if bullish > bearish and confidence >= 60:
+
+            direction = "BUY"
+
+
+        elif bearish > bullish and confidence >= 60:
+
+            direction = "SELL"
+
+
+        return {
+
+            "direction": direction,
+
+            "bullish": bullish,
+
+            "bearish": bearish,
+
+            "score": score,
+
+            "confidence": confidence
+
+        }
+
+
+
+    def build_timeframe_map(
+
+        self,
+
+        symbol,
+
+        candles,
+
+        market
+
+    ):
+
+
+        if not self.multi_timeframe_engine:
+
+            return {}
+
+
+        results = {}
+
+
+        for tf in self.timeframes:
+
+
+            try:
+
+                results[tf] = (
+
+                    self.multi_timeframe_engine.analyze(
+
+                        symbol=symbol,
+
+                        timeframe=tf,
+
+                        candles=candles,
+
+                        market=market
+
+                    )
+
+                )
+
+
+            except Exception:
+
+                continue
+
+
+        return results
+
+
+
+# ==========================================================
+# PART 10
+# Market Intelligence Fusion Layer
+# ==========================================================
+
+
+    def calculate_market_intelligence(
+
+        self,
+
+        trend,
+
+        smart_money,
+
+        history,
+
+        regime,
+
+        timeframe_result
+
+    ):
+
+
+        intelligence_score = 50
+
+
+        reasons = []
+
+
+
+        # Trend Influence
+
+        trend_signal = trend.get(
+
+            "signal",
+
+            "WAIT"
+
+        )
+
+
+        if trend_signal == "BUY":
+
+            intelligence_score += 10
+
+            reasons.append(
+
+                "Trend alignment bullish"
+
+            )
+
+
+        elif trend_signal == "SELL":
+
+            intelligence_score -= 10
+
+            reasons.append(
+
+                "Trend alignment bearish"
+
+            )
+
+
+
+        # Smart Money Influence
+
+        if smart_money.get(
+
+            "bos",
+
+            False
+
+        ):
+
+            intelligence_score += 8
+
+            reasons.append(
+
+                "Break of structure detected"
+
+            )
+
+
+
+        if smart_money.get(
+
+            "choch",
+
+            False
+
+        ):
+
+            intelligence_score += 8
+
+            reasons.append(
+
+                "Change of character detected"
+
+            )
+
+
+
+        if smart_money.get(
+
+            "liquidity_sweep",
+
+            False
+
+        ):
+
+            intelligence_score += 6
+
+            reasons.append(
+
+                "Liquidity sweep detected"
+
+            )
+
+
+
+        # Historical Learning
+
+        history_confidence = history.get(
+
+            "confidence",
+
+            0
+
+        )
+
+
+        if history_confidence >= 70:
+
+            intelligence_score += 5
+
+            reasons.append(
+
+                "Historical pattern confirmed"
+
+            )
+
+
+
+        # Market Regime
+
+        if regime.get(
+
+            "regime"
+
+        ) == "TRENDING":
+
+            intelligence_score += 5
+
+            reasons.append(
+
+                "Trending market"
+
+            )
+
+
+        elif regime.get(
+
+            "regime"
+
+        ) == "HIGH_VOLATILITY":
+
+            intelligence_score -= 5
+
+            reasons.append(
+
+                "High volatility risk"
+
+            )
+
+
+
+        # Multi timeframe
+
+        timeframe_confidence = timeframe_result.get(
+
+            "confidence",
+
+            0
+
+        )
+
+
+        if timeframe_confidence >= 70:
+
+            intelligence_score += 5
+
+            reasons.append(
+
+                "Multi timeframe agreement"
+
+            )
+
+
+
+        intelligence_score = max(
+
+            min(
+
+                intelligence_score,
+
+                100
+
+            ),
+
+            0
+
+        )
+
+
+
+        return {
+
+
+            "intelligence_score":
+
+                intelligence_score,
+
+
+            "reasons":
+
+                reasons
+
+        }
+
+
+
+
+
+    # ==================================================
+    # Final Signal Explanation Builder
+    # ==================================================
+
+
+    def build_signal_explanation(
+
+        self,
+
+        result
+
+    ):
+
+
+        signal = result.get(
+
+            "signal",
+
+            "WAIT"
+
+        )
+
+
+        confidence = result.get(
+
+            "confidence",
+
+            0
+
+        )
+
+
+        quality = result.get(
+
+            "quality",
+
+            "D"
+
+        )
+
+
+
+        reasons = result.get(
+
+            "reasons",
+
+            []
+
+        )
+
+
+
+        if signal == "BUY":
+
+
+            message = (
+
+                "BUY opportunity detected. "
+
+            )
+
+
+        elif signal == "SELL":
+
+
+            message = (
+
+                "SELL opportunity detected. "
+
+            )
+
+
+        else:
+
+
+            message = (
+
+                "WAIT. Market confirmation is insufficient. "
+
+            )
+
+
+
+        message += (
+
+            f"Confidence {confidence}%. "
+
+            f"Quality {quality}. "
+
+        )
+
+
+
+        if reasons:
+
+
+            message += (
+
+                "Factors: "
+
+                +
+
+                ", ".join(reasons)
+
+            )
+
+
+
+        return message
+
+
+
+# ==========================================================
+# PART 11
+# Falcon Final Decision Fusion
+# ==========================================================
+
+
+    def apply_intelligence_filter(
+
+        self,
+
+        decision,
+
+        intelligence
+
+    ):
+
+
+        score = decision.get(
+
+            "score",
+
+            0
+
+        )
+
+
+        intelligence_score = intelligence.get(
+
+            "intelligence_score",
+
+            50
+
+        )
+
+
+        final_score = (
+
+            score * 0.6
+
+        ) + (
+
+            (intelligence_score - 50)
+
+            *
+
+            0.8
+
+        )
+
+
+
+        decision["falcon_score"] = round(
+
+            max(
+
+                min(
+
+                    final_score,
+
+                    100
+
+                ),
+
+                -100
+
+            ),
+
+            2
+
+        )
+
+
+
+        if intelligence_score < 35:
+
+
+            decision["signal"] = "WAIT"
+
+
+            decision["reasons"].append(
+
+                "Falcon intelligence rejected signal"
+
+            )
+
+
+
+        return decision
+
+
+
+
+
+    # ==================================================
+    # Production Output Formatter
+    # ==================================================
+
+
+    def format_production_result(
+
+        self,
+
+        result,
+
+        symbol,
+
+        interval,
+
+        price
+
+    ):
+
+
+        explanation = self.build_signal_explanation(
+
+            result
+
+        )
+
+
+
+        return {
+
+
+            "symbol":
+
+                symbol,
+
+
+            "interval":
+
+                interval,
+
+
+            "price":
+
+                price,
+
+
+            "signal":
+
+                result.get(
+
+                    "signal",
+
+                    "WAIT"
+
+                ),
+
+
+            "confidence":
+
+                result.get(
+
+                    "confidence",
+
+                    0
+
+                ),
+
+
+            "quality":
+
+                result.get(
+
+                    "quality",
+
+                    "D"
+
+                ),
+
+
+            "falcon_score":
+
+                result.get(
+
+                    "falcon_score",
+
+                    0
+
+                ),
+
+
+            "risk_reward":
+
+                result.get(
+
+                    "risk_reward",
+
+                    0
+
+                ),
+
+
+            "stop_loss":
+
+                result.get(
+
+                    "stop_loss"
+
+                ),
+
+
+            "take_profit":
+
+                result.get(
+
+                    "take_profit"
+
+                ),
+
+
+            "confirmations":
+
+                result.get(
+
+                    "confirmations",
+
+                    0
+
+                ),
+
+
+            "explanation":
+
+                explanation,
+
+
+            "reasons":
+
+                result.get(
+
+                    "reasons",
+
+                    []
+
+                ),
+
+
+            "engine":
+
+                self.version,
+
+
+            "status":
+
+                "completed"
+
+        }
+
+
+
+# ==========================================================
+# PART 12
+# Final Market Decision Pipeline
+# ==========================================================
+
+
+    def final_decision_pipeline(
+
+        self,
+
+        symbol,
+
+        candles,
+
+        interval="1h",
+
+        market="crypto"
+
+    ):
+
+
+        if not candles or len(candles) < 120:
+
+            return self.empty_result()
+
+
+
+        regime = self.detect_market_regime(
+
+            candles
+
+        )
+
+
+
+        news_risk = self.analyze_news_risk(
+
+            symbol
+
+        )
+
+
+
+        timeframe_results = self.build_timeframe_map(
+
+            symbol,
+
+            candles,
+
+            market
+
+        )
+
+
+
+        timeframe_consensus = self.timeframe_consensus(
+
+            timeframe_results
+
+        )
+
+
+
+        return {
+
+
+            "regime":
+
+                regime,
+
+
+            "news_risk":
+
+                news_risk,
+
+
+            "timeframe_analysis":
+
+                timeframe_results,
+
+
+            "timeframe_consensus":
+
+                timeframe_consensus
+
+        }
+
+
+
+
+
+    # ==================================================
+    # Risk Protection Layer
+    # ==================================================
+
+
+    def apply_risk_protection(
+
+        self,
+
+        result,
+
+        news_risk,
+
+        regime
+
+    ):
+
+
+
+        if news_risk.get(
+
+            "risk",
+
+            False
+
+        ):
+
+
+            result["signal"] = "WAIT"
+
+
+            result.setdefault(
+
+                "reasons",
+
+                []
+
+            ).append(
+
+                "High impact news protection"
+
+            )
+
+
+
+        if regime.get(
+
+            "regime"
+
+        ) == "HIGH_VOLATILITY":
+
+
+            result["confidence"] = max(
+
+                result.get(
+
+                    "confidence",
+
+                    0
+
+                )
+
+                -
+
+                self.news_risk_penalty,
+
+                0
+
+            )
+
+
+            result.setdefault(
+
+                "reasons",
+
+                []
+
+            ).append(
+
+                "High volatility adjustment"
+
+            )
+
+
+
+        return result
+
+
+
+# ==========================================================
+# PART 13
+# Falcon Final Production Integration
+# ==========================================================
+
+
+    def production_finalize(
+
+        self,
+
+        symbol,
+
+        interval,
+
+        market,
+
+        candles,
+
+        decision
+
+    ):
+
+
+        pipeline = self.final_decision_pipeline(
+
+            symbol=symbol,
+
+            candles=candles,
+
+            interval=interval,
+
+            market=market
+
+        )
+
+
+        intelligence = self.calculate_market_intelligence(
+
+            trend=decision.get("trend", {}),
+
+            smart_money=decision.get("smart_money", {}),
+
+            history=decision.get("history", {}),
+
+            regime=pipeline["regime"],
+
+            timeframe_result=pipeline["timeframe_consensus"]
+
+        )
+
+
+        decision = self.apply_intelligence_filter(
+
+            decision,
+
+            intelligence
+
+        )
+
+
+        decision = self.apply_risk_protection(
+
+            decision,
+
+            pipeline["news_risk"],
+
+            pipeline["regime"]
+
+        )
+
+
+        validation = self.production_validation(
+
+            decision
+
+        )
+
+
+        decision["validation"] = validation
+
+
+        decision["market_regime"] = pipeline["regime"]
+
+
+        decision["news"] = pipeline["news_risk"]
+
+
+        decision["timeframes"] = pipeline["timeframe_consensus"]
+
+
+        self.adaptive_learning_update(
+
+            decision,
+
+            candles
+
+        )
+
+
+        return self.format_production_result(
+
+            result=decision,
+
+            symbol=symbol,
+
+            interval=interval,
+
+            price=candles[-1]["close"]
+
+        )
+
+
+
+# ==================================================
+# Falcon AI Score Rank
+# ==================================================
+
+    def classify_falcon_score(
+
+        self,
+
+        score
+
+    ):
+
+
+        if score >= 90:
+
+            return "ELITE"
+
+
+        if score >= 80:
+
+            return "PREMIUM"
+
+
+        if score >= 70:
+
+            return "STRONG"
+
+
+        if score >= 60:
+
+            return "NORMAL"
+
+
+        if score >= 50:
+
+            return "WEAK"
+
+
+        return "REJECTED"
+
+
+
+    def add_rank(
+
+        self,
+
+        result
+
+    ):
+
+
+        result["rank"] = self.classify_falcon_score(
+
+            result.get(
+
+                "falcon_score",
+
+                0
+
+            )
+
+        )
+
+
+        return result
