@@ -1,0 +1,157 @@
+name: FalconAI Code Quality Check
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+
+jobs:
+
+  quality-check:
+
+    runs-on: ubuntu-latest
+
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+
+      # فحص تركيب ملفات Python
+      - name: Python Compile Check
+        run: |
+          python -m compileall backend
+
+
+      # فحص التكرار داخل signals_engine.py
+      - name: Duplicate Code Detection
+        run: |
+
+          python - <<'PY'
+
+          import ast
+
+
+          file = "backend/app/ai/signals_engine.py"
+
+
+          with open(file, "r", encoding="utf-8") as f:
+              tree = ast.parse(f.read())
+
+
+          classes = []
+          functions = []
+
+
+          for node in ast.walk(tree):
+
+              if isinstance(node, ast.ClassDef):
+                  classes.append(node.name)
+
+
+              if isinstance(node, ast.FunctionDef):
+                  functions.append(node.name)
+
+
+
+          print("Checking classes...")
+
+
+          for name in set(classes):
+
+              count = classes.count(name)
+
+              if count > 1:
+
+                  raise Exception(
+                      f"Duplicate class found: {name}"
+                  )
+
+
+
+          print("Checking important functions...")
+
+
+          important = [
+
+              "analyze",
+
+              "analyze_market",
+
+              "detect_market_regime",
+
+              "detect_early_trend",
+
+              "calculate_confidence",
+
+              "make_decision",
+
+              "health_check"
+
+          ]
+
+
+          for name in important:
+
+              count = functions.count(name)
+
+
+              if count > 1:
+
+                  raise Exception(
+                      f"Duplicate function found: {name}"
+                  )
+
+
+
+          print("Duplicate check passed")
+
+          PY
+
+
+
+      # مراقبة حجم الملف
+      - name: File Size Check
+        run: |
+
+          python - <<'PY'
+
+          file = "backend/app/ai/signals_engine.py"
+
+
+          lines = sum(
+              1 for _ in open(
+                  file,
+                  encoding="utf-8"
+              )
+          )
+
+
+          print(
+              "signals_engine.py lines:",
+              lines
+          )
+
+
+          if lines > 15000:
+
+              raise Exception(
+                  "signals_engine.py is too large"
+              )
+
+
+          print("File size OK")
+
+          PY
