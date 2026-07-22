@@ -1,4 +1,13 @@
-from typing import Dict, Any
+# ==========================================================
+# FalconAI Opportunity Engine
+# Production Version
+# Part 1
+# Core Architecture
+# ==========================================================
+
+
+from typing import Dict, Any, List
+
 
 from app.ai.opportunity.trend_engine import TrendEngine
 from app.ai.opportunity.volume_engine import VolumeEngine
@@ -7,94 +16,690 @@ from app.ai.opportunity.order_blocks import OrderBlocksEngine
 from app.ai.opportunity.support_resistance import SupportResistanceEngine
 from app.ai.opportunity.candles_ai import CandlesAI
 from app.ai.opportunity.historical_learning import HistoricalLearning
+
+
 from app.ai.smart_money import SmartMoneyAnalyzer
+
+
+
+# Multi timeframe engine
+try:
+
+    from app.ai.multi_timeframe_engine import MultiTimeframeEngine
+
+except Exception:
+
+    MultiTimeframeEngine = None
+
+
+
+# News protection
+try:
+
+    from app.ai.news_ai import NewsAnalyzer
+
+except Exception:
+
+    NewsAnalyzer = None
+
+
 
 
 class OpportunityEngine:
 
+
+
     def __init__(self):
 
-        self.trend = TrendEngine()
-        self.volume = VolumeEngine()
-        self.liquidity = LiquidityEngine()
-        self.order_blocks = OrderBlocksEngine()
-        self.support = SupportResistanceEngine()
-        self.candles = CandlesAI()
-        self.history = HistoricalLearning()
 
-        self.smart_money = SmartMoneyAnalyzer()
+        # ==================================================
+        # Engine Registry
+        # ==================================================
+
+
+        self.trend_engine = TrendEngine()
+
+        self.volume_engine = VolumeEngine()
+
+        self.liquidity_engine = LiquidityEngine()
+
+        self.order_block_engine = OrderBlocksEngine()
+
+        self.support_engine = SupportResistanceEngine()
+
+        self.candle_engine = CandlesAI()
+
+        self.history_engine = HistoricalLearning()
+
+        self.smart_money_engine = SmartMoneyAnalyzer()
+
+
+
+        # ==================================================
+        # Optional Engines
+        # ==================================================
+
+
+        self.multi_timeframe_engine = (
+
+            MultiTimeframeEngine()
+
+            if MultiTimeframeEngine
+
+            else None
+
+        )
+
+
+
+        self.news_engine = (
+
+            NewsAnalyzer()
+
+            if NewsAnalyzer
+
+            else None
+
+        )
+
+
+
+        # ==================================================
+        # Supported Timeframes
+        # ==================================================
+
+
+        self.timeframes = [
+
+            "1m",
+
+            "3m",
+
+            "5m",
+
+            "10m",
+
+            "15m",
+
+            "30m",
+
+            "45m",
+
+            "1h",
+
+            "4h",
+
+            "1D",
+
+            "1W",
+
+            "1M"
+
+        ]
+
+
+
+        # ==================================================
+        # Signal Weights
+        # ==================================================
+
 
         self.weights = {
+
+
             "smart_money": 25,
+
+
             "trend": 18,
+
+
             "volume": 10,
+
+
             "liquidity": 12,
+
+
             "order_blocks": 12,
+
+
             "candles": 8,
-            "history": 8,
-            "support_resistance": 7
+
+
+            "history": 10,
+
+
+            "support_resistance": 5,
+
+
+            "multi_timeframe": 15,
+
+
+            "news_filter": 5
+
+
         }
 
-        self.minimum_score = 45
+
+
+        # ==================================================
+        # Decision Parameters
+        # ==================================================
+
+
+        self.minimum_score = 50
+
+
         self.maximum_score = 100
 
-        self.minimum_confidence = 60
-        self.minimum_confirmations = 4
+
+
+        self.minimum_confidence = 65
+
+
+
+        self.minimum_confirmations = 5
+
+
 
         self.reject_conflicting_signals = True
 
+
+
+        # ==================================================
+        # Smart Money Bonuses
+        # ==================================================
+
+
         self.bos_bonus = 6
+
+
         self.choch_bonus = 8
+
+
         self.displacement_bonus = 5
-        self.orderblock_bonus = 5
-        self.discount_bonus = 4
-        self.premium_bonus = 4
 
-        self.conflict_penalty = 12
-        self.weak_volume_penalty = 8
+
+        self.orderblock_bonus = 6
+
+
+        self.breaker_bonus = 4
+
+
+        self.mitigation_bonus = 3
+
+
+
+        # ==================================================
+        # Risk Settings
+        # ==================================================
+
+
+        self.minimum_risk_reward = 2.0
+
+
+        self.default_take_profit_ratio = 3.0
+
+
+
+        # ==================================================
+        # Version
+        # ==================================================
+
+
+        self.version = (
+
+            "FalconAI Opportunity Engine "
+
+            "Production V2"
+
+        )
+
+
 
     # ==================================================
-    # MAIN OPPORTUNITY ANALYSIS
+    # Supported timeframe check
     # ==================================================
 
-    def analyze(
+
+    def is_supported_timeframe(
+
         self,
-        symbol: str,
-        candles: list,
-        interval: str = "1h",
-        market: str = "crypto"
+
+        interval: str
+
+    ) -> bool:
+
+
+        return interval in self.timeframes
+
+
+
+    # ==================================================
+    # Empty Result
+    # ==================================================
+
+
+    def empty_result(
+
+        self
+
     ) -> Dict[str, Any]:
 
-        if not candles or len(candles) < 120:
-            return self.empty_result()
 
-        highs = [c["high"] for c in candles]
-        lows = [c["low"] for c in candles]
-        closes = [c["close"] for c in candles]
-        current_price = closes[-1]
+        return {
 
-        trend = self.trend.analyze(symbol)
-        volume = self.volume.analyze(candles)
-        liquidity = self.liquidity.analyze(candles)
-        order_blocks = self.order_blocks.analyze(candles)
-        candle_patterns = self.candles.analyze(candles)
-        history = self.history.analyze(candles)
 
-        support = self.support.analyze(
-            highs,
-            lows,
-            closes
-        )
+            "signal": "WAIT",
 
-        smart_money = self.smart_money.analyze(
-            symbol=symbol,
-            interval=interval,
-            market=market
-        )
 
-        bullish_score = 0
-        bearish_score = 0
+            "confidence": 0,
+
+
+            "quality": "D",
+
+
+            "score": 0,
+
+
+            "confirmations": 0,
+
+
+            "reasons": [
+
+                "Not enough market data"
+
+            ],
+
+
+            "engine": self.version,
+
+
+            "status": "empty"
+
+
+        }
+
+
+
+    # ==========================================================
+    # PART 2
+    # Multi Timeframe Data Preparation
+    # ==========================================================
+
+
+    def prepare_timeframes(
+
+        self,
+
+        candles: List[dict],
+
+        current_interval: str = "1h"
+
+    ) -> Dict[str, Any]:
+
+
+        """
+        تجهيز بيانات السوق لكل الفريمات
+        بدون إعادة جلب البيانات
+        """
+
+
+        result = {}
+
+
+        if not candles:
+
+            return result
+
+
+
+        # عدد الشموع المطلوبة لكل فريم
+
+        requirements = {
+
+
+            "1m": 300,
+
+            "3m": 300,
+
+            "5m": 300,
+
+            "10m": 300,
+
+            "15m": 300,
+
+            "30m": 250,
+
+            "45m": 250,
+
+            "1h": 200,
+
+            "4h": 150,
+
+            "1D": 100,
+
+            "1W": 50,
+
+            "1M": 24
+
+        }
+
+
+
+        for timeframe, minimum in requirements.items():
+
+
+            if len(candles) >= minimum:
+
+
+                result[timeframe] = {
+
+
+                    "available": True,
+
+
+                    "candles":
+
+                    candles[-minimum:],
+
+
+                    "count":
+
+                    minimum
+
+
+                }
+
+
+            else:
+
+
+                result[timeframe] = {
+
+
+                    "available": False,
+
+
+                    "candles": [],
+
+
+                    "count": 0
+
+
+                }
+
+
+
+        return result
+
+
+
+
+    # ==========================================================
+    # Calculate Market Direction From Timeframes
+    # ==========================================================
+
+
+    def analyze_timeframe_alignment(
+
+        self,
+
+        timeframe_data: Dict[str, Any]
+
+    ) -> Dict[str, Any]:
+
+
+
+        bullish = 0
+
+        bearish = 0
+
+        active = 0
+
+
+        details = {}
+
+
+
+        for tf, data in timeframe_data.items():
+
+
+            if not data.get(
+                "available",
+                False
+            ):
+
+                continue
+
+
+
+            candles = data["candles"]
+
+
+
+            if len(candles) < 50:
+
+                continue
+
+
+
+            closes = [
+
+                c["close"]
+
+                for c in candles
+
+            ]
+
+
+
+            first = closes[0]
+
+            last = closes[-1]
+
+
+
+            change = (
+
+                (last - first)
+
+                /
+
+                first
+
+            ) * 100
+
+
+
+            direction = "SIDEWAYS"
+
+
+
+            if change > 1:
+
+                direction = "BULLISH"
+
+                bullish += 1
+
+
+
+            elif change < -1:
+
+                direction = "BEARISH"
+
+                bearish += 1
+
+
+
+            active += 1
+
+
+
+            details[tf] = {
+
+
+                "direction":
+
+                direction,
+
+
+                "change":
+
+                round(
+
+                    change,
+
+                    3
+
+                )
+
+            }
+
+
+
+        if active == 0:
+
+
+            return {
+
+
+                "direction":
+
+                "UNKNOWN",
+
+
+                "bullish":
+
+                0,
+
+
+                "bearish":
+
+                0,
+
+
+                "details":
+
+                details
+
+            }
+
+
+
+
+        if bullish > bearish:
+
+
+            final_direction = "BULLISH"
+
+
+
+        elif bearish > bullish:
+
+
+            final_direction = "BEARISH"
+
+
+
+        else:
+
+
+            final_direction = "SIDEWAYS"
+
+
+
+
+        confidence = (
+
+            max(
+
+                bullish,
+
+                bearish
+
+            )
+
+            /
+
+            active
+
+        ) * 100
+
+
+
+
+        return {
+
+
+            "direction":
+
+            final_direction,
+
+
+            "bullish":
+
+            bullish,
+
+
+            "bearish":
+
+            bearish,
+
+
+            "confidence":
+
+            round(
+
+                confidence,
+
+                2
+
+            ),
+
+
+            "details":
+
+            details
+
+        }
+
+
+
+# ==========================================================
+# PART 3
+# Core Opportunity Scoring Engines
+# ==========================================================
+
+
+    def calculate_engine_scores(
+
+        self,
+
+        trend,
+
+        volume,
+
+        liquidity,
+
+        order_blocks,
+
+        history,
+
+        smart_money,
+
+        candle_patterns,
+
+        support
+
+    ):
+
+
+        bullish = 0
+
+        bearish = 0
+
         confirmations = 0
+
         reasons = []
 
 
@@ -103,621 +708,2090 @@ class OpportunityEngine:
         # SMART MONEY
         # ==================================================
 
-        sm_score = smart_money.get("smart_money_score", 0)
 
-        if smart_money.get("bullish", False):
+        smart_score = smart_money.get(
 
-            bullish_score += min(
-                sm_score,
+            "smart_money_score",
+
+            0
+
+        )
+
+
+
+        if smart_money.get(
+
+            "bullish",
+
+            False
+
+        ):
+
+
+            bullish += min(
+
+                smart_score,
+
                 self.weights["smart_money"]
+
             )
 
+
             confirmations += 1
 
-            reasons.append("Smart Money Bullish")
+            reasons.append(
 
-        elif smart_money.get("bearish", False):
+                "Smart Money Bullish"
 
-            bearish_score += min(
-                sm_score,
-                self.weights["smart_money"]
             )
 
-            confirmations += 1
 
-            reasons.append("Smart Money Bearish")
 
-        if smart_money.get("bos", False):
+        elif smart_money.get(
 
-            confirmations += 1
+            "bearish",
 
-            if smart_money.get("bos_direction") == "BULLISH":
+            False
 
-                bullish_score += self.bos_bonus
-                reasons.append("Bullish BOS")
+        ):
 
-            elif smart_money.get("bos_direction") == "BEARISH":
 
-                bearish_score += self.bos_bonus
-                reasons.append("Bearish BOS")
+            bearish += min(
 
-        if smart_money.get("choch", False):
+                smart_score,
 
-            confirmations += 1
+                self.weights["smart_money"]
 
-            if smart_money.get("choch_direction") == "BULLISH":
+            )
 
-                bullish_score += self.choch_bonus
-                reasons.append("Bullish CHOCH")
-
-            elif smart_money.get("choch_direction") == "BEARISH":
-
-                bearish_score += self.choch_bonus
-                reasons.append("Bearish CHOCH")
-
-        if smart_money.get("internal_bos", False):
 
             confirmations += 1
 
-            if smart_money.get("bullish"):
+            reasons.append(
 
-                bullish_score += 4
+                "Smart Money Bearish"
 
-            elif smart_money.get("bearish"):
-
-                bearish_score += 4
-
-            reasons.append("Internal BOS")
-
-        if smart_money.get("liquidity_sweep", False):
-
-            confirmations += 1
-
-            if smart_money.get("liquidity_side") == "SELL_SIDE":
-
-                bullish_score += 6
-                reasons.append("Sell Side Sweep")
-
-            elif smart_money.get("liquidity_side") == "BUY_SIDE":
-
-                bearish_score += 6
-                reasons.append("Buy Side Sweep")
-
-        if smart_money.get("displacement", False):
-
-            confirmations += 1
-
-            if smart_money.get("bullish"):
-
-                bullish_score += self.displacement_bonus
-
-            elif smart_money.get("bearish"):
-
-                bearish_score += self.displacement_bonus
-
-            reasons.append("Strong Displacement")
-
-        if smart_money.get("order_block"):
-
-            confirmations += 1
-
-            if smart_money.get("bullish"):
-
-                bullish_score += self.orderblock_bonus
-
-            elif smart_money.get("bearish"):
-
-                bearish_score += self.orderblock_bonus
-
-            reasons.append("Institutional Order Block")
-
-        if smart_money.get("breaker_block"):
-
-            confirmations += 1
-
-            if smart_money.get("bullish"):
-
-                bullish_score += 4
-
-            elif smart_money.get("bearish"):
-
-                bearish_score += 4
-
-            reasons.append("Breaker Block")
-
-        if smart_money.get("mitigation_block"):
-
-            confirmations += 1
-
-            if smart_money.get("bullish"):
-
-                bullish_score += 3
-
-            elif smart_money.get("bearish"):
-
-                bearish_score += 3
-
-            reasons.append("Mitigation Block")
-
-        if smart_money.get("premium_discount") == "DISCOUNT":
-
-            bullish_score += self.discount_bonus
-            reasons.append("Discount Zone")
-
-        elif smart_money.get("premium_discount") == "PREMIUM":
-
-            bearish_score += self.premium_bonus
-            reasons.append("Premium Zone")
+            )
 
 
 
         # ==================================================
-        # TREND ENGINE
+        # BOS / CHOCH
         # ==================================================
 
-        trend_signal = trend.get("signal", "WAIT")
+
+        if smart_money.get(
+
+            "bos",
+
+            False
+
+        ):
+
+
+            confirmations += 1
+
+
+            if smart_money.get(
+
+                "bos_direction"
+
+            ) == "BULLISH":
+
+
+                bullish += self.bos_bonus
+
+                reasons.append(
+
+                    "Bullish BOS"
+
+                )
+
+
+            elif smart_money.get(
+
+                "bos_direction"
+
+            ) == "BEARISH":
+
+
+                bearish += self.bos_bonus
+
+                reasons.append(
+
+                    "Bearish BOS"
+
+                )
+
+
+
+
+        if smart_money.get(
+
+            "choch",
+
+            False
+
+        ):
+
+
+            confirmations += 1
+
+
+            if smart_money.get(
+
+                "choch_direction"
+
+            ) == "BULLISH":
+
+
+                bullish += self.choch_bonus
+
+                reasons.append(
+
+                    "Bullish CHOCH"
+
+                )
+
+
+            elif smart_money.get(
+
+                "choch_direction"
+
+            ) == "BEARISH":
+
+
+                bearish += self.choch_bonus
+
+                reasons.append(
+
+                    "Bearish CHOCH"
+
+                )
+
+
+
+        # ==================================================
+        # TREND
+        # ==================================================
+
+
+        trend_signal = trend.get(
+
+            "signal",
+
+            "WAIT"
+
+        )
+
+
 
         if trend_signal == "BUY":
 
-            bullish_score += self.weights["trend"]
+
+            bullish += self.weights["trend"]
+
             confirmations += 1
-            reasons.append("Trend Bullish")
+
+            reasons.append(
+
+                "Trend Bullish"
+
+            )
+
 
         elif trend_signal == "SELL":
 
-            bearish_score += self.weights["trend"]
+
+            bearish += self.weights["trend"]
+
             confirmations += 1
-            reasons.append("Trend Bearish")
+
+            reasons.append(
+
+                "Trend Bearish"
+
+            )
+
+
 
         # ==================================================
-        # VOLUME ENGINE
+        # VOLUME
         # ==================================================
 
-        volume_score = volume.get("score", 0)
+
+        volume_score = volume.get(
+
+            "score",
+
+            0
+
+        )
+
+
 
         if volume_score > 0:
 
-            bullish_score += min(
+
+            bullish += min(
+
                 volume_score,
+
                 self.weights["volume"]
+
             )
 
+
             confirmations += 1
-            reasons.append("Bullish Volume")
+
+            reasons.append(
+
+                "Volume Support Buyers"
+
+            )
+
+
 
         elif volume_score < 0:
 
-            bearish_score += min(
+
+            bearish += min(
+
                 abs(volume_score),
+
                 self.weights["volume"]
+
             )
 
+
             confirmations += 1
-            reasons.append("Bearish Volume")
 
-        else:
+            reasons.append(
 
-            bullish_score -= self.weak_volume_penalty / 2
-            bearish_score -= self.weak_volume_penalty / 2
+                "Volume Support Sellers"
 
-            reasons.append("Weak Volume")
+            )
+
+
 
         # ==================================================
-        # LIQUIDITY ENGINE
+        # LIQUIDITY
         # ==================================================
 
-        liquidity_score = liquidity.get("score", 0)
+
+        liquidity_score = liquidity.get(
+
+            "score",
+
+            0
+
+        )
+
+
 
         if liquidity_score > 0:
 
-            bullish_score += min(
+
+            bullish += min(
+
                 liquidity_score,
+
                 self.weights["liquidity"]
+
             )
 
+
             confirmations += 1
-            reasons.append("Liquidity Supports Buyers")
+
+            reasons.append(
+
+                "Liquidity Bullish"
+
+            )
+
+
 
         elif liquidity_score < 0:
 
-            bearish_score += min(
+
+            bearish += min(
+
                 abs(liquidity_score),
+
                 self.weights["liquidity"]
+
             )
 
+
             confirmations += 1
-            reasons.append("Liquidity Supports Sellers")
+
+            reasons.append(
+
+                "Liquidity Bearish"
+
+            )
+
+
+
+        return {
+
+
+            "bullish_score":
+
+                bullish,
+
+
+            "bearish_score":
+
+                bearish,
+
+
+            "confirmations":
+
+                confirmations,
+
+
+            "reasons":
+
+                reasons
+
+                }
+
+
+
+# ==========================================================
+# PART 4
+# Advanced Confirmation Layer
+# ==========================================================
+
+
+    def calculate_advanced_confirmation(
+
+        self,
+
+        order_blocks,
+
+        candle_patterns,
+
+        history,
+
+        support,
+
+        timeframe_alignment
+
+    ):
+
+
+        bullish = 0
+
+        bearish = 0
+
+        confirmations = 0
+
+        reasons = []
+
+
 
         # ==================================================
         # ORDER BLOCK ENGINE
         # ==================================================
 
-        if order_blocks.get("bullish_blocks", False):
 
-            bullish_score += self.weights["order_blocks"]
+        if order_blocks.get(
+
+            "bullish_blocks",
+
+            False
+
+        ):
+
+
+            bullish += self.weights["order_blocks"]
+
             confirmations += 1
-            reasons.append("Bullish Order Block")
 
-        if order_blocks.get("bearish_blocks", False):
+            reasons.append(
 
-            bearish_score += self.weights["order_blocks"]
+                "Bullish Order Block"
+
+            )
+
+
+
+        if order_blocks.get(
+
+            "bearish_blocks",
+
+            False
+
+        ):
+
+
+            bearish += self.weights["order_blocks"]
+
             confirmations += 1
-            reasons.append("Bearish Order Block")
+
+            reasons.append(
+
+                "Bearish Order Block"
+
+            )
+
+
 
         # ==================================================
         # CANDLE AI
         # ==================================================
 
+
         candle_confidence = candle_patterns.get(
+
             "confidence",
+
             0
+
         )
 
-        if candle_patterns.get("bullish", False):
 
-            bullish_score += min(
+
+        if candle_patterns.get(
+
+            "bullish",
+
+            False
+
+        ):
+
+
+            bullish += min(
+
                 candle_confidence,
+
                 self.weights["candles"]
+
             )
 
+
             confirmations += 1
-            reasons.append("Bullish Candle Pattern")
 
-        elif candle_patterns.get("bearish", False):
+            reasons.append(
 
-            bearish_score += min(
-                candle_confidence,
-                self.weights["candles"]
+                "Bullish Candle Pattern"
+
             )
 
+
+
+        elif candle_patterns.get(
+
+            "bearish",
+
+            False
+
+        ):
+
+
+            bearish += min(
+
+                candle_confidence,
+
+                self.weights["candles"]
+
+            )
+
+
             confirmations += 1
-            reasons.append("Bearish Candle Pattern")
+
+            reasons.append(
+
+                "Bearish Candle Pattern"
+
+            )
+
+
 
         # ==================================================
         # HISTORICAL LEARNING
         # ==================================================
 
+
         history_confidence = history.get(
+
             "confidence",
+
             0
+
         )
 
-        if history.get("bullish", False):
 
-            bullish_score += min(
+
+        if history.get(
+
+            "bullish",
+
+            False
+
+        ):
+
+
+            bullish += min(
+
                 history_confidence,
+
                 self.weights["history"]
+
             )
 
+
             confirmations += 1
-            reasons.append("Historical Bullish Match")
 
-        elif history.get("bearish", False):
+            reasons.append(
 
-            bearish_score += min(
-                history_confidence,
-                self.weights["history"]
+                "Historical Bullish Pattern"
+
             )
 
+
+
+        elif history.get(
+
+            "bearish",
+
+            False
+
+        ):
+
+
+            bearish += min(
+
+                history_confidence,
+
+                self.weights["history"]
+
+            )
+
+
             confirmations += 1
-            reasons.append("Historical Bearish Match")
 
-        # ==================================================
-        # SUPPORT / RESISTANCE
-        # ==================================================
+            reasons.append(
 
-        if support.get("support_strength", 0) >= 60:
+                "Historical Bearish Pattern"
 
-            bullish_score += self.weights["support_resistance"]
-            reasons.append("Strong Support")
-
-        if support.get("resistance_strength", 0) >= 60:
-
-            bearish_score += self.weights["support_resistance"]
-            reasons.append("Strong Resistance")
+            )
 
 
 
         # ==================================================
-        # FINAL SCORE
+        # SUPPORT RESISTANCE
         # ==================================================
 
-        final_score = bullish_score - bearish_score
+
+        support_strength = support.get(
+
+            "support_strength",
+
+            0
+
+        )
+
+
+        resistance_strength = support.get(
+
+            "resistance_strength",
+
+            0
+
+        )
+
+
+
+        if support_strength >= 70:
+
+
+            bullish += self.weights["support_resistance"]
+
+            reasons.append(
+
+                "Strong Support Zone"
+
+            )
+
+
+
+        if resistance_strength >= 70:
+
+
+            bearish += self.weights["support_resistance"]
+
+            reasons.append(
+
+                "Strong Resistance Zone"
+
+            )
+
+
 
         # ==================================================
-        # منع الإشارات المتضاربة
+        # MULTI TIMEFRAME
         # ==================================================
+
+
+        direction = timeframe_alignment.get(
+
+            "direction",
+
+            "SIDEWAYS"
+
+        )
+
+
+
+        mtf_confidence = timeframe_alignment.get(
+
+            "confidence",
+
+            0
+
+        )
+
+
+
+        if direction == "BULLISH":
+
+
+            bullish += (
+
+                self.weights["multi_timeframe"]
+
+                *
+
+                mtf_confidence
+
+                /
+
+                100
+
+            )
+
+
+            reasons.append(
+
+                "Multi Timeframe Bullish"
+
+            )
+
+
+
+        elif direction == "BEARISH":
+
+
+            bearish += (
+
+                self.weights["multi_timeframe"]
+
+                *
+
+                mtf_confidence
+
+                /
+
+                100
+
+            )
+
+
+            reasons.append(
+
+                "Multi Timeframe Bearish"
+
+            )
+
+
+
+        return {
+
+
+            "bullish_score":
+
+                bullish,
+
+
+            "bearish_score":
+
+                bearish,
+
+
+            "confirmations":
+
+                confirmations,
+
+
+            "reasons":
+
+                reasons
+
+            }
+
+
+# ==========================================================
+# PART 5
+# Final Decision Engine
+# ==========================================================
+
+
+    def finalize_decision(
+
+        self,
+
+        base_result,
+
+        advanced_result
+
+    ):
+
+
+        bullish_score = (
+
+            base_result.get(
+
+                "bullish_score",
+
+                0
+
+            )
+
+            +
+
+            advanced_result.get(
+
+                "bullish_score",
+
+                0
+
+            )
+
+        )
+
+
+
+        bearish_score = (
+
+            base_result.get(
+
+                "bearish_score",
+
+                0
+
+            )
+
+            +
+
+            advanced_result.get(
+
+                "bearish_score",
+
+                0
+
+            )
+
+        )
+
+
+
+        confirmations = (
+
+            base_result.get(
+
+                "confirmations",
+
+                0
+
+            )
+
+            +
+
+            advanced_result.get(
+
+                "confirmations",
+
+                0
+
+            )
+
+        )
+
+
+
+        reasons = (
+
+            base_result.get(
+
+                "reasons",
+
+                []
+
+            )
+
+            +
+
+            advanced_result.get(
+
+                "reasons",
+
+                []
+
+            )
+
+        )
+
+
+
+        score = (
+
+            bullish_score
+
+            -
+
+            bearish_score
+
+        )
+
+
+
+        # ==================================================
+        # Conflict Protection
+        # ==================================================
+
 
         if self.reject_conflicting_signals:
 
-            if bullish_score > 0 and bearish_score > 0:
 
-                difference = abs(
-                    bullish_score - bearish_score
-                )
+            difference = abs(
 
-                if difference <= self.conflict_penalty:
+                bullish_score
 
-                    reasons.append("Conflicting Signals")
+                -
 
-                    return {
-                        "signal": "WAIT",
-                        "confidence": 0,
-                        "score": 0,
-                        "bullish_score": bullish_score,
-                        "bearish_score": bearish_score,
-                        "confirmations": confirmations,
-                        "reasons": reasons,
-                        "engine": "OpportunityEngine"
-                    }
+                bearish_score
+
+            )
+
+
+
+            if (
+
+                bullish_score > 0
+
+                and
+
+                bearish_score > 0
+
+                and
+
+                difference <= self.conflict_penalty
+
+            ):
+
+
+                return {
+
+
+                    "signal":
+
+                        "WAIT",
+
+
+                    "confidence":
+
+                        0,
+
+
+                    "score":
+
+                        score,
+
+
+                    "bullish_score":
+
+                        bullish_score,
+
+
+                    "bearish_score":
+
+                        bearish_score,
+
+
+                    "confirmations":
+
+                        confirmations,
+
+
+                    "reasons":
+
+                        reasons + [
+
+                            "Conflicting market signals"
+
+                        ]
+
+
+                }
+
+
+
 
         # ==================================================
-        # الحد الأدنى للتأكيدات
+        # Confirmation Check
         # ==================================================
+
 
         if confirmations < self.minimum_confirmations:
 
-            reasons.append(
-                f"Not enough confirmations ({confirmations})"
-            )
 
             return {
-                "signal": "WAIT",
-                "confidence": 0,
-                "score": final_score,
-                "bullish_score": bullish_score,
-                "bearish_score": bearish_score,
-                "confirmations": confirmations,
-                "reasons": reasons,
-                "engine": "OpportunityEngine"
+
+
+                "signal":
+
+                    "WAIT",
+
+
+                "confidence":
+
+                    0,
+
+
+                "score":
+
+                    score,
+
+
+                "bullish_score":
+
+                    bullish_score,
+
+
+                "bearish_score":
+
+                    bearish_score,
+
+
+                "confirmations":
+
+                    confirmations,
+
+
+                "reasons":
+
+                    reasons + [
+
+                        "Insufficient confirmations"
+
+                    ]
+
             }
 
+
+
+
         # ==================================================
-        # تحديد الإشارة
+        # Signal Direction
         # ==================================================
+
 
         signal = "WAIT"
 
-        if bullish_score >= self.minimum_score and bullish_score > bearish_score:
+
+
+        if (
+
+            bullish_score >= self.minimum_score
+
+            and
+
+            bullish_score > bearish_score
+
+        ):
+
+
             signal = "BUY"
 
-        elif bearish_score >= self.minimum_score and bearish_score > bullish_score:
+
+
+        elif (
+
+            bearish_score >= self.minimum_score
+
+            and
+
+            bearish_score > bullish_score
+
+        ):
+
+
             signal = "SELL"
 
+
+
+
         # ==================================================
-        # حساب الثقة
+        # Confidence Calculation
         # ==================================================
 
-        total = bullish_score + bearish_score
 
-        if total > 0:
+        total_score = (
+
+            bullish_score
+
+            +
+
+            bearish_score
+
+        )
+
+
+
+        confidence = 0
+
+
+
+        if total_score > 0:
+
 
             confidence = int(
-                (max(bullish_score, bearish_score) / total) * 100
+
+                (
+
+                    max(
+
+                        bullish_score,
+
+                        bearish_score
+
+                    )
+
+                    /
+
+                    total_score
+
+                )
+
+                *
+
+                100
+
             )
 
-        else:
 
-            confidence = 0
 
-        confidence = min(confidence, self.maximum_score)
+        confidence = min(
+
+            confidence,
+
+            self.maximum_score
+
+        )
+
+
+
 
         if confidence < self.minimum_confidence:
 
-            signal = "WAIT"
-
-            reasons.append(
-                "Low confidence"
-                      )
-
-
-
-        # ==================================================
-        # QUALITY FILTER
-        # ==================================================
-
-        quality_score = 0
-
-        if smart_money.get("bos"):
-            quality_score += 2
-
-        if smart_money.get("choch"):
-            quality_score += 2
-
-        if smart_money.get("liquidity_sweep"):
-            quality_score += 2
-
-        if smart_money.get("order_block"):
-            quality_score += 2
-
-        if smart_money.get("displacement"):
-            quality_score += 1
-
-        if trend.get("signal") == signal:
-            quality_score += 2
-
-        if volume.get("score", 0) > 0 and signal == "BUY":
-            quality_score += 1
-
-        if volume.get("score", 0) < 0 and signal == "SELL":
-            quality_score += 1
-
-        if candle_patterns.get("confidence", 0) >= 70:
-            quality_score += 1
-
-        if history.get("confidence", 0) >= 70:
-            quality_score += 1
-
-        if signal == "BUY":
-
-            if support.get("support_strength", 0) >= 70:
-                quality_score += 1
-
-        elif signal == "SELL":
-
-            if support.get("resistance_strength", 0) >= 70:
-                quality_score += 1
-
-        # ==========================================
-        # FINAL QUALITY
-        # ==========================================
-
-        if quality_score >= 12:
-            quality = "A+"
-
-        elif quality_score >= 10:
-            quality = "A"
-
-        elif quality_score >= 8:
-            quality = "B"
-
-        elif quality_score >= 6:
-            quality = "C"
-
-        else:
-            quality = "D"
-
-        if quality in ["C", "D"]:
 
             signal = "WAIT"
 
+
+
             reasons.append(
-                "Signal rejected because quality is too low"
+
+                "Confidence below threshold"
+
             )
 
-        # ==================================================
-        # RISK / REWARD
-        # ==================================================
 
-        risk_reward = 0.0
-        stop_loss = None
-        take_profit = None
-
-        if signal == "BUY" and support.get("nearest_support"):
-
-            stop_loss = support["nearest_support"]["price"]
-
-            risk = current_price - stop_loss
-
-            if risk > 0:
-
-                take_profit = current_price + (risk * 3)
-
-                reward = take_profit - current_price
-
-                risk_reward = reward / risk
-
-        elif signal == "SELL" and support.get("nearest_resistance"):
-
-            stop_loss = support["nearest_resistance"]["price"]
-
-            risk = stop_loss - current_price
-
-            if risk > 0:
-
-                take_profit = current_price - (risk * 3)
-
-                reward = current_price - take_profit
-
-                risk_reward = reward / risk
-
-        if signal != "WAIT" and risk_reward < 2:
-
-            signal = "WAIT"
-
-            reasons.append(
-                f"Risk Reward too low ({risk_reward:.2f})"
-            )
 
         return {
 
-            "signal": signal,
 
-            "confidence": confidence,
+            "signal":
 
-            "quality": quality,
+                signal,
 
-            "quality_score": quality_score,
 
-            "stop_loss": stop_loss,
+            "confidence":
 
-            "take_profit": take_profit,
+                confidence,
 
-            "risk_reward": round(risk_reward, 2),
 
-            "score": final_score,
+            "score":
 
-            "bullish_score": bullish_score,
+                score,
 
-            "bearish_score": bearish_score,
 
-            "confirmations": confirmations,
+            "bullish_score":
 
-            "reasons": reasons,
+                bullish_score,
 
-            "trend": trend,
 
-            "volume": volume,
+            "bearish_score":
 
-            "liquidity": liquidity,
+                bearish_score,
 
-            "order_blocks": order_blocks,
 
-            "candles": candle_patterns,
+            "confirmations":
 
-            "history": history,
+                confirmations,
 
-            "support": support,
 
-            "smart_money": smart_money,
+            "reasons":
 
-            "engine": "OpportunityEngine",
-
-            "status": "completed"
+                reasons
 
         }
 
-    def empty_result(self):
+
+
+# ==========================================================
+# PART 6
+# Quality + Risk Management Layer
+# ==========================================================
+
+
+    def calculate_quality(
+
+        self,
+
+        decision,
+
+        smart_money,
+
+        trend,
+
+        volume,
+
+        history,
+
+        candle_patterns,
+
+        support
+
+    ):
+
+
+        quality_score = 0
+
+
+
+        # Smart Money Quality
+
+        if smart_money.get("bos"):
+
+            quality_score += 2
+
+
+        if smart_money.get("choch"):
+
+            quality_score += 2
+
+
+        if smart_money.get("liquidity_sweep"):
+
+            quality_score += 2
+
+
+        if smart_money.get("order_block"):
+
+            quality_score += 2
+
+
+        if smart_money.get("displacement"):
+
+            quality_score += 1
+
+
+
+        # Trend confirmation
+
+        if trend.get("signal") == decision:
+
+            quality_score += 2
+
+
+
+        # Volume confirmation
+
+        volume_score = volume.get(
+
+            "score",
+
+            0
+
+        )
+
+
+        if decision == "BUY" and volume_score > 0:
+
+            quality_score += 1
+
+
+        if decision == "SELL" and volume_score < 0:
+
+            quality_score += 1
+
+
+
+        # Candle quality
+
+        if candle_patterns.get(
+
+            "confidence",
+
+            0
+
+        ) >= 70:
+
+            quality_score += 1
+
+
+
+        # Historical quality
+
+        if history.get(
+
+            "confidence",
+
+            0
+
+        ) >= 70:
+
+            quality_score += 1
+
+
+
+        # Support resistance
+
+        if decision == "BUY":
+
+
+            if support.get(
+
+                "support_strength",
+
+                0
+
+            ) >= 70:
+
+                quality_score += 1
+
+
+
+        elif decision == "SELL":
+
+
+            if support.get(
+
+                "resistance_strength",
+
+                0
+
+            ) >= 70:
+
+                quality_score += 1
+
+
+
+
+        if quality_score >= 12:
+
+            quality = "A+"
+
+        elif quality_score >= 10:
+
+            quality = "A"
+
+        elif quality_score >= 8:
+
+            quality = "B"
+
+        elif quality_score >= 6:
+
+            quality = "C"
+
+        else:
+
+            quality = "D"
+
+
 
         return {
 
-            "signal": "WAIT",
 
-            "confidence": 0,
+            "quality":
 
-            "quality": "D",
+                quality,
 
-            "quality_score": 0,
 
-            "score": 0,
+            "quality_score":
 
-            "bullish_score": 0,
+                quality_score
 
-            "bearish_score": 0,
+        }
 
-            "confirmations": 0,
 
-            "stop_loss": None,
-            "take_profit": None,
-            "risk_reward": 0.0,
 
-            "trend": {},
-            "volume": {},
-            "liquidity": {},
-            "order_blocks": {},
-            "candles": {},
-            "history": {},
-            "support": {},
-            "smart_money": {},
-            
-            "reasons": [
 
-                "Not enough candles"
 
-            ],
+    # ==========================================================
+    # Risk Reward Calculator
+    # ==========================================================
 
-            "engine": "OpportunityEngine",
 
-            "status": "empty"
+    def calculate_risk_reward(
+
+        self,
+
+        signal,
+
+        current_price,
+
+        support
+
+    ):
+
+
+        stop_loss = None
+
+        take_profit = None
+
+        risk_reward = 0
+
+
+
+        if signal == "BUY":
+
+
+            nearest_support = support.get(
+
+                "nearest_support"
+
+            )
+
+
+            if nearest_support:
+
+
+                stop_loss = nearest_support.get(
+
+                    "price"
+
+                )
+
+
+                if stop_loss:
+
+
+                    risk = (
+
+                        current_price
+
+                        -
+
+                        stop_loss
+
+                    )
+
+
+                    if risk > 0:
+
+
+                        take_profit = (
+
+                            current_price
+
+                            +
+
+                            (
+
+                                risk
+
+                                *
+
+                                self.default_take_profit_ratio
+
+                            )
+
+                        )
+
+
+                        reward = (
+
+                            take_profit
+
+                            -
+
+                            current_price
+
+                        )
+
+
+                        risk_reward = (
+
+                            reward
+
+                            /
+
+                            risk
+
+                        )
+
+
+
+        elif signal == "SELL":
+
+
+            nearest_resistance = support.get(
+
+                "nearest_resistance"
+
+            )
+
+
+            if nearest_resistance:
+
+
+                stop_loss = nearest_resistance.get(
+
+                    "price"
+
+                )
+
+
+                if stop_loss:
+
+
+                    risk = (
+
+                        stop_loss
+
+                        -
+
+                        current_price
+
+                    )
+
+
+                    if risk > 0:
+
+
+                        take_profit = (
+
+                            current_price
+
+                            -
+
+                            (
+
+                                risk
+
+                                *
+
+                                self.default_take_profit_ratio
+
+                            )
+
+                        )
+
+
+                        reward = (
+
+                            current_price
+
+                            -
+
+                            take_profit
+
+                        )
+
+
+                        risk_reward = (
+
+                            reward
+
+                            /
+
+                            risk
+
+                        )
+
+
+
+        return {
+
+
+            "stop_loss":
+
+                stop_loss,
+
+
+            "take_profit":
+
+                take_profit,
+
+
+            "risk_reward":
+
+                round(
+
+                    risk_reward,
+
+                    2
+
+                )
 
             }
+
+
+
+# ==========================================================
+# PART 7
+# Main Analyze Pipeline + Production Status
+# ==========================================================
+
+
+    def analyze(
+
+        self,
+
+        symbol: str,
+
+        candles: list,
+
+        interval: str = "1h",
+
+        market: str = "crypto"
+
+    ) -> Dict[str, Any]:
+
+
+
+        if not candles or len(candles) < 120:
+
+            return self.empty_result()
+
+
+
+        if not self.is_supported_timeframe(
+
+            interval
+
+        ):
+
+
+            return {
+
+
+                "signal":
+
+                    "WAIT",
+
+
+                "confidence":
+
+                    0,
+
+
+                "reason":
+
+                    "Unsupported timeframe",
+
+
+                "engine":
+
+                    self.version
+
+            }
+
+
+
+        closes = [
+
+            c["close"]
+
+            for c in candles
+
+        ]
+
+
+        highs = [
+
+            c["high"]
+
+            for c in candles
+
+        ]
+
+
+        lows = [
+
+            c["low"]
+
+            for c in candles
+
+        ]
+
+
+
+        current_price = closes[-1]
+
+
+
+        # ==================================================
+        # Prepare Timeframes
+        # ==================================================
+
+
+        timeframe_data = self.prepare_timeframes(
+
+            candles,
+
+            interval
+
+        )
+
+
+
+        timeframe_alignment = self.analyze_timeframe_alignment(
+
+            timeframe_data
+
+        )
+
+
+
+        # ==================================================
+        # Run AI Engines
+        # ==================================================
+
+
+        trend = self.trend_engine.analyze(
+
+            symbol
+
+        )
+
+
+        volume = self.volume_engine.analyze(
+
+            candles
+
+        )
+
+
+        liquidity = self.liquidity_engine.analyze(
+
+            candles
+
+        )
+
+
+        order_blocks = self.order_block_engine.analyze(
+
+            candles
+
+        )
+
+
+        candle_patterns = self.candle_engine.analyze(
+
+            candles
+
+        )
+
+
+        history = self.history_engine.analyze(
+
+            candles
+
+        )
+
+
+        support = self.support_engine.analyze(
+
+            highs,
+
+            lows,
+
+            closes
+
+        )
+
+
+        smart_money = self.smart_money_engine.analyze(
+
+            symbol=symbol,
+
+            interval=interval,
+
+            market=market
+
+        )
+
+
+
+        # ==================================================
+        # Calculate Scores
+        # ==================================================
+
+
+        base_result = self.calculate_engine_scores(
+
+            trend,
+
+            volume,
+
+            liquidity,
+
+            order_blocks,
+
+            history,
+
+            smart_money,
+
+            candle_patterns,
+
+            support
+
+        )
+
+
+
+        advanced_result = self.calculate_advanced_confirmation(
+
+            order_blocks,
+
+            candle_patterns,
+
+            history,
+
+            support,
+
+            timeframe_alignment
+
+        )
+
+
+
+        decision = self.finalize_decision(
+
+            base_result,
+
+            advanced_result
+
+        )
+
+
+
+        signal = decision.get(
+
+            "signal",
+
+            "WAIT"
+
+        )
+
+
+
+        # ==================================================
+        # Quality
+        # ==================================================
+
+
+        quality = self.calculate_quality(
+
+            signal,
+
+            smart_money,
+
+            trend,
+
+            volume,
+
+            history,
+
+            candle_patterns,
+
+            support
+
+        )
+
+
+
+        decision.update(
+
+            quality
+
+        )
+
+
+
+        # ==================================================
+        # Risk
+        # ==================================================
+
+
+        risk = self.calculate_risk_reward(
+
+            signal,
+
+            current_price,
+
+            support
+
+        )
+
+
+
+        decision.update(
+
+            risk
+
+        )
+
+
+
+        if (
+
+            signal != "WAIT"
+
+            and
+
+            decision["risk_reward"]
+
+            <
+
+            self.minimum_risk_reward
+
+        ):
+
+
+            decision["signal"] = "WAIT"
+
+
+            decision["reasons"].append(
+
+                "Risk reward below minimum"
+
+            )
+
+
+
+        # ==================================================
+        # Final Output
+        # ==================================================
+
+
+        return {
+
+
+            **decision,
+
+
+            "symbol":
+
+                symbol,
+
+
+            "interval":
+
+                interval,
+
+
+            "price":
+
+                current_price,
+
+
+            "trend":
+
+                trend,
+
+
+            "volume":
+
+                volume,
+
+
+            "liquidity":
+
+                liquidity,
+
+
+            "order_blocks":
+
+                order_blocks,
+
+
+            "candles":
+
+                candle_patterns,
+
+
+            "history":
+
+                history,
+
+
+            "support":
+
+                support,
+
+
+            "smart_money":
+
+                smart_money,
+
+
+            "timeframe_alignment":
+
+                timeframe_alignment,
+
+
+            "engine":
+
+                self.version,
+
+
+            "status":
+
+                "completed"
+
+        }
+
+
+
+    # ==========================================================
+    # Production Status
+    # ==========================================================
+
+
+    def production_status(
+
+        self
+
+    ):
+
+
+        return {
+
+
+            "engine":
+
+                self.version,
+
+
+            "status":
+
+                "ACTIVE",
+
+
+            "supported_timeframes":
+
+                self.timeframes,
+
+
+            "engines":
+
+            {
+
+
+                "trend":
+
+                    True,
+
+
+                "volume":
+
+                    True,
+
+
+                "liquidity":
+
+                    True,
+
+
+                "order_blocks":
+
+                    True,
+
+
+                "candles":
+
+                    True,
+
+
+                "history":
+
+                    True,
+
+
+                "smart_money":
+
+                    True,
+
+
+                "multi_timeframe":
+
+                    self.multi_timeframe_engine is not None
+
+
+            }
+
+
+        }
+
+
+
+    # ==========================================================
+    # Health Check
+    # ==========================================================
+
+
+    def health_check(
+
+        self
+
+    ):
+
+
+        return {
+
+
+            "engine":
+
+                self.version,
+
+
+            "status":
+
+                "healthy",
+
+
+            "timeframes":
+
+                len(
+
+                    self.timeframes
+
+                ),
+
+
+            "engines_loaded":
+
+                8,
+
+
+            "ready":
+
+                True
+
+        }
