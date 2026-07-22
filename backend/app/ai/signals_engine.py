@@ -3807,51 +3807,182 @@ class SignalEngine:
 
 
 # =====================================================
-# MULTI PROVIDER DATA VALIDATION ENGINE V1
+# ADVANCED DATA QUALITY VALIDATOR V3
 # =====================================================
 
-    def validate_market_data_quality(
+def validate_market_data_quality(
+    self,
+    candles=None,
+    providers_data=None,
+    market_data=None
+):
 
-        self,
+    result = {
+        "quality": "LOW",
+        "score": 0,
+        "issues": [],
+        "warnings": []
+    }
 
-        market_data,
+    # =====================================
+    # Support both old and new formats
+    # =====================================
 
-        providers_data=None
-
-    ):
-
-
-        quality_score = 100
-
-        warnings = []
-
-
+    if market_data is not None:
 
         candles = market_data.get(
-
             "candles",
-
-            []
-
+            candles or []
         )
-
 
         price = market_data.get(
-
             "price",
-
             0
-
         )
-
 
         volume = market_data.get(
-
             "volume",
-
             0
-
         )
+
+    else:
+
+        price = 0
+        volume = 0
+
+    # =====================================
+    # Basic validation
+    # =====================================
+
+    if not candles:
+
+        result["issues"].append("NO_CANDLES")
+        return result
+
+    score = 100
+
+    # =====================================
+    # Candle count
+    # =====================================
+
+    if len(candles) < 100:
+
+        score -= 25
+        result["issues"].append("LOW_HISTORY")
+
+    # =====================================
+    # Price validation
+    # =====================================
+
+    if price <= 0:
+
+        score -= 15
+        result["issues"].append("INVALID_PRICE")
+
+    # =====================================
+    # Volume validation
+    # =====================================
+
+    if volume < 0:
+
+        score -= 10
+        result["issues"].append("INVALID_VOLUME")
+
+    # =====================================
+    # Candle integrity
+    # =====================================
+
+    for candle in candles:
+
+        high = candle.get("high", 0)
+        low = candle.get("low", 0)
+        open_price = candle.get("open", 0)
+        close = candle.get("close", 0)
+
+        if high < low:
+
+            score -= 3
+            result["warnings"].append("HIGH_LOW_ERROR")
+
+        if high < open_price or high < close:
+
+            score -= 2
+
+        if low > open_price or low > close:
+
+            score -= 2
+
+    # =====================================
+    # Multi Provider Validation
+    # =====================================
+
+    if providers_data:
+
+        valid_prices = []
+
+        for provider in providers_data.values():
+
+            if isinstance(provider, dict):
+
+                p = provider.get("price")
+
+                if isinstance(p, (int, float)):
+
+                    valid_prices.append(p)
+
+        if len(valid_prices) >= 2:
+
+            average = sum(valid_prices) / len(valid_prices)
+
+            deviation = max(
+
+                abs(p - average)
+
+                for p in valid_prices
+
+            )
+
+            if average > 0:
+
+                deviation = deviation / average
+
+                if deviation > 0.02:
+
+                    score -= 20
+
+                    result["warnings"].append(
+                        "PROVIDER_PRICE_MISMATCH"
+                    )
+
+    # =====================================
+    # Final Quality
+    # =====================================
+
+    score = max(0, min(score, 100))
+
+    result["score"] = score
+
+    if score >= 90:
+
+        result["quality"] = "EXCELLENT"
+
+    elif score >= 75:
+
+        result["quality"] = "HIGH"
+
+    elif score >= 60:
+
+        result["quality"] = "MEDIUM"
+
+    elif score >= 40:
+
+        result["quality"] = "LOW"
+
+    else:
+
+        result["quality"] = "VERY_LOW"
+
+    return result
 
 
 
@@ -10628,45 +10759,6 @@ class SignalEngine:
 
 
         return False
-
-
-
-# =====================================================
-# ADVANCED DATA QUALITY VALIDATOR V2
-# =====================================================
-
-    def validate_market_data_quality(
-
-        self,
-
-        candles,
-
-        providers_data=None
-
-    ):
-
-        result = {
-
-            "quality": "LOW",
-
-            "score": 0,
-
-            "issues": []
-
-        }
-
-
-        if not candles:
-
-            result["issues"].append(
-                "NO_CANDLES"
-            )
-
-            return result
-
-
-
-        score = 100
 
 
 
