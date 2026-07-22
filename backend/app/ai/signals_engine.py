@@ -4415,7 +4415,7 @@ def validate_market_data_quality(
 
         self,
 
-        
+    ):    
 
         if not intelligence.get(
 
