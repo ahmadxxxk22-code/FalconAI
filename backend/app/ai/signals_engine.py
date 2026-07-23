@@ -77,1041 +77,213 @@ class SignalEngine:
         # FALCONAI PRODUCTION FILTERS
         # =================================================
 
-        self.minimum_confidence = 80
 
-        self.minimum_alert_confidence = 85
 
-        self.minimum_trend_confidence = 92
+        # =================================================
+        # MULTI TIMEFRAME CONFIGURATION
+        # =================================================
 
-        self.minimum_strong_trend = 95
+        self.timeframes = [
+
+            "1m",
+
+            "3m",
+
+            "5m",
+
+            "15m",
+
+            "30m",
+
+            "45m",
+
+            "1h",
+
+            "2h",
+
+            "4h",
+
+            "6h",
+
+            "8h",
+
+            "12h",
+
+            "1d",
+
+            "3d",
+
+            "1w",
+
+            "1M"
+
+        ]
+
+        self.minimum_confidence = 60
+
+        self.minimum_confirmations = 4
 
         self.maximum_confidence = 100
 
-        self.minimum_signal_score = 10
+        self.minimum_score = 45
 
-        self.allow_counter_trend = False
+        self.maximum_score = 100
 
-        self.minimum_trend_strength = 75
-
-        self.minimum_mtf_confidence = 85
-
-        self.minimum_prediction_confidence = 80
-
-        self.minimum_volume_confidence = 75
-
-        self.minimum_liquidity_confidence = 75
-
-        self.minimum_smart_money_confidence = 80
-
-        self.minimum_history_confidence = 75
-
-        self.minimum_orderblock_confidence = 75
-
-        self.minimum_fibonacci_confidence = 75
-
-        self.minimum_news_confidence = 70
-
-        self.minimum_macro_confidence = 70
-
-        self.minimum_data_quality = "GOOD"
-
-        # =================================================
-        # QUALITY PROTECTION
-        # =================================================
-
-        self.enable_quality_gate = True
-        self.enable_duplicate_protection = True
-        self.enable_confidence_gate = True
-        self.enable_signal_validation = True
-
-        self.enable_news_filter = True
-        self.enable_economic_filter = True
-        self.enable_fibonacci_filter = True
-        self.enable_smart_money_filter = True
-        self.enable_volume_filter = True
-        self.enable_liquidity_filter = True
-        self.enable_orderblock_filter = True
-        self.enable_candle_filter = True
-        self.enable_history_filter = True
-        self.enable_mtf_filter = True
-
-        self.enable_counter_trend_block = True
-        self.enable_false_trend_filter = True
-        self.enable_fake_breakout_filter = True
-        self.enable_confirmation_filter = True
-
-        # =================================================
-        # AI WEIGHTS
-        # =================================================
-
-        self.weights = {
-
-            "trend": 15,
-            "multi_timeframe": 15,
-            "prediction": 12,
-            "smart_money": 12,
-            "market": 8,
-            "economic": 8,
-            "news": 7,
-            "fibonacci": 6,
-            "volume": 5,
-            "liquidity": 4,
-            "order_blocks": 4,
-            "candles": 2,
-            "history": 2
-
-        }
-
-        # =================================================
-        # STATISTICS
-        # =================================================
-
-        self.signal_statistics = {
-
-            "buy": 0,
-            "sell": 0,
-            "wait": 0,
-            "trend": 0,
-            "success": 0,
-            "failed": 0
-
-        }
-
-        self.version = "FalconAI Production V3"
+        self.reject_conflicting_signals = True
 
 
 
-# =====================================================
-# MAIN AI SIGNAL ANALYSIS
-# =====================================================
+# ==========================================================
+# SIGNAL QUALITY VALIDATION ENGINE
+# Part 1
+# ==========================================================
 
-    def analyze(
+    def validate_signal_quality(
         self,
-        symbol: str = "BTCUSDT",
-        interval: str = "1h",
-        market: str = "crypto",
-        economic_event: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-
-        signal_id = (
-            f"{symbol}_"
-            f"{interval}_"
-            f"{datetime.utcnow().timestamp()}"
-        )
-
-        # =================================================
-        # MARKET DATA
-        # =================================================
-
-        market_data = self.market.analyze(
-            symbol=symbol,
-            interval=interval,
-            market=market
-        )
-
-        candles = market_data.get(
-            "candles",
-            []
-        )
-
-        data_quality = self.evaluate_data_quality(
-            candles
-        )
-
-        # =================================================
-        # QUALITY GATE
-        # =================================================
-
-        if self.enable_quality_gate:
-
-            if data_quality.get("quality") in [
-                "LOW",
-                "WEAK"
-            ]:
-
-                return {
-                    "signal": "WAIT",
-                    "confidence": 0,
-                    "reason": "LOW_DATA_QUALITY",
-                    "quality": data_quality,
-                    "created_at":
-                        datetime.utcnow().isoformat()
-                }
-
-        # =================================================
-        # OPPORTUNITY MODULES
-        # =================================================
-
-        volume_analysis = self.volume.analyze(candles)
-
-        liquidity_analysis = self.liquidity.analyze(candles)
-
-        order_blocks_analysis = self.order_blocks.analyze(candles)
-
-        candle_analysis = self.candles_ai.analyze(candles)
-
-        historical_analysis = self.history.analyze(candles)
-
-        # =================================================
-        # CORE AI
-        # =================================================
-
-        trend = self.trend.analyze(
-            symbol=symbol,
-            interval=interval,
-            market=market
-        )
-
-        multi_timeframe = self.multi_timeframe.analyze(
-            symbol=symbol,
-            market=market
-        )
-
-        opportunity = self.opportunity.analyze(
-            symbol=symbol,
-            candles=candles
-        )
-
-        smart_money = self.smart_money.analyze(
-            symbol,
-            interval
-        )
-
-        prediction = self.prediction.predict(
-            symbol=symbol,
-            interval=interval,
-            market=market
-        )
-
-        patterns = self.patterns.analyze(
-            symbol,
-            interval
-        )
-
-        fibonacci = self.fibonacci.analyze(
-            symbol,
-            interval
-        )
-
-        news = self.news.analyze(
-            symbol
-               )
-
-
-
-        # =================================================
-        # ECONOMIC INTELLIGENCE
-        # =================================================
-
-        economic = {
-            "available": False,
-            "risk": "UNKNOWN",
-            "confidence": 0
-        }
-
-        if (
-            self.enable_economic_filter
-            and
-            self.economic
-        ):
-            economic = self.economic.analyze(
-                economic_event
-            )
-
-        # =================================================
-        # MARKET REGIME
-        # =================================================
-
-        market_regime = self.detect_market_regime(
-            market_data,
-            trend,
-            multi_timeframe
-        )
-
-        # =================================================
-        # EARLY TREND DETECTION
-        # =================================================
-
-        early_trend = self.detect_early_trend(
-            market_data,
-            opportunity,
-            smart_money,
-            multi_timeframe,
-            volume_analysis,
-            liquidity_analysis,
-            order_blocks_analysis,
-            candle_analysis,
-            historical_analysis
-        )
-
-        # =================================================
-        # CONFIDENCE FUSION
-        # =================================================
-
-        confidence, confidence_details = self.calculate_confidence(
-
-            trend,
-
-            multi_timeframe,
-
-            opportunity,
-
-            smart_money,
-
-            prediction,
-
-            market_data,
-
-            fibonacci,
-
-            news,
-
-            patterns,
-
-            volume_analysis,
-
-            liquidity_analysis,
-
-            order_blocks_analysis,
-
-            candle_analysis,
-
-            historical_analysis,
-
-            economic
-
-        )
-
-        # =================================================
-        # TREND PROTECTION
-        # =================================================
-
-        trend_allowed = (
-
-            confidence >= self.minimum_trend_confidence
-
-            and
-
-            trend.get(
-                "strength",
-                0
-            ) >= self.minimum_trend_strength
-
-            and
-
-            multi_timeframe.get(
-                "confidence",
-                0
-            ) >= self.minimum_mtf_confidence
-
-            and
-
-            smart_money.get(
-                "confidence",
-                0
-            ) >= self.minimum_smart_money_confidence
-
-            and
-
-            volume_analysis.get(
-                "confidence",
-                0
-            ) >= self.minimum_volume_confidence
-
-            and
-
-            liquidity_analysis.get(
-                "confidence",
-                0
-            ) >= self.minimum_liquidity_confidence
-
-            and
-
-            order_blocks_analysis.get(
-                "confidence",
-                0
-            ) >= self.minimum_orderblock_confidence
-
-            and
-
-            fibonacci.get(
-                "confidence",
-                0
-            ) >= self.minimum_fibonacci_confidence
-
-            and
-
-            historical_analysis.get(
-                "confidence",
-                0
-            ) >= self.minimum_history_confidence
-
-            and
-
-            economic.get(
-                "risk",
-                "LOW"
-            ) not in [
-
-                "HIGH",
-
-                "EXTREME"
-
-            ]
-
-        )
-
-
-
-        # =================================================
-        # FINAL AI DECISION
-        # =================================================
-
-        decision = self.make_decision(
-
-            trend,
-
-            multi_timeframe,
-
-            opportunity,
-
-            smart_money,
-
-            prediction,
-
-            market_data,
-
-            fibonacci,
-
-            news,
-
-            early_trend,
-
-            volume_analysis,
-
-            liquidity_analysis,
-
-            order_blocks_analysis,
-
-            candle_analysis,
-
-            historical_analysis,
-
-            economic,
-
-            market_regime
-
-        )
-
-        direction = decision.get(
-            "signal",
-            "WAIT"
-        )
-
-        # =================================================
-        # TREND CERTIFICATION
-        # =================================================
-
-        trend_status = "NONE"
-
-        if trend_allowed:
-
-            if confidence >= self.minimum_strong_trend:
-
-                trend_status = "CONFIRMED"
-
-            else:
-
-                trend_status = "POTENTIAL"
-
-        else:
-
-            trend_status = "REJECTED"
-
-            if direction in [
-                "BUY",
-                "SELL"
-            ]:
-
-                direction = "WAIT"
-
-                decision["signal"] = "WAIT"
-
-                decision["warnings"] = decision.get(
-                    "warnings",
-                    []
-                ) + [
-                    "Trend confirmation failed"
-                ]
-
-        # =================================================
-        # RISK MANAGEMENT
-        # =================================================
-
-        risk = self.risk.calculate(
-
-            direction=direction,
-
-            price=market_data.get(
-                "price",
-                0
-            ),
-
-            confidence=confidence,
-
-            atr=market_data.get(
-                "atr",
-                0
-            ),
-
-            volatility=market_data.get(
-                "volatility",
-                0
-            ),
-
-            trend_strength=trend.get(
-                "strength",
-                0
-            ),
-
-            market_state=market_regime,
-
-            smart_money=smart_money,
-
-            fibonacci=fibonacci,
-
-            market=market
-
-        )
-
-
-
-
-        # =================================================
-        # ECONOMIC INTELLIGENCE
-        # =================================================
-
-        economic = {
-            "available": False,
-            "risk": "UNKNOWN",
-            "confidence": 0
-        }
-
-        if (
-            self.enable_economic_filter
-            and
-            self.economic
-        ):
-            economic = self.economic.analyze(
-                economic_event
-            )
-
-        # =================================================
-        # MARKET REGIME
-        # =================================================
-
-        market_regime = self.detect_market_regime(
-            market_data,
-            trend,
-            multi_timeframe
-        )
-
-        # =================================================
-        # EARLY TREND DETECTION
-        # =================================================
-
-        early_trend = self.detect_early_trend(
-            market_data,
-            opportunity,
-            smart_money,
-            multi_timeframe,
-            volume_analysis,
-            liquidity_analysis,
-            order_blocks_analysis,
-            candle_analysis,
-            historical_analysis
-        )
-
-        # =================================================
-        # CONFIDENCE FUSION
-        # =================================================
-
-        confidence, confidence_details = self.calculate_confidence(
-
-            trend,
-
-            multi_timeframe,
-
-            opportunity,
-
-            smart_money,
-
-            prediction,
-
-            market_data,
-
-            fibonacci,
-
-            news,
-
-            patterns,
-
-            volume_analysis,
-
-            liquidity_analysis,
-
-            order_blocks_analysis,
-
-            candle_analysis,
-
-            historical_analysis,
-
-            economic
-
-        )
-
-        # =================================================
-        # TREND PROTECTION
-        # =================================================
-
-        trend_allowed = (
-
-            confidence >= self.minimum_trend_confidence
-
-            and
-
-            trend.get(
-                "strength",
-                0
-            ) >= self.minimum_trend_strength
-
-            and
-
-            multi_timeframe.get(
-                "confidence",
-                0
-            ) >= self.minimum_mtf_confidence
-
-            and
-
-            smart_money.get(
-                "confidence",
-                0
-            ) >= self.minimum_smart_money_confidence
-
-            and
-
-            volume_analysis.get(
-                "confidence",
-                0
-            ) >= self.minimum_volume_confidence
-
-            and
-
-            liquidity_analysis.get(
-                "confidence",
-                0
-            ) >= self.minimum_liquidity_confidence
-
-            and
-
-            order_blocks_analysis.get(
-                "confidence",
-                0
-            ) >= self.minimum_orderblock_confidence
-
-            and
-
-            fibonacci.get(
-                "confidence",
-                0
-            ) >= self.minimum_fibonacci_confidence
-
-            and
-
-            historical_analysis.get(
-                "confidence",
-                0
-            ) >= self.minimum_history_confidence
-
-            and
-
-            economic.get(
-                "risk",
-                "LOW"
-            ) not in [
-
-                "HIGH",
-
-                "EXTREME"
-
-            ]
-
-        )
-
-
-
-        # =================================================
-        # FINAL REPORT
-        # =================================================
-
-        report = {
-
-            "signal_id":
-                signal_id,
-
-            "engine":
-                self.version,
-
-            "symbol":
-                symbol,
-
-            "interval":
-                interval,
-
-            "market":
-                market,
-
-            "signal":
-                direction,
-
-            "trend_status":
-                trend_status,
-
-            "market_regime":
-                market_regime,
-
-            "confidence":
-                confidence,
-
-            "confidence_details":
-                confidence_details,
-
-            "decision":
-                decision,
-
-            "risk":
-                risk,
-
-            "quality":
-                data_quality,
-
-            "economic":
-                economic,
-
-            "modules": {
-
-                "market":
-                    market_data,
-
-                "trend":
-                    trend,
-
-                "multi_timeframe":
-                    multi_timeframe,
-
-                "opportunity":
-                    opportunity,
-
-                "smart_money":
-                    smart_money,
-
-                "prediction":
-                    prediction,
-
-                "patterns":
-                    patterns,
-
-                "fibonacci":
-                    fibonacci,
-
-                "news":
-                    news,
-
-                "volume":
-                    volume_analysis,
-
-                "liquidity":
-                    liquidity_analysis,
-
-                "order_blocks":
-                    order_blocks_analysis,
-
-                "candles":
-                    candle_analysis,
-
-                "history":
-                    historical_analysis
-
-            },
-
-            "created_at":
-                datetime.utcnow().isoformat()
-
-        }
-
-        # =================================================
-        # SIGNAL STATISTICS
-        # =================================================
-
-        if direction == "BUY":
-
-            self.signal_statistics["buy"] += 1
-
-        elif direction == "SELL":
-
-            self.signal_statistics["sell"] += 1
-
-        else:
-
-            self.signal_statistics["wait"] += 1
-
-        if trend_status == "CONFIRMED":
-
-            self.signal_statistics["trend"] += 1
-
-        # =================================================
-        # ALERT FILTER
-        # =================================================
-
-        report["allow_notification"] = (
-
-            trend_status == "CONFIRMED"
-
-            and
-
-            confidence >= self.minimum_trend_confidence
-
-        )
-
-        report["allow_mobile_push"] = (
-
-            trend_status == "CONFIRMED"
-
-            and
-
-            confidence >= self.minimum_strong_trend
-
-        )
-
-        report["allow_subscription_signal"] = (
-
-            confidence >= self.minimum_alert_confidence
-
-        )
-
-        return report
-
-
-# =====================================================
-# DATA QUALITY ENGINE
-# =====================================================
-
-    def evaluate_data_quality(
-        self,
-        candles
-    ) -> Dict[str, Any]:
-
-        count = len(candles)
-
-        quality = "LOW"
-
-        score = 0
-
-        if count >= 300:
-
-            quality = "EXCELLENT"
-
-            score = 100
-
-        elif count >= 200:
-
-            quality = "VERY_GOOD"
-
-            score = 90
-
-        elif count >= 100:
-
-            quality = "GOOD"
-
-            score = 80
-
-        elif count >= 60:
-
-            quality = "ACCEPTABLE"
-
-            score = 65
-
-        elif count >= 30:
-
-            quality = "WEAK"
-
-            score = 45
-
-        return {
-
-            "quality": quality,
-
-            "score": score,
-
-            "candles": count
-
-            }
-
-
-
-# =====================================================
-# MARKET REGIME DETECTION
-# =====================================================
-
-    def detect_market_regime(
-        self,
-        market,
-        trend,
-        multi_timeframe
-    ) -> str:
-
-        trend_strength = trend.get(
-            "strength",
-            trend.get("score", 0)
-        )
-
-        mtf = multi_timeframe.get(
-            "confidence",
-            0
-        )
-
-        volatility = market.get(
-            "volatility",
-            0
-        )
-
-        volume = market.get(
-            "volume_ratio",
-            1
-        )
-
-        if (
-            trend_strength >= 90
-            and
-            mtf >= 90
-            and
-            volume >= 1.3
-        ):
-            return "STRONG_TREND"
-
-        if (
-            trend_strength >= 75
-            and
-            mtf >= 80
-        ):
-            return "TRENDING"
-
-        if volatility >= 7:
-            return "HIGH_VOLATILITY"
-
-        return "RANGING"
-
-
-# =====================================================
-# EARLY TREND DETECTOR
-# =====================================================
-
-    def detect_early_trend(
-
-        self,
-
-        market,
-
-        opportunity,
-
-        smart_money,
-
-        multi_timeframe,
-
-        volume,
-
-        liquidity,
-
-        order_blocks,
-
-        candles,
-
-        history
-
+        signal: str,
+        confidence: float,
+        confirmations: int,
+        market_regime: str,
+        smart_money: dict,
+        volume: dict,
+        trend: dict
     ):
 
+        result = {
+            "accepted": True,
+            "quality": "LOW",
+            "score": 0,
+            "reasons": []
+        }
+
         score = 0
 
-        if smart_money.get("signal") == "BUY":
+        # ==========================================
+        # Confidence
+        # ==========================================
+
+        if confidence >= 90:
+            score += 30
+
+        elif confidence >= 80:
+            score += 25
+
+        elif confidence >= 70:
             score += 20
 
-        if smart_money.get("signal") == "SELL":
-            score -= 20
-
-        if volume.get("confidence", 0) >= 80:
+        elif confidence >= 60:
             score += 10
 
-        if liquidity.get("confidence", 0) >= 80:
-            score += 10
+        else:
+            result["accepted"] = False
+            result["reasons"].append("Low confidence")
 
-        if order_blocks.get("confidence", 0) >= 80:
-            score += 10
+        # ==========================================
+        # Confirmations
+        # ==========================================
 
-        if candles.get("confidence", 0) >= 75:
-            score += 10
+        if confirmations >= 8:
+            score += 20
 
-        if history.get("confidence", 0) >= 80:
+        elif confirmations >= 6:
             score += 15
 
-        if multi_timeframe.get("confidence", 0) >= 85:
-            score += 15
-
-        if opportunity.get("confidence", 0) >= 80:
+        elif confirmations >= 4:
             score += 10
 
-        if score >= 80:
-            return "EARLY_BULLISH"
+        else:
+            result["accepted"] = False
+            result["reasons"].append("Weak confirmations")
 
-        if score <= -80:
-            return "EARLY_BEARISH"
+        # ==========================================
+        # Market Regime
+        # ==========================================
 
-        return "NONE"
+        if market_regime == "TRENDING":
+            score += 10
+
+        elif market_regime == "VOLATILE":
+            score += 6
+
+        elif market_regime == "RANGING":
+            score -= 8
+
+        # ==========================================
+        # Smart Money
+        # ==========================================
+
+        if smart_money.get("bos"):
+            score += 5
+
+        if smart_money.get("choch"):
+            score += 5
+
+        if smart_money.get("order_block"):
+            score += 5
+
+        if smart_money.get("liquidity_sweep"):
+            score += 5
+
+        # ==========================================
+        # Volume
+        # ==========================================
+
+        if volume.get("score", 0) > 0:
+            score += 5
+
+        # ==========================================
+        # Trend
+        # ==========================================
+
+        if trend.get("signal") == signal:
+            score += 10
+
+        result["score"] = score
+
+        if score >= 85:
+            result["quality"] = "A+"
+
+        elif score >= 75:
+            result["quality"] = "A"
+
+        elif score >= 65:
+            result["quality"] = "B"
+
+        elif score >= 50:
+            result["quality"] = "C"
+
+        else:
+            result["quality"] = "D"
+
+        if result["quality"] == "D":
+            result["accepted"] = False
+            result["reasons"].append("Quality too low")
+
+        return result
 
 
-# =====================================================
-# SIGNAL VALIDATION GATE
-# =====================================================
 
-    def validate_signal(
+# ==========================================================
+# RISK SAFETY GATE
+# Part 2
+# ==========================================================
+
+    def risk_safety_check(
 
         self,
 
         confidence,
 
-        trend_status,
-
-        economic,
-
-        news,
+        risk,
 
         market_regime
 
     ):
 
-        if confidence < self.minimum_confidence:
+        if confidence < 60:
             return False
 
-        if trend_status == "REJECTED":
-            return False
-
-        if economic.get("risk") in [
-            "HIGH",
-            "EXTREME"
-        ]:
-            return False
-
-        if news.get("risk") == "HIGH":
+        if risk.get("risk_level") == "HIGH":
             return False
 
         if market_regime == "RANGING":
@@ -1120,434 +292,136 @@ class SignalEngine:
         return True
 
 
+# ==========================================================
+# MARKET DATA QUALITY VALIDATOR
+# Part 2
+# ==========================================================
 
-# =====================================================
-# AI CONFIDENCE FUSION
-# =====================================================
-
-    def calculate_confidence(
+    def validate_market_data_quality(
 
         self,
 
-        trend,
+        market_data,
 
-        multi_timeframe,
-
-        opportunity,
-
-        smart_money,
-
-        prediction,
-
-        market,
-
-        fibonacci,
-
-        news,
-
-        patterns,
-
-        volume,
-
-        liquidity,
-
-        order_blocks,
-
-        candles,
-
-        history,
-
-        economic
+        providers_data=None
 
     ):
 
-        confidence = 0.0
+        quality_score = 100
 
-        details = []
+        warnings = []
 
-        engines = {
+        candles = market_data.get("candles", [])
 
-            "trend": trend,
+        price = market_data.get("price", 0)
 
-            "multi_timeframe": multi_timeframe,
+        volume = market_data.get("volume", 0)
 
-            "prediction": prediction,
+        # ==========================================
+        # Candle Validation
+        # ==========================================
 
-            "smart_money": smart_money,
+        candle_count = len(candles)
 
-            "market": market,
+        if candle_count < 50:
 
-            "economic": economic,
+            quality_score -= 30
 
-            "news": news,
+            warnings.append("Missing candles")
 
-            "fibonacci": fibonacci,
+        elif candle_count < 100:
 
-            "volume": volume,
+            quality_score -= 15
 
-            "liquidity": liquidity,
+        # ==========================================
+        # Price Validation
+        # ==========================================
 
-            "order_blocks": order_blocks,
+        if price is None or price <= 0:
 
-            "candles": candles,
+            quality_score -= 40
 
-            "history": history
+            warnings.append("Invalid price")
 
-        }
+        # ==========================================
+        # Volume Validation
+        # ==========================================
 
-        for name, engine in engines.items():
+        if volume is None or volume <= 0:
 
-            if not engine:
-                continue
+            quality_score -= 20
 
-            weight = self.weights.get(
-                name,
-                0
-            )
+            warnings.append("Invalid volume")
 
-            engine_confidence = engine.get(
-                "confidence",
-                0
-            )
+        # ==========================================
+        # Multi Provider Validation
+        # ==========================================
 
-            confidence += (
-                engine_confidence
-                * weight
-                / 100
-            )
+        if providers_data:
 
-            if engine_confidence >= 80:
+            prices = []
 
-                details.append(
-                    f"{name}:PASS"
-                )
+            for provider in providers_data:
 
-            else:
+                provider_price = provider.get("price", 0)
 
-                details.append(
-                    f"{name}:LOW"
-                )
+                if provider_price > 0:
 
-        # =============================================
-        # HARD FILTERS
-        # =============================================
+                    prices.append(provider_price)
 
-        if trend.get(
-            "strength",
-            0
-        ) < self.minimum_trend_strength:
+            if len(prices) >= 2:
 
-            confidence -= 20
+                highest = max(prices)
 
-            details.append(
-                "Weak trend"
-            )
+                lowest = min(prices)
 
-        if multi_timeframe.get(
-            "confidence",
-            0
-        ) < self.minimum_mtf_confidence:
+                difference = ((highest - lowest) / lowest) * 100
 
-            confidence -= 15
+                if difference > 1:
 
-            details.append(
-                "Weak MTF"
-            )
+                    quality_score -= 20
 
-        if smart_money.get(
-            "confidence",
-            0
-        ) < self.minimum_smart_money_confidence:
+                    warnings.append(
+                        "Provider price mismatch"
+                    )
 
-            confidence -= 15
+        # ==========================================
+        # Final Quality
+        # ==========================================
 
-            details.append(
-                "Weak SmartMoney"
-            )
-
-        if liquidity.get(
-            "confidence",
-            0
-        ) < self.minimum_liquidity_confidence:
-
-            confidence -= 10
-
-        if volume.get(
-            "confidence",
-            0
-        ) < self.minimum_volume_confidence:
-
-            confidence -= 10
-
-        if order_blocks.get(
-            "confidence",
-            0
-        ) < self.minimum_orderblock_confidence:
-
-            confidence -= 10
-
-        if history.get(
-            "confidence",
-            0
-        ) < self.minimum_history_confidence:
-
-            confidence -= 10
-
-        if fibonacci.get(
-            "confidence",
-            0
-        ) < self.minimum_fibonacci_confidence:
-
-            confidence -= 5
-
-        if economic.get(
-            "risk",
-            ""
-        ) in [
-
-            "HIGH",
-
-            "EXTREME"
-
-        ]:
-
-            confidence -= 20
-
-            details.append(
-                "Economic Risk"
-            )
-
-        confidence = max(
+        quality_score = max(
             0,
             min(
-                round(confidence),
+                quality_score,
                 100
             )
         )
 
-        return confidence, details
+        if quality_score >= 90:
 
+            quality = "EXCELLENT"
 
+        elif quality_score >= 75:
 
-# =====================================================
-# FINAL AI DECISION ENGINE
-# =====================================================
+            quality = "HIGH"
 
-    def make_decision(
+        elif quality_score >= 60:
 
-        self,
+            quality = "MEDIUM"
 
-        trend,
+        elif quality_score >= 40:
 
-        multi_timeframe,
+            quality = "LOW"
 
-        opportunity,
+        else:
 
-        smart_money,
-
-        prediction,
-
-        market,
-
-        fibonacci,
-
-        news,
-
-        early_trend,
-
-        volume,
-
-        liquidity,
-
-        order_blocks,
-
-        candles,
-
-        history,
-
-        economic,
-
-        market_regime
-
-    ):
-
-        buy_score = 0
-        sell_score = 0
-
-        reasons = []
-        warnings = []
-
-        # ============================================
-        # TREND
-        # ============================================
-
-        if trend.get("signal") == "BUY":
-            buy_score += 15
-            reasons.append("Trend Bullish")
-
-        elif trend.get("signal") == "SELL":
-            sell_score += 15
-            reasons.append("Trend Bearish")
-
-        # ============================================
-        # MULTI TIMEFRAME
-        # ============================================
-
-        if multi_timeframe.get("signal") == "BUY":
-            buy_score += 15
-
-        elif multi_timeframe.get("signal") == "SELL":
-            sell_score += 15
-
-        # ============================================
-        # SMART MONEY
-        # ============================================
-
-        if smart_money.get("signal") == "BUY":
-            buy_score += 12
-            reasons.append("Smart Money Buy")
-
-        elif smart_money.get("signal") == "SELL":
-            sell_score += 12
-            reasons.append("Smart Money Sell")
-
-        # ============================================
-        # PREDICTION
-        # ============================================
-
-        if prediction.get("signal") == "BUY":
-            buy_score += 10
-
-        elif prediction.get("signal") == "SELL":
-            sell_score += 10
-
-        # ============================================
-        # OPPORTUNITY
-        # ============================================
-
-        if opportunity.get("signal") == "BUY":
-            buy_score += 10
-
-        elif opportunity.get("signal") == "SELL":
-            sell_score += 10
-
-        # ============================================
-        # FIBONACCI
-        # ============================================
-
-        if fibonacci.get("signal") == "BUY":
-            buy_score += 6
-
-        elif fibonacci.get("signal") == "SELL":
-            sell_score += 6
-
-        # ============================================
-        # ORDER BLOCKS
-        # ============================================
-
-        if order_blocks.get("signal") == "BUY":
-            buy_score += 5
-
-        elif order_blocks.get("signal") == "SELL":
-            sell_score += 5
-
-        # ============================================
-        # LIQUIDITY
-        # ============================================
-
-        if liquidity.get("signal") == "BUY":
-            buy_score += 5
-
-        elif liquidity.get("signal") == "SELL":
-            sell_score += 5
-
-        # ============================================
-        # VOLUME
-        # ============================================
-
-        if volume.get("signal") == "BUY":
-            buy_score += 5
-
-        elif volume.get("signal") == "SELL":
-            sell_score += 5
-
-        # ============================================
-        # CANDLE AI
-        # ============================================
-
-        if candles.get("signal") == "BUY":
-            buy_score += 3
-
-        elif candles.get("signal") == "SELL":
-            sell_score += 3
-
-        # ============================================
-        # HISTORY
-        # ============================================
-
-        if history.get("signal") == "BUY":
-            buy_score += 3
-
-        elif history.get("signal") == "SELL":
-            sell_score += 3
-
-        # ============================================
-        # EARLY TREND
-        # ============================================
-
-        if early_trend == "EARLY_BULLISH":
-            buy_score += 15
-
-        elif early_trend == "EARLY_BEARISH":
-            sell_score += 15
-
-        # ============================================
-        # NEWS
-        # ============================================
-
-        if news.get("risk") == "HIGH":
-            warnings.append("High News Risk")
-
-            buy_score -= 10
-            sell_score -= 10
-
-        # ============================================
-        # ECONOMIC
-        # ============================================
-
-        if economic.get("risk") in [
-            "HIGH",
-            "EXTREME"
-        ]:
-
-            warnings.append("Economic Event")
-
-            buy_score -= 15
-            sell_score -= 15
-
-        # ============================================
-        # FINAL RESULT
-        # ============================================
-
-        signal = "WAIT"
-
-        if buy_score >= self.minimum_signal_score and buy_score > sell_score:
-            signal = "BUY"
-
-        elif sell_score >= self.minimum_signal_score and sell_score > buy_score:
-            signal = "SELL"
+            quality = "VERY_LOW"
 
         return {
 
-            "signal": signal,
+            "quality": quality,
 
-            "buy_score": buy_score,
-
-            "sell_score": sell_score,
-
-            "market_regime": market_regime,
-
-            "reasons": reasons,
+            "score": quality_score,
 
             "warnings": warnings
 
@@ -1555,502 +429,890 @@ class SignalEngine:
 
 
 
-# =====================================================
-# HEALTH CHECK
-# =====================================================
-
-    def health_check(self):
-
-        return {
-
-            "engine": self.version,
-
-            "status": "running",
-
-            "minimum_confidence": self.minimum_confidence,
-
-            "minimum_trend_confidence": self.minimum_trend_confidence,
-
-            "minimum_strong_trend": self.minimum_strong_trend,
-
-            "counter_trend_allowed": self.allow_counter_trend,
-
-            "weights": self.weights,
-
-            "statistics": self.signal_statistics,
-
-            "modules": {
-
-                "market": True,
-
-                "trend": True,
-
-                "multi_timeframe": True,
-
-                "prediction": True,
-
-                "smart_money": True,
-
-                "fibonacci": True,
-
-                "patterns": True,
-
-                "volume": True,
-
-                "liquidity": True,
-
-                "order_blocks": True,
-
-                "candles": True,
-
-                "history": True,
-
-                "news": True,
-
-                "economic": self.economic is not None,
-
-                "risk_manager": True
-
-            }
-
-        }
-
-
-# =====================================================
-# RESET STATISTICS
-# =====================================================
-
-    def reset_statistics(self):
-
-        self.signal_statistics = {
-
-            "buy": 0,
-
-            "sell": 0,
-
-            "wait": 0,
-
-            "trend": 0,
-
-            "success": 0,
-
-            "failed": 0
-
-        }
-
-        return {
-
-            "status": "reset"
-
-        }
-
-
-# =====================================================
-# ENGINE INFORMATION
-# =====================================================
-
-    def info(self):
-
-        return {
-
-            "engine": self.version,
-
-            "release": "FalconAI Production",
-
-            "signal_confidence": self.minimum_confidence,
-
-            "trend_confidence": self.minimum_trend_confidence,
-
-            "confirmed_trend": self.minimum_strong_trend,
-
-            "quality_gate": self.enable_quality_gate,
-
-            "duplicate_protection": self.enable_duplicate_protection,
-
-            "signal_validation": self.enable_signal_validation,
-
-            "economic_filter": self.enable_economic_filter,
-
-            "news_filter": self.enable_news_filter,
-
-            "smart_money_filter": self.enable_smart_money_filter,
-
-            "history_learning": True,
-
-            "multi_timeframe": True,
-
-            "institutional_mode": True
-
-        }
-
-
-
-# =====================================================
-# MARKET REGIME DETECTION
-# =====================================================
-
-    def detect_market_regime(
-        self,
-        market,
-        trend,
-        multi_timeframe
-    ):
-
-        trend_strength = trend.get(
-            "strength",
-            trend.get("score", 0)
-        )
-
-        mtf = multi_timeframe.get(
-            "confidence",
-            0
-        )
-
-        volatility = market.get(
-            "volatility",
-            0
-        )
-
-        volume_ratio = market.get(
-            "volume_ratio",
-            1
-        )
-
-        spread = market.get(
-            "spread_score",
-            50
-        )
-
-        smart_pressure = market.get(
-            "smart_money_pressure",
-            0
-        )
-
-        if (
-            trend_strength >= 95
-            and mtf >= 90
-            and volume_ratio >= 1.5
-            and smart_pressure >= 80
-        ):
-
-            return "INSTITUTIONAL_TREND"
-
-        if (
-            trend_strength >= 85
-            and mtf >= 85
-            and volume_ratio >= 1.2
-        ):
-
-            return "STRONG_TREND"
-
-        if (
-            trend_strength >= 75
-            and mtf >= 75
-        ):
-
-            return "TRENDING"
-
-        if (
-            volatility >= 8
-            and spread < 40
-        ):
-
-            return "HIGH_VOLATILITY"
-
-        if volatility <= 2:
-
-            return "LOW_VOLATILITY"
-
-        return "RANGING"
-
-
-# =====================================================
-# EARLY TREND AI
-# =====================================================
-
-    def detect_early_trend(
+# ==========================================================
+# MULTI TIMEFRAME ANALYSIS ENGINE
+# Part 3
+# ==========================================================
+
+    def analyze_all_timeframes(
 
         self,
 
-        market,
+        symbol,
 
-        opportunity,
-
-        smart_money,
-
-        multi_timeframe,
-
-        volume,
-
-        liquidity,
-
-        order_blocks,
-
-        candles,
-
-        history
+        market="crypto"
 
     ):
+
+        results = {}
 
         bullish = 0
+
         bearish = 0
 
-        if smart_money.get("signal") == "BUY":
-            bullish += 20
+        total_confidence = 0
 
-        elif smart_money.get("signal") == "SELL":
-            bearish += 20
+        completed = 0
 
-        if volume.get("signal") == "BUY":
-            bullish += 10
+        for timeframe in self.timeframes:
 
-        elif volume.get("signal") == "SELL":
-            bearish += 10
+            try:
 
-        if liquidity.get("signal") == "BUY":
-            bullish += 10
+                analysis = self.analyze_market(
 
-        elif liquidity.get("signal") == "SELL":
-            bearish += 10
+                    symbol=symbol,
 
-        if order_blocks.get("signal") == "BUY":
-            bullish += 10
+                    timeframe=timeframe,
 
-        elif order_blocks.get("signal") == "SELL":
-            bearish += 10
+                    market=market
 
-        if candles.get("signal") == "BUY":
-            bullish += 10
+                )
 
-        elif candles.get("signal") == "SELL":
-            bearish += 10
+                results[timeframe] = analysis
 
-        if history.get("signal") == "BUY":
-            bullish += 15
+                if analysis.get("signal") == "BUY":
+                    bullish += 1
 
-        elif history.get("signal") == "SELL":
-            bearish += 15
+                elif analysis.get("signal") == "SELL":
+                    bearish += 1
 
-        if multi_timeframe.get("signal") == "BUY":
-            bullish += 15
-
-        elif multi_timeframe.get("signal") == "SELL":
-            bearish += 15
-
-        if opportunity.get("signal") == "BUY":
-            bullish += 10
-
-        elif opportunity.get("signal") == "SELL":
-            bearish += 10
-
-        if bullish >= 90:
-            return "EARLY_BULLISH"
-
-        if bearish >= 90:
-            return "EARLY_BEARISH"
-
-        return "NONE"
-
-
-
-# =====================================================
-# DATA QUALITY ENGINE
-# =====================================================
-
-    def evaluate_data_quality(
-        self,
-        candles
-    ):
-
-        count = len(candles)
-
-        score = 0
-
-        quality = "LOW"
-
-        if count >= 500:
-
-            score += 40
-
-        elif count >= 300:
-
-            score += 35
-
-        elif count >= 200:
-
-            score += 30
-
-        elif count >= 100:
-
-            score += 20
-
-        else:
-
-            score += 5
-
-        # =============================================
-        # Missing Candles
-        # =============================================
-
-        missing = 0
-
-        for candle in candles:
-
-            if candle is None:
-
-                missing += 1
-
-        if missing == 0:
-
-            score += 20
-
-        elif missing < 5:
-
-            score += 10
-
-        else:
-
-            score -= 20
-
-        # =============================================
-        # Volume Quality
-        # =============================================
-
-        valid_volume = 0
-
-        for candle in candles:
-
-            if candle:
-
-                volume = candle.get(
-                    "volume",
+                total_confidence += analysis.get(
+                    "confidence",
                     0
                 )
 
-                if volume > 0:
+                completed += 1
 
-                    valid_volume += 1
+            except Exception as e:
 
-        volume_ratio = (
+                results[timeframe] = {
 
-            valid_volume /
+                    "signal": "WAIT",
 
-            max(
+                    "confidence": 0,
 
-                len(candles),
+                    "error": str(e)
 
-                1
+                }
 
-            )
+        average_confidence = (
 
+            total_confidence / completed
+
+            if completed
+
+            else 0
         )
 
-        if volume_ratio >= 0.95:
 
-            score += 20
 
-        elif volume_ratio >= 0.80:
+        # ==========================================
+        # FINAL DIRECTION
+        # ==========================================
 
-            score += 10
+        final_signal = "WAIT"
 
-        else:
+        if bullish > bearish:
 
-            score -= 15
+            final_signal = "BUY"
 
-        # =============================================
-        # Price Quality
-        # =============================================
+        elif bearish > bullish:
 
-        valid_price = 0
+            final_signal = "SELL"
 
-        for candle in candles:
+        # ==========================================
+        # TIMEFRAME AGREEMENT
+        # ==========================================
 
-            if candle:
+        agreement = 0
 
-                if candle.get(
-                    "close"
-                ):
+        if completed > 0:
 
-                    valid_price += 1
+            agreement = int(
 
-        price_ratio = (
+                max(
 
-            valid_price /
+                    bullish,
 
-            max(
+                    bearish
 
-                len(candles),
+                )
 
-                1
+                /
+
+                completed
+
+                * 100
 
             )
-
-        )
-
-        if price_ratio >= 0.98:
-
-            score += 20
-
-        elif price_ratio >= 0.90:
-
-            score += 10
-
-        else:
-
-            score -= 20
-
-        # =============================================
-        # FINAL QUALITY
-        # =============================================
-
-        if score >= 90:
-
-            quality = "EXCELLENT"
-
-        elif score >= 80:
-
-            quality = "VERY_GOOD"
-
-        elif score >= 70:
-
-            quality = "GOOD"
-
-        elif score >= 55:
-
-            quality = "ACCEPTABLE"
-
-        elif score >= 40:
-
-            quality = "WEAK"
-
-        else:
-
-            quality = "LOW"
 
         return {
 
-            "quality": quality,
+            "signal": final_signal,
 
-            "score": score,
+            "agreement": agreement,
 
-            "candles": count,
+            "average_confidence": round(
 
-            "missing": missing,
-
-            "volume_ratio": round(
-
-                volume_ratio,
+                average_confidence,
 
                 2
 
             ),
 
-            "price_ratio": round(
+            "bullish_timeframes": bullish,
 
-                price_ratio,
+            "bearish_timeframes": bearish,
 
-                2
+            "completed": completed,
+
+            "results": results
+
+        }
+
+
+# ==========================================================
+# MARKET REGIME DETECTOR
+# Part 4
+# ==========================================================
+
+    def detect_market_regime(
+
+        self,
+
+        market_data
+
+    ):
+
+        trend = market_data.get(
+
+            "trend",
+
+            {}
+
+        )
+
+        volume = market_data.get(
+
+            "volume",
+
+            {}
+
+        )
+
+        volatility = market_data.get(
+
+            "volatility",
+
+            0
+
+        )
+
+        if (
+
+            trend.get("strength", 0) >= 70
+
+            and
+
+            volatility >= 60
+
+        ):
+
+            return "TRENDING"
+
+        if (
+
+            volatility >= 80
+
+        ):
+
+            return "VOLATILE"
+
+        return "RANGING"
+
+
+
+# ==========================================================
+# SIGNAL EXPLANATION ENGINE
+# Part 5
+# ==========================================================
+
+    def explain_signal(
+
+        self,
+
+        signal,
+
+        confidence,
+
+        agreement,
+
+        regime,
+
+        reasons=None
+
+    ):
+
+        explanation = []
+
+
+        if signal == "BUY":
+
+            explanation.append(
+                "Bullish market conditions detected"
+            )
+
+        elif signal == "SELL":
+
+            explanation.append(
+                "Bearish market conditions detected"
+            )
+
+        else:
+
+            explanation.append(
+                "No clear market direction"
+            )
+
+
+        explanation.append(
+
+            f"Confidence level: {confidence}%"
+
+        )
+
+
+        explanation.append(
+
+            f"Timeframe agreement: {agreement}%"
+
+        )
+
+
+        explanation.append(
+
+            f"Market regime: {regime}"
+
+        )
+
+
+        if reasons:
+
+            explanation.extend(reasons)
+
+
+        return {
+
+            "signal": signal,
+
+            "explanation": explanation
+
+        }
+
+
+
+# ==========================================================
+# RISK GATE SYSTEM
+# Part 6
+# ==========================================================
+
+    def external_risk_gate(
+
+        self,
+
+        confidence,
+
+        risk_data,
+
+        market_regime
+
+    ):
+
+        risk_level = risk_data.get(
+
+            "risk_level",
+
+            "UNKNOWN"
+
+        )
+
+
+        if confidence < 70:
+
+            return {
+
+                "allowed": False,
+
+                "reason": "LOW_CONFIDENCE"
+
+            }
+
+
+        if risk_level == "HIGH":
+
+            return {
+
+                "allowed": False,
+
+                "reason": "HIGH_RISK"
+
+            }
+
+
+        if market_regime == "RANGING":
+
+            return {
+
+                "allowed": False,
+
+                "reason": "BAD_MARKET_CONDITION"
+
+            }
+
+
+        return {
+
+            "allowed": True,
+
+            "reason": "PASSED"
+
+        }
+
+
+
+# ==========================================================
+# HEALTH CHECK
+# Part 7
+# ==========================================================
+
+    def health_check(
+
+        self
+
+    ):
+
+        components = {
+
+            "market":
+
+                self.market is not None,
+
+            "trend":
+
+                self.trend is not None,
+
+            "patterns":
+
+                self.patterns is not None,
+
+            "risk":
+
+                self.risk is not None,
+
+            "prediction":
+
+                self.prediction is not None,
+
+            "opportunity":
+
+                self.opportunity is not None
+
+        }
+
+
+        status = all(
+
+            components.values()
+
+        )
+
+
+        return {
+
+            "status":
+
+                "healthy" if status else "degraded",
+
+            "components":
+
+                components
+
+        }
+
+
+
+# ==========================================================
+# MAIN SIGNAL ANALYSIS ENGINE
+# Part 8
+# ==========================================================
+
+    def analyze(
+
+        self,
+
+        symbol,
+
+        market="crypto",
+
+        timeframe="15m"
+
+    ):
+
+        try:
+
+
+            # ==========================================
+            # MARKET ANALYSIS
+            # ==========================================
+
+            market_data = self.market.analyze(
+
+                symbol,
+
+                timeframe
 
             )
 
-        }
+
+
+            if not market_data:
+
+
+                return {
+
+                    "signal": "WAIT",
+
+                    "confidence": 0,
+
+                    "reason":
+
+                        "NO_MARKET_DATA"
+
+                }
+
+
+
+            # ==========================================
+            # MARKET REGIME
+            # ==========================================
+
+            market_regime = self.detect_market_regime(
+
+                market_data
+
+            )
+
+
+
+            # ==========================================
+            # TREND ANALYSIS
+            # ==========================================
+
+            trend_result = self.trend.analyze(
+
+                market_data
+
+            )
+
+
+
+            # ==========================================
+            # PATTERN ANALYSIS
+            # ==========================================
+
+            pattern_result = self.patterns.analyze(
+
+                market_data
+
+            )
+
+
+
+            # ==========================================
+            # SMART MONEY ANALYSIS
+            # ==========================================
+
+            smart_money_result = self.smart_money.analyze(
+
+                market_data
+
+            )
+
+
+
+            # ==========================================
+            # OPPORTUNITY ENGINE
+            # ==========================================
+
+            opportunity_result = self.opportunity.analyze(
+
+                symbol,
+
+                market,
+
+                timeframe
+
+            )
+
+
+
+            # ==========================================
+            # MULTI TIMEFRAME
+            # ==========================================
+
+            timeframe_result = self.analyze_all_timeframes(
+
+                symbol,
+
+                market
+
+            )
+
+
+
+            # ==========================================
+            # PREDICTION ENGINE
+            # ==========================================
+
+            prediction_result = self.prediction.predict(
+
+                market_data
+
+            )
+
+
+
+            # ==========================================
+            # SIGNAL COLLECTION
+            # ==========================================
+
+
+            buy_score = 0
+
+            sell_score = 0
+
+
+            reasons = []
+
+
+
+            # Trend
+
+            if trend_result.get(
+
+                "direction"
+
+            ) == "UP":
+
+
+                buy_score += 20
+
+                reasons.append(
+
+                    "UPTREND"
+
+                )
+
+
+            elif trend_result.get(
+
+                "direction"
+
+            ) == "DOWN":
+
+
+                sell_score += 20
+
+                reasons.append(
+
+                    "DOWNTREND"
+
+                )
+
+
+
+            # Smart Money
+
+            if smart_money_result.get(
+
+                "bullish"
+
+            ):
+
+
+                buy_score += 20
+
+                reasons.append(
+
+                    "SMART_MONEY_BUY"
+
+                )
+
+
+
+            if smart_money_result.get(
+
+                "bearish"
+
+            ):
+
+
+                sell_score += 20
+
+                reasons.append(
+
+                    "SMART_MONEY_SELL"
+
+                )
+
+
+
+            # Opportunity
+
+            if opportunity_result.get(
+
+                "signal"
+
+            ) == "BUY":
+
+
+                buy_score += 20
+
+
+            elif opportunity_result.get(
+
+                "signal"
+
+            ) == "SELL":
+
+
+                sell_score += 20
+
+
+
+            # Prediction
+
+            if prediction_result.get(
+
+                "signal"
+
+            ) == "BUY":
+
+
+                buy_score += 15
+
+
+            elif prediction_result.get(
+
+                "signal"
+
+            ) == "SELL":
+
+
+                sell_score += 15
+
+
+
+            # ==========================================
+            # FINAL SIGNAL
+            # ==========================================
+
+
+            final_signal = "WAIT"
+
+
+
+            if buy_score > sell_score:
+
+
+                final_signal = "BUY"
+
+
+
+            elif sell_score > buy_score:
+
+
+                final_signal = "SELL"
+
+
+
+            total_score = max(
+
+                buy_score,
+
+                sell_score
+
+            )
+
+
+
+            confidence = min(
+
+                total_score,
+
+                100
+
+            )
+
+
+
+            # ==========================================
+            # RISK CHECK
+            # ==========================================
+
+
+            risk_result = self.risk.analyze(
+
+                market_data
+
+            )
+
+
+
+            risk_gate = self.external_risk_gate(
+
+                confidence,
+
+                risk_result,
+
+                market_regime
+
+            )
+
+
+
+            if not risk_gate["allowed"]:
+
+
+                final_signal = "WAIT"
+
+
+
+                reasons.append(
+
+                    risk_gate["reason"]
+
+                )
+
+
+
+            # ==========================================
+            # EXPLANATION
+            # ==========================================
+
+
+            explanation = self.explain_signal(
+
+                final_signal,
+
+                confidence,
+
+                timeframe_result.get(
+
+                    "agreement",
+
+                    0
+
+                ),
+
+                market_regime,
+
+                reasons
+
+            )
+
+
+
+            return {
+
+
+                "symbol":
+
+                    symbol,
+
+
+                "timeframe":
+
+                    timeframe,
+
+
+                "signal":
+
+                    final_signal,
+
+
+                "confidence":
+
+                    confidence,
+
+
+                "market_regime":
+
+                    market_regime,
+
+
+                "buy_score":
+
+                    buy_score,
+
+
+                "sell_score":
+
+                    sell_score,
+
+
+                "risk":
+
+                    risk_result,
+
+
+                "timeframes":
+
+                    timeframe_result,
+
+
+                "smart_money":
+
+                    smart_money_result,
+
+
+                "opportunity":
+
+                    opportunity_result,
+
+
+                "prediction":
+
+                    prediction_result,
+
+
+                "explanation":
+
+                    explanation
+
+
+            }
+
+
+
+        except Exception as e:
+
+
+            return {
+
+
+                "signal":
+
+                    "WAIT",
+
+
+                "confidence":
+
+                    0,
+
+
+                "error":
+
+                    str(e)
+
+            }
