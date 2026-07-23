@@ -3807,151 +3807,220 @@ class SignalEngine:
 
 
 # =====================================================
-# ADVANCED DATA QUALITY VALIDATOR V3
+# MULTI PROVIDER DATA VALIDATION ENGINE V1
 # =====================================================
 
-def validate_market_data_quality(
-    self,
-    candles=None,
-    providers_data=None,
-    market_data=None
-):
+    def validate_market_data_quality(
 
-    result = {
-        "quality": "LOW",
-        "score": 0,
-        "issues": [],
-        "warnings": []
-    }
+        self,
 
-    # =====================================
-    # Support both old and new formats
-    # =====================================
+        market_data,
 
-    if market_data is not None:
+        providers_data=None
+
+    ):
+
+
+        quality_score = 100
+
+        warnings = []
+
+
 
         candles = market_data.get(
+
             "candles",
-            candles or []
+
+            []
+
         )
+
 
         price = market_data.get(
+
             "price",
+
             0
+
         )
+
 
         volume = market_data.get(
+
             "volume",
+
             0
+
         )
 
-    else:
 
-        price = 0
-        volume = 0
 
-    # =====================================
-    # Basic validation
-    # =====================================
+        # =================================================
+        # CANDLE VALIDATION
+        # =================================================
 
-    if not candles:
 
-        result["issues"].append("NO_CANDLES")
-        return result
+        candle_count = len(
 
-    score = 100
+            candles
 
-    # =====================================
-    # Candle count
-    # =====================================
+        )
 
-    if len(candles) < 100:
 
-        score -= 25
-        result["issues"].append("LOW_HISTORY")
+        if candle_count < 50:
 
-    # =====================================
-    # Price validation
-    # =====================================
 
-    if price <= 0:
+            quality_score -= 30
 
-        score -= 15
-        result["issues"].append("INVALID_PRICE")
 
-    # =====================================
-    # Volume validation
-    # =====================================
+            warnings.append(
 
-    if volume < 0:
-
-        score -= 10
-        result["issues"].append("INVALID_VOLUME")
-
-    # =====================================
-    # Candle integrity
-    # =====================================
-
-    for candle in candles:
-
-        high = candle.get("high", 0)
-        low = candle.get("low", 0)
-        open_price = candle.get("open", 0)
-        close = candle.get("close", 0)
-
-        if high < low:
-
-            score -= 3
-            result["warnings"].append("HIGH_LOW_ERROR")
-
-        if high < open_price or high < close:
-
-            score -= 2
-
-        if low > open_price or low > close:
-
-            score -= 2
-
-    # =====================================
-    # Multi Provider Validation
-    # =====================================
-
-    if providers_data:
-
-        valid_prices = []
-
-        for provider in providers_data.values():
-
-            if isinstance(provider, dict):
-
-                p = provider.get("price")
-
-                if isinstance(p, (int, float)):
-
-                    valid_prices.append(p)
-
-        if len(valid_prices) >= 2:
-
-            average = sum(valid_prices) / len(valid_prices)
-
-            deviation = max(
-
-                abs(p - average)
-
-                for p in valid_prices
+                "Missing candles"
 
             )
 
-            if average > 0:
 
-                deviation = deviation / average
+        elif candle_count < 100:
 
-                if deviation > 0.02:
 
-                    score -= 20
+            quality_score -= 15
 
-                    result["warnings"].append(
-                        "PROVIDER_PRICE_MISMATCH"
+
+
+        # =================================================
+        # PRICE QUALITY
+        # =================================================
+
+
+        if (
+
+            price is None
+
+            or
+
+            price <= 0
+
+        ):
+
+
+            quality_score -= 40
+
+
+            warnings.append(
+
+                "Invalid price"
+
+            )
+
+
+
+        # =================================================
+        # VOLUME QUALITY
+        # =================================================
+
+
+        if (
+
+            volume is None
+
+            or
+
+            volume <= 0
+
+        ):
+
+
+            quality_score -= 20
+
+
+            warnings.append(
+
+                "Invalid volume"
+
+            )
+
+
+
+        # =================================================
+        # PROVIDER CONSISTENCY CHECK
+        # =================================================
+
+
+        if providers_data:
+
+
+            prices = []
+
+
+            for provider in providers_data:
+
+
+                provider_price = provider.get(
+
+                    "price",
+
+                    0
+
+                )
+
+
+                if provider_price > 0:
+
+                    prices.append(
+
+                        provider_price
+
+                    )
+
+
+
+            if len(prices) >= 2:
+
+
+                maximum = max(
+
+                    prices
+
+                )
+
+
+                minimum = min(
+
+                    prices
+
+                )
+
+
+                difference = (
+
+                    (
+
+                        maximum
+
+                        -
+
+                        minimum
+
+                    )
+
+                    /
+
+                    minimum
+
+                ) * 100
+
+
+
+                if difference > 1:
+
+
+                    quality_score -= 20
+
+
+                    warnings.append(
+
+                        "Provider price mismatch"
+
                     )
 
 
@@ -4405,7 +4474,245 @@ def validate_market_data_quality(
                }
 
 
-    
+
+# =====================================================
+# NEWS & ECONOMIC INTELLIGENCE FUSION V1
+# =====================================================
+
+    def analyze_external_intelligence(
+
+        self,
+
+        symbol,
+
+        economic_event=None
+
+    ):
+
+
+        news_score = 0
+
+        economic_score = 0
+
+        warnings = []
+
+
+
+        # =================================================
+        # NEWS ANALYSIS
+        # =================================================
+
+
+        news_data = self.news.analyze(
+
+            symbol
+
+        )
+
+
+
+        news_confidence = news_data.get(
+
+            "confidence",
+
+            0
+
+        )
+
+
+        news_risk = news_data.get(
+
+            "risk",
+
+            "LOW"
+
+        )
+
+
+
+        if news_confidence >= 80:
+
+
+            news_score += 10
+
+
+
+        if news_risk in [
+
+            "HIGH",
+
+            "EXTREME"
+
+        ]:
+
+
+            news_score -= 20
+
+
+            warnings.append(
+
+                "High impact news risk"
+
+            )
+
+
+
+        # =================================================
+        # ECONOMIC CALENDAR
+        # =================================================
+
+
+        economic_data = {
+
+
+            "available":
+
+                False,
+
+
+            "risk":
+
+                "LOW",
+
+
+            "confidence":
+
+                0
+
+        }
+
+
+
+        if (
+
+            self.enable_economic_filter
+
+            and
+
+            self.economic
+
+        ):
+
+
+            economic_data = self.economic.analyze(
+
+                economic_event
+
+            )
+
+
+
+        economic_risk = economic_data.get(
+
+            "risk",
+
+            "LOW"
+
+        )
+
+
+        economic_conf = economic_data.get(
+
+            "confidence",
+
+            0
+
+        )
+
+
+
+        if economic_conf >= 80:
+
+
+            economic_score += 10
+
+
+
+        if economic_risk in [
+
+            "HIGH",
+
+            "EXTREME"
+
+        ]:
+
+
+            economic_score -= 25
+
+
+            warnings.append(
+
+                "Economic event protection active"
+
+            )
+
+
+
+        # =================================================
+        # FINAL EXTERNAL SCORE
+        # =================================================
+
+
+        total_score = (
+
+            news_score
+
+            +
+
+            economic_score
+
+        )
+
+
+
+        total_score = max(
+
+            -50,
+
+            min(
+
+                total_score,
+
+                20
+
+            )
+
+        )
+
+
+
+        return {
+
+
+            "score":
+
+                total_score,
+
+
+            "news":
+
+                news_data,
+
+
+            "economic":
+
+                economic_data,
+
+
+            "warnings":
+
+                warnings,
+
+
+            "safe":
+
+                total_score >= -20
+
+        }
+
+
+
+
 
 # =====================================================
 # NEWS ECONOMIC FILTER
@@ -4415,7 +4722,10 @@ def validate_market_data_quality(
 
         self,
 
-    ):    
+        intelligence
+
+    ):
+
 
         if not intelligence.get(
 
@@ -10318,6 +10628,45 @@ def validate_market_data_quality(
 
 
         return False
+
+
+
+# =====================================================
+# ADVANCED DATA QUALITY VALIDATOR V2
+# =====================================================
+
+    def validate_market_data_quality(
+
+        self,
+
+        candles,
+
+        providers_data=None
+
+    ):
+
+        result = {
+
+            "quality": "LOW",
+
+            "score": 0,
+
+            "issues": []
+
+        }
+
+
+        if not candles:
+
+            result["issues"].append(
+                "NO_CANDLES"
+            )
+
+            return result
+
+
+
+        score = 100
 
 
 
