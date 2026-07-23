@@ -131,6 +131,20 @@ class SignalEngine:
 
         self.reject_conflicting_signals = True
 
+        
+        # =================================================
+        # ENGINE STATE
+        # =================================================
+
+        self.version = "V3_PRODUCTION"
+
+        self.active = True
+
+        self.last_signal = None
+
+        self.analysis_count = 0
+
+        self.error_count = 0
 
 
 # ==========================================================
@@ -1316,3 +1330,121 @@ class SignalEngine:
                     str(e)
 
             }
+
+
+
+# ==========================================================
+# CONFIDENCE CALCULATION ENGINE
+# Part 9
+# ==========================================================
+
+    def calculate_confidence(
+
+        self,
+
+        buy_score,
+
+        sell_score,
+
+        confirmations=0
+
+    ):
+
+        total = max(
+
+            buy_score,
+
+            sell_score
+
+        )
+
+
+        confidence = total
+
+
+        if confirmations >= 8:
+
+            confidence += 10
+
+
+        elif confirmations >= 5:
+
+            confidence += 5
+
+
+
+        return min(
+
+            max(
+
+                confidence,
+
+                0
+
+            ),
+
+            100
+
+        )
+
+
+
+# ==========================================================
+# FINAL DECISION ENGINE
+# Part 10
+# ==========================================================
+
+    def make_decision(
+
+        self,
+
+        buy_score,
+
+        sell_score,
+
+        confidence
+
+    ):
+
+
+        signal = "WAIT"
+
+
+
+        if confidence < self.minimum_confidence:
+
+            return {
+
+                "signal": "WAIT",
+
+                "confidence": confidence,
+
+                "reason": "LOW_CONFIDENCE"
+
+            }
+
+
+
+        if buy_score > sell_score:
+
+            signal = "BUY"
+
+
+
+        elif sell_score > buy_score:
+
+            signal = "SELL"
+
+
+
+        return {
+
+            "signal": signal,
+
+            "confidence": confidence,
+
+            "buy_score": buy_score,
+
+            "sell_score": sell_score
+
+        }
