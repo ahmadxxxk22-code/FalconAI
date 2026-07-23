@@ -1676,59 +1676,83 @@ class SignalEngine:
         }
 
 
+
 # ==========================================================
 # POSITION SIZE ENGINE
 # ==========================================================
 
-    def calculate_position_size(
+def calculate_position_size(
 
-        self,
+    self,
 
-        account_balance,
+    balance,
 
-        risk_percent,
+    risk_percent,
 
-        entry,
+    entry,
 
-        stop_loss
+    stop_loss
 
-    ):
+):
 
-        risk_amount = (
+    if balance <= 0:
 
-            account_balance
-
-            *
-
-            risk_percent
-
-            /
-
-            100
-
-        )
-
-        distance = abs(
-
-            entry - stop_loss
-
-        )
-
-        if distance <= 0:
-
-            return 0
-
-        position = risk_amount / distance
-
-        return round(
-
-            position,
-
-            4
-
-        )
+        return 0
 
 
+    if entry <= 0 or stop_loss <= 0:
+
+        return 0
+
+
+    risk_amount = (
+
+        balance
+
+        *
+
+        risk_percent
+
+        /
+
+        100
+
+    )
+
+
+    distance = abs(
+
+        entry - stop_loss
+
+    )
+
+
+    if distance <= 0:
+
+        return 0
+
+
+    position_size = (
+
+        risk_amount
+
+        /
+
+        distance
+
+    )
+
+
+    return round(
+
+        position_size,
+
+        8
+
+    )
+
+
+    
 
 # ==========================================================
 # TRADE MANAGEMENT ENGINE
@@ -3157,82 +3181,6 @@ class SignalEngine:
             "warnings": warnings
 
         }
-
-
-
-# ==========================================================
-# CAPITAL PROTECTION ENGINE
-# ==========================================================
-
-    def calculate_position_size(
-
-        self,
-
-        balance,
-
-        risk_percent,
-
-        entry,
-
-        stop_loss
-
-    ):
-
-        if balance <= 0:
-
-            return 0
-
-
-        if entry <= 0 or stop_loss <= 0:
-
-            return 0
-
-
-        risk_amount = (
-
-            balance
-
-            *
-
-            risk_percent
-
-            /
-
-            100
-
-        )
-
-
-        distance = abs(
-
-            entry - stop_loss
-
-        )
-
-
-        if distance == 0:
-
-            return 0
-
-
-        position_size = (
-
-            risk_amount
-
-            /
-
-            distance
-
-        )
-
-
-        return round(
-
-            position_size,
-
-            8
-
-        )
 
 
 
